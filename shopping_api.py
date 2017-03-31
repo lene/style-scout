@@ -4,6 +4,17 @@ from ebaysdk.shopping import Connection as Shopping
 from item import Item
 
 
+class Category:
+    def __init__(self, data):
+        self.id = data['CategoryID']
+        self.id_path = data.get('CategoryIDPath', '').split(':')
+        self.name = data['CategoryName']
+        self.name_path = data.get('CategoryNamePath', '').split(':')
+        self.is_leaf = data['LeafCategory'] == 'true'
+        # also present, but currently not useful:
+        # {'CategoryParentID': '15724', 'CategoryLevel': '3'}
+
+
 class ShoppingAPI:
 
     def __init__(
@@ -33,15 +44,15 @@ class ShoppingAPI:
             'IncludeSelector': 'ChildCategories'
         }
         response = self._api.execute('GetCategoryInfo', call_data)
-        return response.dict()['CategoryArray']['Category']
+        return [Category(c) for c in response.dict()['CategoryArray']['Category']]
 
     def get_category_items(self, category, limit=100):
         query = {
-            'categoryId': [category],
+            'categoryId': [category.id],
             'paginationInput': {'entriesPerPage': limit, 'pageNumber': '1'},
         }
         response = self._search_api.execute('findItemsAdvanced', query)
-        return [Item(self, result['itemId']) for result in response.dict()['searchResult']['item']]
+        return [Item(self, category, result['itemId']) for result in response.dict()['searchResult']['item']]
 
     def get_item(self, item_id):
         query = {

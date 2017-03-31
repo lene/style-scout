@@ -3,6 +3,7 @@
 
 # IDE configuration
 .idea
+dir.sh
 
 # generated data
 data

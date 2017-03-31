@@ -1,5 +1,6 @@
 import json
 
+from collections import defaultdict
 from ebaysdk.exception import ConnectionError
 
 from shopping_api import ShoppingAPI
@@ -29,10 +30,10 @@ def search_categories(search_term_filter, root_category=-1):
         for id in category_ids:
             categories = [
                 category for category in api.categories(id)
-                if any(term.lower() in category['CategoryName'].lower() for term in search_term_filter[level])
+                if any(term.lower() in category.name.lower() for term in search_term_filter[level])
             ]
-            leaf_categories += [c for c in categories if c['LeafCategory'] != 'false']
-            next_level_cat_ids += [c['CategoryID'] for c in categories if c['LeafCategory'] == 'false']
+            leaf_categories += [c for c in categories if c.is_leaf]
+            next_level_cat_ids += [c.id for c in categories if not c.is_leaf]
         category_ids = next_level_cat_ids
     return leaf_categories
 
@@ -46,10 +47,17 @@ try:
 
     categories = search_categories(DEFAULT_CATEGORIES)
 
-    results = api.get_category_items(categories[0]['CategoryID'], 10)
-
-    for result in results:
-        print(str(result))
+    tags = defaultdict(int)
+    for category in categories:
+        results = api.get_category_items(category, 10)
+        for result in results:
+            # print(result.item_specifics)
+            for tag in result.get_tags():
+                tags[tag] += 1
+        print(category.name, tags)
+    tags = {t: n for t, n in tags.items() if n > 1}
+    for k in sorted(tags.keys()):
+        print(k, tags[k])
 
 except ConnectionError as e:
     print(e)
