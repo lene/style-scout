@@ -4,6 +4,9 @@
 # IDE configuration
 .idea
 
+# generated data
+data
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
