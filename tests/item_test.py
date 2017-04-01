@@ -55,7 +55,7 @@ class ItemTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             Item.set_liked(items, 3)
 
-    def test_get_possible_tags(self):
+    def test_get_possible_tags_without_specifics(self):
         item = Item(self.api, self.category, 1)
         tags = item.get_possible_tags()
         for tag_label in Item.TAG_LIST.values():
@@ -99,20 +99,20 @@ class ItemTest(unittest.TestCase):
 
     def test_download_images_jpg(self):
         test_pic = join(sep, *__file__.split('/')[:-1], 'data', 'test.jpg')
-        self.api.get_item = partial(
-            create_item_dict, picture_url=['file://'+test_pic]
-        )
+        self.api.get_item = partial(create_item_dict, picture_url=['file://'+test_pic])
         Item.download_root = self.DOWNLOAD_ROOT
         item = Item(self.api, self.category, 1)
+
         item.download_images()
+
         self.assertTrue(isfile(self.DOWNLOAD_ROOT + '/style-scout_tests_data_test.jpg'))
 
     def test_download_images_nonexistent(self):
-        self.api.get_item = partial(
-            create_item_dict, picture_url=['file:///tmp/nonexistent']
-        )
+        self.api.get_item = partial(create_item_dict, picture_url=['file:///tmp/nonexistent'])
+        Item.download_root = self.DOWNLOAD_ROOT
         item = Item(self.api, self.category, 1)
-        item.download_images()
+
+        item.download_images()  # should just ignore the error
 
 
 def create_item_dict(item_id, specifics=None, picture_url=None):
