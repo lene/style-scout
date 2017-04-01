@@ -54,9 +54,15 @@ class ShoppingAPI:
         }
         response = self._search_api.execute('findItemsAdvanced', query)
         try:
-            return [Item(self, category, result['itemId']) for result in response.dict()['searchResult']['item']]
+            return [
+                Item(self, category, result['itemId'])
+                for result in response.dict()['searchResult']['item']
+            ]
         except KeyError:
-            print('Query failed: ', query, category.name)
+            from pprint import pprint
+            print('Query failed: ', category.name)
+            pprint(response.dict())
+            raise
             return []
 
     def get_item(self, item_id):

@@ -22,7 +22,7 @@ class Item:
             self.item_specifics = self._get_specifics(item.get('ItemSpecifics', {}))
             self.picture_urls = item['PictureURL']
             self.picture_files = []
-            self.tags = []
+            self.tags = set()
         except AttributeError:
             self.item_specifics = {}
 
@@ -248,6 +248,8 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
 
     @staticmethod
     def _get_specifics(item_specifics):
+        if not item_specifics:
+            return {}
 
         if isinstance(item_specifics['NameValueList'], dict):  # because some people just cannot stick to schemata
             return {
