@@ -63,7 +63,6 @@ class ShoppingAPI:
             print('Query failed: ', category.name)
             pprint(response.dict())
             raise
-            return []
 
     def get_item(self, item_id):
         query = {

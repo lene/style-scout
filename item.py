@@ -4,8 +4,7 @@ from collections import defaultdict
 
 class Item:
 
-    download_root = 'data'
-    account = 'eBay'
+    download_root = 'data/eBay'
     TAG_LIST = {
         'farbe': 'color', 'länge': 'length', 'stil': 'style', 'anlass': 'occasion',
         'muster': 'pattern', 'absatzhöhe': 'heel height',
@@ -20,7 +19,7 @@ class Item:
             self.title = item['Title']
             self.description = self._clean_description(item['Description'])
             self.item_specifics = self._get_specifics(item.get('ItemSpecifics', {}))
-            self.picture_urls = item['PictureURL']
+            self.picture_urls = item.get('PictureURL', [])
             self.picture_files = []
             self.tags = set()
         except AttributeError:
@@ -36,9 +35,9 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
     def like(self):
         self.tags.add('<3')
 
-    def download_images(self):
+    def download_images(self, verbose=False):
         for i, picture_url in enumerate(self.picture_urls):
-            self.download_image(picture_url, i == 0)
+            self.download_image(picture_url, verbose and i == 0)
 
     def set_tags(self, all_available_tags):
         self.tags = all_available_tags & self.get_possible_tags()
@@ -51,7 +50,6 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
                 if not isinstance(self.item_specifics[specifics], list):
                     self.item_specifics[specifics] = [self.item_specifics[specifics]]
                 tag_values = [s.lower() for s in self.item_specifics[specifics]]
-                # print(tag_values)
                 for tag_value in tag_values:
                     tag_value = self.process_tag(tag_label, tag_value)
                     if tag_value:
@@ -239,16 +237,20 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
         from os import makedirs
         from PIL import Image
         from urllib.request import urlretrieve
+        from urllib.error import URLError
 
-        makedirs(join(cls.download_root, cls.account), exist_ok=True)
-        filename = join(cls.download_root, cls.account, '_'.join(url.split('/')[-4:]))
-        if not isfile(filename):
-            urlretrieve(url, filename)
-        # for debugging/following the status, mostly
-        with Image.open(filename) as image:
-            if show:
-                image.show()
-                # print(filename, image.size)
+        try:
+            makedirs(join(cls.download_root), exist_ok=True)
+            filename = join(cls.download_root, '_'.join(url.split('/')[-4:]))
+            if not isfile(filename):
+                urlretrieve(url, filename)
+            # for debugging/following the status, mostly
+            with Image.open(filename) as image:
+                if show:
+                    image.show()
+                    # print(filename, image.size)
+        except URLError:
+            pass
 
     @staticmethod
     def _clean_description(description):
@@ -261,7 +263,6 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
     def _get_specifics(item_specifics):
         if not item_specifics:
             return {}
-
         if isinstance(item_specifics['NameValueList'], dict):  # because some people just cannot stick to schemata
             return {
                 item_specifics['NameValueList']['Name'].lower(): item_specifics['NameValueList']['Value'].lower()
