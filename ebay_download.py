@@ -46,7 +46,7 @@ def search_categories(search_term_filter, root_category=-1):
 
 def print_tags(tags, num_most_popular=30):
     for k in sorted(tags.keys()):
-        if 'style:' in k or 'heel height:' in k or 'length:' in k:
+        if 'style:' in k or 'heel height:' in k or 'length:' in k or 'pattern:' in k:
             continue
         print(k, tags[k])
     print()
@@ -56,23 +56,22 @@ def print_tags(tags, num_most_popular=30):
     print(len(tags), 'tags')
 
 
-if isfile(PICKLE):
-    with open(PICKLE, 'rb') as file:
-        items = load(file)
-else:
-    items = []
-
-
 def remove_duplicate_items(items):
-    print(len(items))
     ids = set()
     new_items = []
     for item in items:
         if item.id not in ids:
             new_items.append(item)
             ids.add(item.id)
-    print(len(new_items), 'tags')
+    print(len(items), '->', len(new_items), 'items')
     return new_items
+
+
+if isfile(PICKLE):
+    with open(PICKLE, 'rb') as file:
+        items = load(file)
+else:
+    items = []
 
 
 for page in range(0, 100):
@@ -105,6 +104,7 @@ for page in range(0, 100):
     except ConnectionError as e:
         print(e)
         print(e.response.dict())
+
     finally:
         with open(PICKLE, 'wb') as file:
             dump(items, file)
