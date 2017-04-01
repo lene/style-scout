@@ -18,25 +18,25 @@ class Category:
 class ShoppingAPI:
 
     def __init__(
-            self, appid, certid, devid, siteid=77,
-            debug=True, config_file=None, warnings=True, timeout=20
+            self, auth, siteid=77, config_file=None,
+            debug=True, warnings=True, timeout=20
     ):
-        self._appid = appid
-        self._certid = certid
-        self._devid = devid
+        self._appid = auth['app_id']
+        self._certid = auth['cert_id']
+        self._devid = auth['dev_id']
         self._siteid = str(siteid)
-        self._debug = debug
-        self._warnings = warnings
-        self._config_file = config_file
-        self._timeout = timeout
         self._api = Shopping(
-            debug=debug, config_file=config_file, appid=appid, certid=certid,
-            devid=devid, warnings=warnings, timeout=timeout, siteid=self._siteid
+            appid=self._appid, certid=self._certid, devid=self._devid, siteid=self._siteid,
+            config_file=config_file, debug=debug, warnings=warnings, timeout=timeout
         )
         self._search_api = Finding(
-            appid=appid, config_file=None,
-            siteid='EBAY-DE'
+            appid=self._appid, siteid=self.get_site_code(siteid),
+            config_file=config_file, debug=debug, warnings=warnings, timeout=timeout
         )
+
+    @staticmethod
+    def get_site_code(siteid):
+        return {77: 'EBAY-DE'}[siteid]
 
     def categories(self, root_id):
         call_data = {
@@ -46,13 +46,18 @@ class ShoppingAPI:
         response = self._api.execute('GetCategoryInfo', call_data)
         return [Category(c) for c in response.dict()['CategoryArray']['Category']]
 
-    def get_category_items(self, category, limit=100):
+    def get_category_items(self, category, limit=100, page=1):
+        assert limit <= 100, 'Not yet implemented: Searching for more than one page'
         query = {
             'categoryId': [category.id],
-            'paginationInput': {'entriesPerPage': limit, 'pageNumber': '1'},
+            'paginationInput': {'entriesPerPage': limit, 'pageNumber': page},
         }
         response = self._search_api.execute('findItemsAdvanced', query)
-        return [Item(self, category, result['itemId']) for result in response.dict()['searchResult']['item']]
+        try:
+            return [Item(self, category, result['itemId']) for result in response.dict()['searchResult']['item']]
+        except KeyError:
+            print('Query failed: ', query, category.name)
+            return []
 
     def get_item(self, item_id):
         query = {
