@@ -6,6 +6,8 @@ from operator import itemgetter
 from ebaysdk.exception import ConnectionError
 from os.path import isfile
 
+from os import rename, remove
+
 from shopping_api import ShoppingAPI
 
 PICKLE = 'items.pickle'
@@ -44,9 +46,9 @@ def search_categories(search_term_filter, root_category=-1):
     return leaf_categories
 
 
-def print_tags(tags, num_most_popular=30):
+def print_tags(tags, num_most_popular=50):
     for k in sorted(tags.keys()):
-        if 'style:' in k or 'heel height:' in k or 'length:' in k or 'pattern:' in k:
+        if 'style:' in k or 'heel height:' in k or 'length:' in k or 'pattern:' in k or True: #  completely disabled for now
             continue
         print(k, tags[k])
     print()
@@ -70,11 +72,12 @@ def remove_duplicate_items(items):
 if isfile(PICKLE):
     with open(PICKLE, 'rb') as file:
         items = load(file)
+        print([str(i) for i in items[:20]])
 else:
     items = []
 
 
-for page in range(0, 100):
+for page in range(1, 100):
     print('\nPage', page)
     try:
 
@@ -87,24 +90,28 @@ for page in range(0, 100):
         if ITEMS_PER_CATEGORY:
             for category in categories:
                 items += api.get_category_items(category, limit=ITEMS_PER_CATEGORY, page=page)
-                print(category.name)
+                print('{} done, {} items in total'.format(category.name, len(items)))
 
         items = remove_duplicate_items(items)
 
         tags = defaultdict(int)
         for item in items:
-            for tag in item.get_tag_suggestions():
+            for tag in item.get_possible_tags():
                 tags[tag] += 1
         tags = {t: n for t, n in tags.items() if n >= MIN_TAG_NUM}
         print_tags(tags)
 
         for item in items:
-            item.set_tags(tags)
+            item.set_tags(set(tags.keys()))
 
     except ConnectionError as e:
         print(e)
         print(e.response.dict())
 
     finally:
+        if isfile(PICKLE):
+            if isfile(PICKLE+'.bak'):
+                remove(PICKLE+'.bak')
+            rename(PICKLE, PICKLE+'.bak')
         with open(PICKLE, 'wb') as file:
             dump(items, file)
