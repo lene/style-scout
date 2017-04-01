@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 
 
 class Item:
@@ -21,37 +22,43 @@ class Item:
             self.item_specifics = self._get_specifics(item.get('ItemSpecifics', {}))
             self.picture_urls = item['PictureURL']
             self.picture_files = []
+            self.tags = []
         except AttributeError:
             self.item_specifics = {}
 
     def __str__(self):
         return """Id: {}
 Title: {}
-{}
 Specifics: {}
-Pix: {}""".format(self.id, self.title, self.description, self.item_specifics, self.picture_urls)
+Tags: {}
+Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.picture_urls)
 
     def download_images(self):
         for i, picture_url in enumerate(self.picture_urls):
             self.download_image(picture_url, i == 0)
 
-    def set_tags(self, tag_names):
-        tags = set()
-        for name in tag_names:
-            pass
+    def set_tags(self, all_available_tags):
+        self.tags = all_available_tags & self.get_possible_tags()
 
-    def get_tag_suggestions(self):
+    def get_possible_tags(self):
         tags = set(self.category.name_path[1:])
         for specifics in self.TAG_LIST.keys():
+            tag_label = self.TAG_LIST[specifics]
             if specifics in self.item_specifics:
-                tag_label = self.TAG_LIST[specifics]
-                tag_value = self.item_specifics[specifics].lower()
-                tag_value = self.process_tag(tag_label, tag_value)
-                if tag_value:
-                    if not isinstance(tag_value, list):
-                        tag_value = [tag_value]
-                    for v in tag_value:
-                        tags.add('{}:{}'.format(tag_label, v))
+                if not isinstance(self.item_specifics[specifics], list):
+                    self.item_specifics[specifics] = [self.item_specifics[specifics]]
+                tag_values = [s.lower() for s in self.item_specifics[specifics]]
+                # print(tag_values)
+                for tag_value in tag_values:
+                    tag_value = self.process_tag(tag_label, tag_value)
+                    if tag_value:
+                        if not isinstance(tag_value, list):
+                            tag_value = [tag_value]
+                        for v in tag_value:
+                            tags.add('{}:{}'.format(tag_label, v))
+            else:
+                tags.add('{}:UNDEFINED'.format(tag_label))
+
         return tags
 
     def process_tag(self, tag_label, tag_value):
@@ -167,20 +174,20 @@ Pix: {}""".format(self.id, self.title, self.description, self.item_specifics, se
 
     @staticmethod
     def process_occasion_tag(tag_value):
-        if tag_value == 'wandern/trekking':
-            return 'outdoor'
-        elif tag_value == 'clubwear':
-            return 'party'
-        elif tag_value == 'abendlich':
-            return 'festlich'
-        elif tag_value == 'immer' or tag_value == 'alles' or tag_value == 'freizeit, besondere anlässe, party, arbeit':
-            return None
-        elif tag_value[:8] == 'hochzeit':
-            return 'spezieller anlass'
-        elif tag_value == 'formal' or tag_value == 'büro':
+        if tag_value == 'formal' or tag_value == 'büro':
             return 'business'
         elif 'business' in tag_value and 'freizeit' in tag_value:
             return ['business', 'freizeit']
+        elif tag_value == 'abendlich':
+            return 'festlich'
+        elif tag_value == 'wandern/trekking':
+            return 'outdoor'
+        elif tag_value == 'clubwear':
+            return 'party'
+        elif tag_value[:8] == 'hochzeit':
+            return 'spezieller anlass'
+        elif tag_value == 'immer' or tag_value == 'alles' or tag_value == 'freizeit, besondere anlässe, party, arbeit':
+            return None
         return tag_value
 
     @staticmethod
@@ -241,10 +248,20 @@ Pix: {}""".format(self.id, self.title, self.description, self.item_specifics, se
 
     @staticmethod
     def _get_specifics(item_specifics):
+
+        if isinstance(item_specifics['NameValueList'], dict):  # because some people just cannot stick to schemata
+            return {
+                item_specifics['NameValueList']['Name'].lower(): item_specifics['NameValueList']['Value'].lower()
+            }
+
+        specifics = defaultdict(list)
         try:
-            return {pair['Name'].lower(): pair['Value'].lower() for pair in item_specifics.get('NameValueList', []) if not isinstance(pair['Value'], list)}
-        except TypeError:
-            return {} if isinstance(item_specifics['NameValueList']['Value'], list) else {item_specifics['NameValueList']['Name'].lower(): item_specifics['NameValueList']['Value'].lower()}
-        except AttributeError:
+            for pair in item_specifics.get('NameValueList', []):
+                if isinstance(pair['Value'], list):
+                    specifics[pair['Name'].lower()].extend(v.lower() for v in pair['Value'])
+                else:
+                    specifics[pair['Name'].lower()].append(pair['Value'].lower())
+            return dict(specifics)
+        except (TypeError, AttributeError):
             print(item_specifics)
             raise
