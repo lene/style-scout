@@ -1,6 +1,7 @@
 import json
 from pickle import dump, load
 
+from argparse import ArgumentParser, ArgumentTypeError
 from collections import defaultdict
 from operator import itemgetter
 from ebaysdk.exception import ConnectionError
@@ -12,7 +13,7 @@ from shopping_api import ShoppingAPI
 
 PICKLE = 'items.pickle'
 
-ITEMS_PER_CATEGORY = 100
+ITEMS_PER_CATEGORY = 20
 DEFAULT_CATEGORIES = {
     1: ('Kleidung',),
     2: ('Damenmode', 'Damenschuhe'),
@@ -26,8 +27,40 @@ DEFAULT_CATEGORIES = {
 }
 MIN_TAG_NUM = 10
 
-with open('ebay_auth.json') as file:
-    auth = json.load(file)
+
+def parse_command_line():
+    parser = ArgumentParser(
+        description="Download information about eBay items as training data for style neural network"
+    )
+    parser.add_argument(
+        '--items-per-page', default=ITEMS_PER_CATEGORY, type=int,
+        help="Page size (once per every category)"
+    )
+    parser.add_argument(
+        '--page-from', default=1, type=int, help="Page number from which to start"
+    )
+    parser.add_argument(
+        '--page-to', default=1, type=int, help="Page number up to which to read"
+    )
+    parser.add_argument(
+        '--min-valid-tag', default=MIN_TAG_NUM, type=int,
+        help="Minimum number of times a tag has to occur to be considered valid"
+    )
+    parser.add_argument(
+        '--verbose', '-v', action='store_true', help="Print info about extracted tags"
+    )
+    parser.add_argument(
+        '--item-file', default=PICKLE, help="Pickle file in which downloaded items are stored"
+    )    
+    parser.add_argument(
+        '--ebay-auth-file', default='ebay_auth.json',
+        help="JSON file containing the eBay authorization IDs"
+    )    
+    parser.add_argument(
+        '--ebay-site_id', type=int, default=77, help="eBay site ID (77 for Germany)"
+    )    
+
+    return parser.parse_args()
 
 
 def search_categories(search_term_filter, root_category=-1):
@@ -55,7 +88,7 @@ def print_tags(tags, num_most_popular=50):
     print(num_most_popular, 'most popular tags:')
     for k, v in sorted(tags.items(), key=itemgetter(1))[-num_most_popular:]:
         print(k, v)
-    print(len(tags), 'tags')
+    print(len(tags), 'distinct tags')
 
 
 def remove_duplicate_items(items):
@@ -69,49 +102,70 @@ def remove_duplicate_items(items):
     return new_items
 
 
-if isfile(PICKLE):
-    with open(PICKLE, 'rb') as file:
-        items = load(file)
-        print([str(i) for i in items[:20]])
-else:
-    items = []
+def count_all_tags(items):
+    counted_tags = defaultdict(int)
+    for item in items:
+        for tag in item.get_possible_tags():
+            counted_tags[tag] += 1
+    return counted_tags
 
 
-for page in range(1, 100):
-    print('\nPage', page)
+def dump_objects_to_file(filename, objects):
+    if isfile(filename):
+        if isfile(filename + '.bak'):
+            remove(filename + '.bak')
+        rename(filename, filename + '.bak')
+    with open(filename, 'wb') as file:
+        dump(objects, file)
+
+
+def get_valid_tags(items, min_count):
+    return {
+        t: n for t, n in count_all_tags(items).items()
+        if n >= min_count
+    }
+
+
+def load_objects_from_file(filename):
+    if isfile(filename):
+        with open(filename, 'rb') as file:
+            return load(file)
+    return []
+
+
+def update_items(items, page, per_page):
+    if per_page:
+        for category in categories:
+            items += api.get_category_items(category, limit=per_page, page=page)
+            print('{} done, {} items in total'.format(category.name, len(items)))
+    return remove_duplicate_items(items)
+
+
+args = parse_command_line()
+
+with open(args.ebay_auth_file) as file:
+    auth = json.load(file)
+
+items = load_objects_from_file(args.item_file)
+
+api = ShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
+categories = search_categories(DEFAULT_CATEGORIES)
+
+for page in range(args.page_from, args.page_to + 1):
+
+    print('\nPage {}, {} distinct items'.format(page, len(items)))
+
     try:
 
-        api = ShoppingAPI(
-            auth['production'], 77, debug=False
-        )
+        items = update_items(items, page, args.items_per_page)
 
-        categories = search_categories(DEFAULT_CATEGORIES)
+        valid_tags = get_valid_tags(items, args.min_valid_tag)
 
-        if ITEMS_PER_CATEGORY:
-            for category in categories:
-                items += api.get_category_items(category, limit=ITEMS_PER_CATEGORY, page=page)
-                print('{} done, {} items in total'.format(category.name, len(items)))
-
-        items = remove_duplicate_items(items)
-
-        tags = defaultdict(int)
-        for item in items:
-            for tag in item.get_possible_tags():
-                tags[tag] += 1
-        tags = {t: n for t, n in tags.items() if n >= MIN_TAG_NUM}
-        print_tags(tags)
+        if args.verbose:
+            print_tags(valid_tags)
 
         for item in items:
-            item.set_tags(set(tags.keys()))
-
-    except ConnectionError as e:
-        print(e)
-        print(e.response.dict())
+            item.set_tags(set(valid_tags.keys()))
 
     finally:
-        if isfile(PICKLE):
-            if isfile(PICKLE+'.bak'):
-                remove(PICKLE+'.bak')
-            rename(PICKLE, PICKLE+'.bak')
-        with open(PICKLE, 'wb') as file:
-            dump(items, file)
+        dump_objects_to_file(args.item_file, items)
