@@ -141,6 +141,18 @@ def update_items(items, page, per_page):
     return remove_duplicate_items(items)
 
 
+def add_liked_items(api, items, category, liked_item_ids):
+    from item import Item
+    present_item_ids = set(i.id for i in items)
+    for liked in liked_item_ids:
+        if liked in present_item_ids:
+            Item.set_liked(items, liked)
+        else:
+            new_item = Item(api, category, liked)
+            new_item.like()
+            items.append(new_item)
+
+
 args = parse_command_line()
 
 with open(args.ebay_auth_file) as file:

@@ -33,6 +33,9 @@ Specifics: {}
 Tags: {}
 Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.picture_urls)
 
+    def like(self):
+        self.tags.add('<3')
+
     def download_images(self):
         for i, picture_url in enumerate(self.picture_urls):
             self.download_image(picture_url, i == 0)
@@ -60,6 +63,14 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
                 tags.add('{}:UNDEFINED'.format(tag_label))
 
         return tags
+
+    @classmethod
+    def set_liked(cls, items, item_id):
+        for item in items:
+            if item.id == item_id:
+                item.like()
+                return
+        raise ValueError("Item {} not in items".format(item_id))
 
     def process_tag(self, tag_label, tag_value):
         if tag_label == 'color':
