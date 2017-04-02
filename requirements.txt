@@ -1,3 +1,6 @@
 ebaysdk
+h5py
+keras
 nose
 pillow
+tensorflow

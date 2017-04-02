@@ -62,6 +62,9 @@ def parse_command_line():
     parser.add_argument(
         '--ebay-site_id', type=int, default=77, help="eBay site ID (77 for Germany)"
     )    
+    parser.add_argument(
+        '--download-images',action='store_true', help="Download images"
+    )
 
     return parser.parse_args()
 
@@ -99,6 +102,9 @@ def remove_duplicate_items(items):
     new_items = []
     for item in items:
         if item.id not in ids:
+            if isinstance(item.category, int):
+                print(item.title, item.category)
+                continue
             new_items.append(item)
             ids.add(item.id)
     print(len(items), '->', len(new_items), 'items')
@@ -183,6 +189,10 @@ categories = search_categories(DEFAULT_CATEGORIES)
 if args.likes_file:
     import_likes(api, args.likes_file, items)
 
+if args.download_images:
+    for item in items:
+        item.download_images(verbose=True)
+
 for page in range(args.page_from, args.page_to + 1):
 
     print('\nPage {}, {} distinct items'.format(page, len(items)))
@@ -201,3 +211,22 @@ for page in range(args.page_from, args.page_to + 1):
 
     finally:
         dump_objects_to_file(args.item_file, items)
+
+from data_sets.image_file_data_sets import ImageFileDataSets
+from keras.applications.inception_v3 import InceptionV3
+from item import Item
+
+IMGSZ = 299
+data = ImageFileDataSets.get_data(data_file='ebay_images.pickle', image_directory=Item.download_root, image_size=IMGSZ)
+
+model = InceptionV3(include_top=True, weights=None, input_shape=(*data.size, data.depth), classes=data.num_labels)
+
+model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
+
+train = data.train.input.reshape(len(data.train.input), IMGSZ, IMGSZ, 3)
+#labels = data.train.labels.reshape(len(data.train.input), 4, 1, 1)
+
+print(train.shape, data.train.labels.shape)
+model.fit(train, data.train.labels, epochs=1)
+model.save_weights('ebay.hdf5')
+ 

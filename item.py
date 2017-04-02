@@ -92,8 +92,8 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
             # for debugging/following the status, mostly
             with Image.open(filename) as image:
                 if show:
-                    image.show()
-                    # print(filename, image.size)
+                    # image.show()
+                    print(filename, image.size)
         except URLError:
             pass
 

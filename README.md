@@ -6,8 +6,10 @@ Using neural networks to detect clothes of a style you like
 * Store pickled DB of downloaded items
 
 # Rough roadmap
+* add labels correctly
+* find an alternative to pickle to storing data
+* find out how to use inception with other sizes than 299
 * Find an efficient way to like items
-* Add "like" property to tags
 * Train NN against extracted tags
 * Add other eBay sites/countries, internationalize
 * Add other services (e.g. Zalando, Kleiderkreisel, ...)
