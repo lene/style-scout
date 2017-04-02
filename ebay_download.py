@@ -57,6 +57,9 @@ def parse_command_line():
         help="JSON file containing the eBay authorization IDs"
     )    
     parser.add_argument(
+        '--likes-file', help="JSON file containing the liked item IDs"
+    )
+    parser.add_argument(
         '--ebay-site_id', type=int, default=77, help="eBay site ID (77 for Germany)"
     )    
 
@@ -153,6 +156,20 @@ def add_liked_items(api, items, category, liked_item_ids):
             items.append(new_item)
 
 
+def import_likes(api, filename, items):
+    from shopping_api import Category
+
+    if not isfile(filename):
+        return
+
+    with open(filename, 'r') as f:
+        liked = json.load(f)
+
+    for category_id, item_ids in liked.items():
+        category = Category.by_id(category_id)
+        add_liked_items(api, items, category, item_ids)
+
+
 args = parse_command_line()
 
 with open(args.ebay_auth_file) as file:
@@ -162,6 +179,9 @@ items = load_objects_from_file(args.item_file)
 
 api = ShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
 categories = search_categories(DEFAULT_CATEGORIES)
+
+if args.likes_file:
+    import_likes(api, args.likes_file, items)
 
 for page in range(args.page_from, args.page_to + 1):
 

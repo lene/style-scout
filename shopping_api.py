@@ -5,6 +5,9 @@ from item import Item
 
 
 class Category:
+
+    _by_id = {}
+
     def __init__(self, data):
         self.id = data['CategoryID']
         self.id_path = data.get('CategoryIDPath', '').split(':')
@@ -13,6 +16,11 @@ class Category:
         self.is_leaf = data['LeafCategory'] == 'true'
         # also present, but currently not useful:
         # {'CategoryParentID': '15724', 'CategoryLevel': '3'}
+        self._by_id[self.id] = self
+
+    @classmethod
+    def by_id(cls, id):
+        return cls._by_id[str(id)]
 
 
 class ShoppingAPI:
@@ -56,7 +64,7 @@ class ShoppingAPI:
         try:
             return [
                 Item(self, category, result['itemId'])
-                for result in response.dict()['searchResult']['item']
+                for result in response.dict()['searchResult'].get('item', [])
             ]
         except KeyError:
             from pprint import pprint
