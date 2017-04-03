@@ -42,9 +42,11 @@ class ImageFileDataSets(DataSets):
             return data
 
     def __init__(self, base_dir, x_size, y_size, validation_share=None, one_hot=False):
-        """Construct the data set, locating and if necessarily downloading the MNIST data.
-
-        :param train_dir: Where to store the MNIST data files.
+        """Construct the data set from images stored in subdirs under base_dir
+        :param base_dir: Where to store the MNIST data files.
+        :param x_size:
+        :param y_size:
+        :param validation_share:
         :param one_hot:
         """
         self.one_hot = one_hot

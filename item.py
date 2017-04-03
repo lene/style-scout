@@ -39,7 +39,10 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
 
     def download_images(self, verbose=False):
         for i, picture_url in enumerate(self.picture_urls):
-            self.download_image(picture_url, verbose and i == 0)
+            downloaded = self.download_image(picture_url, verbose and i == 0)
+            if downloaded:
+                self.picture_files.append(downloaded)
+
 
     def set_tags(self, all_available_tags):
         self.tags = all_available_tags & self.get_possible_tags()
@@ -94,8 +97,9 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
                 if show:
                     # image.show()
                     print(filename, image.size)
+            return filename
         except URLError:
-            pass
+            return None
 
     @staticmethod
     def _clean_description(description):

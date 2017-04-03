@@ -26,6 +26,7 @@ DEFAULT_CATEGORIES = {
     4: ('Bodys', 'Nachtwäsche')
 }
 MIN_TAG_NUM = 10
+WEIGHTS_FILE = 'ebay.hdf5'
 
 
 def parse_command_line():
@@ -65,7 +66,10 @@ def parse_command_line():
     parser.add_argument(
         '--download-images',action='store_true', help="Download images"
     )
-
+    parser.add_argument(
+        '--weights-file', '-w', default=WEIGHTS_FILE,
+        help='HDF5 file containing a precomputed set of weights for this neural network.'
+    )
     return parser.parse_args()
 
 
@@ -190,7 +194,8 @@ if args.likes_file:
     import_likes(api, args.likes_file, items)
 
 if args.download_images:
-    for item in items:
+    for i, item in enumerate(items):
+        print(i, '/', len(items), end=' ')
         item.download_images(verbose=True)
 
 for page in range(args.page_from, args.page_to + 1):
@@ -212,21 +217,31 @@ for page in range(args.page_from, args.page_to + 1):
     finally:
         dump_objects_to_file(args.item_file, items)
 
-from data_sets.image_file_data_sets import ImageFileDataSets
+from data_sets.ebay_data_sets import EbayDataSets
+from variable_inception import variable_inception
 from keras.applications.inception_v3 import InceptionV3
 from item import Item
 
-IMGSZ = 299
-data = ImageFileDataSets.get_data(data_file='ebay_images.pickle', image_directory=Item.download_root, image_size=IMGSZ)
+IMGSZ = 139
+# data = ImageFileDataSets.get_data(data_file='ebay_images.pickle', image_directory=Item.download_root, image_size=IMGSZ)
+data = EbayDataSets.get_data('ebay_images.pickle', items, valid_tags, IMGSZ)
 
-model = InceptionV3(include_top=True, weights=None, input_shape=(*data.size, data.depth), classes=data.num_labels)
+model = variable_inception(input_shape=(*data.size, data.depth), classes=data.num_classes)
+# model = InceptionV3(include_top=True, weights=None, input_shape=(*data.size, data.depth), classes=data.num_classes)
 
 model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
 
+if isfile(args.weights_file):
+    print('Loading ' + args.weights_file)
+    model.load_weights(args.weights_file)
+
 train = data.train.input.reshape(len(data.train.input), IMGSZ, IMGSZ, 3)
-#labels = data.train.labels.reshape(len(data.train.input), 4, 1, 1)
 
 print(train.shape, data.train.labels.shape)
 model.fit(train, data.train.labels, epochs=1)
-model.save_weights('ebay.hdf5')
+model.save_weights(args.weights_file)
  
+test = data.test.input.reshape(len(data.test.input), IMGSZ, IMGSZ, 3)
+loss_and_metrics = model.evaluate(test, data.test.labels)
+print()
+print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
