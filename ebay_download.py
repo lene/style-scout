@@ -27,6 +27,8 @@ DEFAULT_CATEGORIES = {
 }
 MIN_TAG_NUM = 10
 WEIGHTS_FILE = 'ebay.hdf5'
+IMAGES_FILE = 'ebay_images.pickle'
+DEFAULT_SIZE = 139
 
 
 def parse_command_line():
@@ -64,11 +66,23 @@ def parse_command_line():
         '--ebay-site_id', type=int, default=77, help="eBay site ID (77 for Germany)"
     )    
     parser.add_argument(
-        '--download-images',action='store_true', help="Download images"
+        '--download-images', action='store_true', help="Download images"
+    )
+    parser.add_argument(
+        '--images-file', default=IMAGES_FILE,
+        help='Pickle file containing precomputed image data set'
     )
     parser.add_argument(
         '--weights-file', '-w', default=WEIGHTS_FILE,
         help='HDF5 file containing a precomputed set of weights for this neural network.'
+    )
+    parser.add_argument(
+        '--num-epochs', '-n', type=int, default=1,
+        help='How many times to iterate.'
+    )
+    parser.add_argument(
+        '--image-size', '-s', type=int, default=DEFAULT_SIZE,
+        help='Size (both width and height) to which images are resized.'
     )
     return parser.parse_args()
 
@@ -219,15 +233,10 @@ for page in range(args.page_from, args.page_to + 1):
 
 from data_sets.ebay_data_sets import EbayDataSets
 from variable_inception import variable_inception
-from keras.applications.inception_v3 import InceptionV3
-from item import Item
 
-IMGSZ = 139
-# data = ImageFileDataSets.get_data(data_file='ebay_images.pickle', image_directory=Item.download_root, image_size=IMGSZ)
-data = EbayDataSets.get_data('ebay_images.pickle', items, valid_tags, IMGSZ)
+data = EbayDataSets.get_data(args.images_file, items, valid_tags, args.image_size)
 
 model = variable_inception(input_shape=(*data.size, data.depth), classes=data.num_classes)
-# model = InceptionV3(include_top=True, weights=None, input_shape=(*data.size, data.depth), classes=data.num_classes)
 
 model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
 
@@ -235,13 +244,13 @@ if isfile(args.weights_file):
     print('Loading ' + args.weights_file)
     model.load_weights(args.weights_file)
 
-train = data.train.input.reshape(len(data.train.input), IMGSZ, IMGSZ, 3)
+train = data.train.input.reshape(len(data.train.input), args.image_size, args.image_size, 3)
 
 print(train.shape, data.train.labels.shape)
-model.fit(train, data.train.labels, epochs=1)
+model.fit(train, data.train.labels, epochs=args.num_epochs)
 model.save_weights(args.weights_file)
  
-test = data.test.input.reshape(len(data.test.input), IMGSZ, IMGSZ, 3)
+test = data.test.input.reshape(len(data.test.input), args.image_size, args.image_size, 3)
 loss_and_metrics = model.evaluate(test, data.test.labels)
 print()
 print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])

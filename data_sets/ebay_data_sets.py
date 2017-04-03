@@ -43,11 +43,8 @@ class EbayDataSets(ImageFileDataSets):
         self.valid_labels = tuple(valid_labels)
         self.num_classes = len(valid_labels)
         self.labels_to_numbers = {label: i for i, label in enumerate(self.valid_labels)}
-        print(self.num_classes)
 
         all_images, all_labels = self._extract_images()
-
-        print(len(all_images), len(all_labels))
 
         all_labels = self._dense_to_one_hot(all_labels)
         self.numbers_to_labels = {v: k for k, v in self.labels_to_numbers.items()}
@@ -72,7 +69,7 @@ class EbayDataSets(ImageFileDataSets):
         import os.path
         images, labels = [], []
         for i, item in enumerate(self.items):
-            print(i, '/', len(self.items), end='\r')
+            print('Extracting images: {}/{}'.format(i, len(self.items)), end='\r')
             item.download_images(verbose=False)
             for image_file in item.picture_files:
                 try:
@@ -81,6 +78,7 @@ class EbayDataSets(ImageFileDataSets):
                     continue
                 images.append(numpy.asarray(self.downscale(image)))
                 labels.append(tuple(item.tags))
+        print()
 
         return numpy.asarray(images), numpy.asarray(labels)
 
