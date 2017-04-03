@@ -190,8 +190,9 @@ def import_likes(api, filename, items):
         liked = json.load(f)
 
     for category_id, item_ids in liked.items():
-        category = Category.by_id(category_id)
-        add_liked_items(api, items, category, item_ids)
+        if category_id.isdigit():
+            category = Category.by_id(category_id)
+            add_liked_items(api, items, category, item_ids)
 
 
 args = parse_command_line()
