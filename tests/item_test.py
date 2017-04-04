@@ -1,6 +1,7 @@
 
 from item import Item
-from shopping_api import ShoppingAPI, Category
+from category import Category
+from shopping_api import ShoppingAPI
 
 import unittest
 from unittest.mock import Mock
@@ -21,8 +22,13 @@ class ItemTest(unittest.TestCase):
     def setUp(self):
         self.api = Mock(spec=ShoppingAPI)
         self.api.get_item = create_item_dict  # Mock(return_value=self.item_data)
-        self.category = Mock(spec=Category)
-        self.category.name_path = ['0', '1']
+        self.category = Category({
+            'CategoryID': '1',
+            'CategoryIDPath': '0:1',
+            'CategoryName': 'test',
+            'CategoryNamePath': 'root:test',
+            'LeafCategory': 'true'
+        })
 
     def tearDown(self):
         if isdir(self.DOWNLOAD_ROOT):
@@ -40,15 +46,15 @@ class ItemTest(unittest.TestCase):
 
     def test_like(self):
         item = Item(self.api, self.category, 1)
-        self.assertEqual(set(), item.tags)
+        self.assertEqual([], item.tags)
         item.like()
-        self.assertEqual({'<3'}, item.tags)
+        self.assertEqual(['<3'], item.tags)
 
     def test_set_liked(self):
         items = [Item(self.api, self.category, 1), Item(self.api, self.category, 2)]
         Item.set_liked(items, 1)
-        self.assertEqual({'<3'}, items[0].tags)
-        self.assertEqual(set(), items[1].tags)
+        self.assertEqual(['<3'], items[0].tags)
+        self.assertEqual([], items[1].tags)
 
     def test_set_liked_raises_if_not_found(self):
         items = [Item(self.api, self.category, 1), Item(self.api, self.category, 2)]
