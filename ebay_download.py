@@ -248,8 +248,9 @@ if isfile(args.weights_file):
 train = data.train.input.reshape(len(data.train.input), args.image_size, args.image_size, 3)
 
 print(train.shape, data.train.labels.shape)
-model.fit(train, data.train.labels, epochs=args.num_epochs)
-model.save_weights(args.weights_file)
+if args.num_epochs:
+    model.fit(train, data.train.labels, epochs=args.num_epochs)
+    model.save_weights(args.weights_file)
  
 test = data.test.input.reshape(len(data.test.input), args.image_size, args.image_size, 3)
 loss_and_metrics = model.evaluate(test, data.test.labels)

@@ -24,25 +24,26 @@ class Item:
             self.picture_urls = item.get('PictureURL', [])
             self.picture_files = []
             self.tags = set()
+            self._valid = True
         except AttributeError:
             self.item_specifics = {}
-
-    def __str__(self):
-        return """Id: {}
-Title: {}
-Specifics: {}
-Tags: {}
-Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.picture_urls)
+            self._valid = False
 
     def like(self):
         self.tags.add('<3')
 
-    def download_images(self, verbose=False):
-        for i, picture_url in enumerate(self.picture_urls):
-            downloaded = self.download_image(picture_url, verbose and i == 0)
-            if downloaded:
-                self.picture_files.append(downloaded)
+    @property
+    def valid(self):
+        return self._valid
 
+    def download_images(self, verbose=False):
+        try:
+            for i, picture_url in enumerate(self.picture_urls):
+                downloaded = self.download_image(picture_url, verbose and i == 0)
+                if downloaded:
+                    self.picture_files.append(downloaded)
+        except AttributeError:
+            return
 
     def set_tags(self, all_available_tags):
         self.tags = all_available_tags & self.get_possible_tags()
@@ -100,6 +101,13 @@ Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.pict
             return filename
         except URLError:
             return None
+
+    def __str__(self):
+            return """Id: {}
+    Title: {}
+    Specifics: {}
+    Tags: {}
+    Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.picture_urls)
 
     @staticmethod
     def _clean_description(description):
