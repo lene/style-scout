@@ -2,25 +2,7 @@ from ebaysdk.finding import Connection as Finding
 from ebaysdk.shopping import Connection as Shopping
 
 from item import Item
-
-
-class Category:
-
-    _by_id = {}
-
-    def __init__(self, data):
-        self.id = data['CategoryID']
-        self.id_path = data.get('CategoryIDPath', '').split(':')
-        self.name = data['CategoryName']
-        self.name_path = data.get('CategoryNamePath', '').split(':')
-        self.is_leaf = data['LeafCategory'] == 'true'
-        # also present, but currently not useful:
-        # {'CategoryParentID': '15724', 'CategoryLevel': '3'}
-        self._by_id[self.id] = self
-
-    @classmethod
-    def by_id(cls, id):
-        return cls._by_id[str(id)]
+from category import Category
 
 
 class ShoppingAPI:

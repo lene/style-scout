@@ -10,21 +10,11 @@ from os.path import isfile
 from os import rename, remove
 
 from shopping_api import ShoppingAPI
+from category import Category
 
 PICKLE = 'items.pickle'
 
 ITEMS_PER_CATEGORY = 20
-DEFAULT_CATEGORIES = {
-    1: ('Kleidung',),
-    2: ('Damenmode', 'Damenschuhe'),
-    3: (
-        'Anzüge & Kombinationen', 'Blusen, Tops & Shirts',
-        'Jacken & Mäntel', 'Kleider', 'Röcke', 'Damenunterwäsche',
-        'Halbschuhe & Ballerinas', 'Pumps', 'Sandalen & Badeschuhe',
-        'Stiefel & Stiefeletten'
-    ),
-    4: ('Bodys', 'Nachtwäsche')
-}
 MIN_TAG_NUM = 10
 WEIGHTS_FILE = 'ebay.hdf5'
 IMAGES_FILE = 'ebay_images.pickle'
@@ -85,22 +75,6 @@ def parse_command_line():
         help='Size (both width and height) to which images are resized.'
     )
     return parser.parse_args()
-
-
-def search_categories(search_term_filter, root_category=-1):
-    category_ids = [root_category]
-    leaf_categories = []
-    for level in range(1, 5):
-        next_level_cat_ids = []
-        for id in category_ids:
-            categories = [
-                category for category in api.categories(id)
-                if any(term.lower() in category.name.lower() for term in search_term_filter[level])
-            ]
-            leaf_categories += [c for c in categories if c.is_leaf]
-            next_level_cat_ids += [c.id for c in categories if not c.is_leaf]
-        category_ids = next_level_cat_ids
-    return leaf_categories
 
 
 def print_tags(tags, num_most_popular=50):
@@ -181,7 +155,6 @@ def add_liked_items(api, items, category, liked_item_ids):
 
 
 def import_likes(api, filename, items):
-    from shopping_api import Category
 
     if not isfile(filename):
         return
@@ -192,6 +165,7 @@ def import_likes(api, filename, items):
     for category_id, item_ids in liked.items():
         if category_id.isdigit():
             category = Category.by_id(category_id)
+            print(category.name)
             add_liked_items(api, items, category, item_ids)
 
 
@@ -203,7 +177,7 @@ with open(args.ebay_auth_file) as file:
 items = load_objects_from_file(args.item_file)
 
 api = ShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
-categories = search_categories(DEFAULT_CATEGORIES)
+categories = Category.search_categories(api)
 
 if args.likes_file:
     import_likes(api, args.likes_file, items)
