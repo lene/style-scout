@@ -1,4 +1,5 @@
 from tag_processor import TagProcessor
+from category import Category
 
 import re
 from collections import defaultdict
@@ -14,27 +15,35 @@ class Item:
     }
 
     def __init__(self, api, category, item_id):
+        self._category_id = category.id
         try:
             item = api.get_item(item_id)
-            self.category = category
             self.id = item['ItemID']
             self.title = item['Title']
             self.description = self._clean_description(item['Description'])
             self.item_specifics = self._get_specifics(item.get('ItemSpecifics', {}))
             self.picture_urls = item.get('PictureURL', [])
             self.picture_files = []
-            self.tags = set()
+            self._tags = []
             self._valid = True
         except AttributeError:
             self.item_specifics = {}
             self._valid = False
 
     def like(self):
-        self.tags.add('<3')
+        self._tags.append('<3')
+
+    @property
+    def tags(self):
+        return list(set(self._tags))
 
     @property
     def valid(self):
         return self._valid
+
+    @property
+    def category(self):
+        return Category.by_id(self._category_id)
 
     def download_images(self, verbose=False):
         try:
@@ -46,7 +55,7 @@ class Item:
             return
 
     def set_tags(self, all_available_tags):
-        self.tags = all_available_tags & self.get_possible_tags()
+        self._tags = list(set(all_available_tags) & self.get_possible_tags())
 
     def get_possible_tags(self):
         tags = set(self.category.name_path[1:])
@@ -101,13 +110,6 @@ class Item:
             return filename
         except URLError:
             return None
-
-    def __str__(self):
-            return """Id: {}
-    Title: {}
-    Specifics: {}
-    Tags: {}
-    Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.picture_urls)
 
     @staticmethod
     def _clean_description(description):
