@@ -5,7 +5,7 @@ from PIL import Image
 import numpy
 from os.path import isfile
 from subprocess import call
-from pickle import dump, load
+from dill import dump, load, HIGHEST_PROTOCOL
 from gzip import open as gzopen
 
 
@@ -15,18 +15,17 @@ class EbayDataSets(ImageFileDataSets):
     def get_data(cls, data_file, items, valid_labels, image_size):
         if data_file is not None and isfile(data_file):
             print('Loading ' + data_file)
-            with gzopen(data_file, 'rb') as file:
+            my_open = gzopen if '.gz' == data_file[-3:] else open
+            with my_open(data_file, 'rb') as file:
                 return load(file)
         else:
             data = EbayDataSets(items, valid_labels, image_size, image_size, 0)
-            try:
-                with gzopen(data_file, 'wb') as file:
-                    dump(data, file)
-            except OverflowError:  # annoying python bug when using gzopen with data > 4GB
-                uncompressed_file = '.'.join(data_file.split('.')[:-1])
-                with open(uncompressed_file, 'wb') as file:
-                    dump(data, file)
-                call(('gzip', uncompressed_file))
+
+            my_data_file = data_file[:-3] if '.gz' == data_file[-3:] else data_file
+            with open(my_data_file, 'wb') as file:
+                dump(data, file, protocol=HIGHEST_PROTOCOL)
+            if '.gz' == data_file[-3:]:
+                call(('gzip', my_data_file))
             return data
 
     def __init__(self, items, valid_labels, x_size, y_size, validation_share=None):
