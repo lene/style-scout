@@ -1,4 +1,4 @@
-from data_sets import ImageFileDataSets
+from data_sets import ImageFileDataSets, add_border
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
 from PIL import Image
@@ -71,13 +71,16 @@ class EbayDataSets(ImageFileDataSets):
         for i, item in enumerate(self.items):
             print('Extracting images: {}/{}'.format(i, len(self.items)), end='\r')
             item.download_images(verbose=False)
-            for image_file in item.picture_files:
-                try:
-                    image = Image.open(os.path.join(image_file)).convert('RGB')
-                except OSError:
-                    continue
-                images.append(numpy.asarray(self.downscale(image)))
-                labels.append(tuple(item.tags))
+            try:
+                for image_file in item.picture_files:
+                    try:
+                        image = Image.open(os.path.join(image_file)).convert('RGB')
+                    except OSError:
+                        continue
+                    images.append(numpy.asarray(self.downscale(image, method=add_border)))
+                    labels.append(tuple(item.tags))
+            except AttributeError:
+                continue
         print()
 
         return numpy.asarray(images), numpy.asarray(labels)

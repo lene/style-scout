@@ -17,6 +17,22 @@ __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 IMAGENET_SIZE = 299
 
 
+def crop_bottom(image, w, h):
+    if w > h:
+        image = image.crop(((w - h) / 2, 0, w - (w - h) / 2, h))
+    elif h > w:
+        image = image.crop((0, 0, w, w))
+    return image
+
+
+def add_border(image, w, h):
+    if w == h:
+        return image
+    new_image = Image.new("RGB", (max(w, h), max(w, h)))
+    new_image.paste(image, (0, 0))
+    return new_image
+
+
 class ImageFileDataSets(DataSets):
     """Data sets (training, validation and test data) containing RGB image files."""
 
@@ -109,12 +125,9 @@ class ImageFileDataSets(DataSets):
 
         return numpy.asarray(images), numpy.asarray(labels)
 
-    def downscale(self, image):
+    def downscale(self, image, method=crop_bottom):
         w, h = image.size
-        if w > h:
-            image = image.crop(((w-h)/2, 0, w-(w-h)/2, h))
-        elif h > w:
-            image = image.crop((0, 0, w, w))
+        image = method(image, w, h)
         return image.resize(self.size, Image.BICUBIC)
 
     @staticmethod
@@ -154,3 +167,4 @@ def nth_index_and_value(l, n):
     v = sorted(l)[-n]
     i = list(l).index(v)
     return i, v
+
