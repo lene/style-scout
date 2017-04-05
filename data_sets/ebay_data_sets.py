@@ -13,29 +13,20 @@ class EbayDataSets(ImageFileDataSets):
 
     @classmethod
     def get_data(cls, data_file, items, valid_labels, image_size):
-        if True:
-            if data_file is not None and isfile(data_file):
-                print('Loading ' + data_file)
-                my_open = gzopen if '.gz' == data_file[-3:] else open
-                with my_open(data_file, 'rb') as file:
-                    return load(file)
-            else:
-                data = EbayDataSets(items, valid_labels, image_size, image_size, 0)
-
-                my_data_file = data_file[:-3] if '.gz' == data_file[-3:] else data_file
-                with open(my_data_file, 'wb') as file:
-                    dump(data, file)#, protocol=HIGHEST_PROTOCOL)
-                if '.gz' == data_file[-3:]:
-                    call(('gzip', my_data_file))
-                return data
+        if data_file is not None and isfile(data_file):
+            print('Loading ' + data_file)
+            data = EbayDataSets(items, valid_labels, image_size, image_size, 0, extract=False)
+            npzfile = numpy.load(data_file)
+            # insert correct code here after refactoring __init__ to make it work
+            data.images = npzfile.images
+            data.labels = npzfile.labels
         else:
-            from klepto.archives import file_archive
-            data = EbayDataSets(items, valid_labels, image_size, image_size, 0)
-            arch = file_archive(data_file, cached=False)
-            arch['data'] = data
+            data = EbayDataSets(items, valid_labels, image_size, image_size, 0, extract=True)
+            # insert correct code here after refactoring __init__ to make it work
+            numpy.savez_compressed(data_file, images=..., labels=...)
             return data
 
-    def __init__(self, items, valid_labels, x_size, y_size, validation_share=None):
+    def __init__(self, items, valid_labels, x_size, y_size, validation_share=None, extract=True):
         """Construct the data set from images stored in subdirs under base_dir
         :param base_dir: Where to store the MNIST data files.
         :param x_size:
@@ -50,25 +41,26 @@ class EbayDataSets(ImageFileDataSets):
         self.num_classes = len(valid_labels)
         self.labels_to_numbers = {label: i for i, label in enumerate(self.valid_labels)}
 
-        all_images, all_labels = self._extract_images()
+        if extract:
+            all_images, all_labels = self._extract_images()
 
-        all_labels = self._dense_to_one_hot(all_labels)
-        self.numbers_to_labels = {v: k for k, v in self.labels_to_numbers.items()}
+            all_labels = self._dense_to_one_hot(all_labels)
+            self.numbers_to_labels = {v: k for k, v in self.labels_to_numbers.items()}
 
-        train_images, train_labels, test_images, test_labels = self.split_images(all_images, all_labels, 0.8)
+            train_images, train_labels, test_images, test_labels = self.split_images(all_images, all_labels, 0.8)
 
-        self.validation_size = int(len(all_images)*(self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share))
-        validation_images = train_images[:self.validation_size]
-        validation_labels = train_labels[:self.validation_size]
-        train_images = train_images[self.validation_size:]
-        train_labels = train_labels[self.validation_size:]
+            self.validation_size = int(len(all_images)*(self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share))
+            validation_images = train_images[:self.validation_size]
+            validation_labels = train_labels[:self.validation_size]
+            train_images = train_images[self.validation_size:]
+            train_labels = train_labels[self.validation_size:]
 
-        DataSets.__init__(
-            self,
-            ImagesLabelsDataSet(train_images, train_labels, self.depth),
-            ImagesLabelsDataSet(validation_images, validation_labels, self.depth),
-            ImagesLabelsDataSet(test_images, test_labels, self.depth)
-        )
+            DataSets.__init__(
+                self,
+                ImagesLabelsDataSet(train_images, train_labels, self.depth),
+                ImagesLabelsDataSet(validation_images, validation_labels, self.depth),
+                ImagesLabelsDataSet(test_images, test_labels, self.depth)
+            )
 
     def _extract_images(self):
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
