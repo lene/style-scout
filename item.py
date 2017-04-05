@@ -48,7 +48,7 @@ class Item:
     def set_tags(self, all_available_tags):
         self.tags = all_available_tags & self.get_possible_tags()
 
-    def get_possible_tags(self):
+    def get_possible_tags(self, add_undefined=False):
         tags = set(self.category.name_path[1:])
         for specifics in self.TAG_LIST.keys():
             tag_label = self.TAG_LIST[specifics]
@@ -64,7 +64,8 @@ class Item:
                         for v in tag_value:
                             tags.add('{}:{}'.format(tag_label, v))
             else:
-                tags.add('{}:UNDEFINED'.format(tag_label))
+                if add_undefined:
+                    tags.add('{}:UNDEFINED'.format(tag_label))
 
         return tags
 
