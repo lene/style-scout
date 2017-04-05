@@ -5,7 +5,7 @@ from PIL import Image
 import numpy
 from os.path import isfile
 from subprocess import call
-from json import dump, load#, HIGHEST_PROTOCOL
+from _pickle import dump, load
 from gzip import open as gzopen
 
 
@@ -13,7 +13,7 @@ class EbayDataSets(ImageFileDataSets):
 
     @classmethod
     def get_data(cls, data_file, items, valid_labels, image_size):
-        if False:
+        if True:
             if data_file is not None and isfile(data_file):
                 print('Loading ' + data_file)
                 my_open = gzopen if '.gz' == data_file[-3:] else open
@@ -97,6 +97,4 @@ class EbayDataSets(ImageFileDataSets):
             for tag in tags:
                 labels_one_hot[i][self.labels_to_numbers[tag]] = 1
         return labels_one_hot
-        index_offset = numpy.arange(len(labels)) * self.num_classes
-        labels_one_hot.flat[index_offset + self.labels_to_numbers.ravel()] = 1
 
