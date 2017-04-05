@@ -9,6 +9,7 @@ dir.sh
 data
 *.pickle*
 *.hdf5
+*.npz
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
