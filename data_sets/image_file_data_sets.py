@@ -37,7 +37,7 @@ class ImageFileDataSets(DataSets):
     """Data sets (training, validation and test data) containing RGB image files."""
 
     DEFAULT_VALIDATION_SHARE = 0.2
-    depth = 3
+    DEPTH = 3
 
     @classmethod
     def get_data(cls, data_file=None, image_directory=None, image_size=IMAGENET_SIZE):
@@ -68,7 +68,7 @@ class ImageFileDataSets(DataSets):
         self.one_hot = one_hot
         self.base_dir = base_dir
         self.size = (x_size, y_size)
-        self.num_features = x_size*y_size*self.depth
+        self.num_features = x_size*y_size*self.DEPTH
 
         all_images, all_labels = self._extract_images(base_dir)
 
@@ -86,9 +86,9 @@ class ImageFileDataSets(DataSets):
         train_labels = train_labels[self.validation_size:]
 
         super().__init__(
-            ImagesLabelsDataSet(train_images, train_labels, self.depth),
-            ImagesLabelsDataSet(validation_images, validation_labels, self.depth),
-            ImagesLabelsDataSet(test_images, test_labels, self.depth)
+            ImagesLabelsDataSet(train_images, train_labels, self.DEPTH),
+            ImagesLabelsDataSet(validation_images, validation_labels, self.DEPTH),
+            ImagesLabelsDataSet(test_images, test_labels, self.DEPTH)
         )
 
     def get_label(self, number):

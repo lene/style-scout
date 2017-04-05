@@ -210,7 +210,7 @@ from variable_inception import variable_inception
 
 data = EbayDataSets.get_data(args.images_file, items, valid_tags, args.image_size)
 
-model = variable_inception(input_shape=(*data.size, data.depth), classes=data.num_classes)
+model = variable_inception(input_shape=(*data.size, data.DEPTH), classes=data.num_classes)
 
 model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
 
