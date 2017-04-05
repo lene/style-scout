@@ -6,6 +6,7 @@ import numpy
 from os.path import isfile
 from subprocess import call
 from _pickle import dump, load
+from pickle import HIGHEST_PROTOCOL
 from gzip import open as gzopen
 
 
@@ -24,7 +25,7 @@ class EbayDataSets(ImageFileDataSets):
 
                 my_data_file = data_file[:-3] if '.gz' == data_file[-3:] else data_file
                 with open(my_data_file, 'wb') as file:
-                    dump(data, file)#, protocol=HIGHEST_PROTOCOL)
+                    dump(data, file, protocol=HIGHEST_PROTOCOL)
                 if '.gz' == data_file[-3:]:
                     call(('gzip', my_data_file))
                 return data
