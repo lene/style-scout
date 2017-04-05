@@ -1,10 +1,9 @@
 import json
 from pickle import dump, load
 
-from argparse import ArgumentParser, ArgumentTypeError
+from argparse import ArgumentParser
 from collections import defaultdict
 from operator import itemgetter
-from ebaysdk.exception import ConnectionError
 from os.path import isfile
 
 from os import rename, remove
@@ -206,7 +205,7 @@ for page in range(args.page_from, args.page_to + 1):
     finally:
         dump_objects_to_file(args.item_file, items)
 
-from data_sets.ebay_data_sets import EbayDataSets
+from data_sets import EbayDataSets
 from variable_inception import variable_inception
 
 data = EbayDataSets.get_data(args.images_file, items, valid_tags, args.image_size)
