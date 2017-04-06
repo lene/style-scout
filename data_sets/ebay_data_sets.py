@@ -58,6 +58,8 @@ class EbayDataSets(ImageFileDataSets):
 
         if extract:
             all_images, all_labels = self._extract_images()
+            required_ram = all_images.size*(4+1)+all_labels.nbytes
+            print('RAM needed for images and labels: {0:.2f}GB'.format(required_ram/1024/1024/1024) )
 
             all_labels = self._dense_to_one_hot(all_labels)
 
@@ -68,6 +70,8 @@ class EbayDataSets(ImageFileDataSets):
             validation_labels = train_labels[:self.validation_size]
             train_images = train_images[self.validation_size:]
             train_labels = train_labels[self.validation_size:]
+        else:
+            self.validation_size = len(validation_images)
 
         DataSets.__init__(
             self,

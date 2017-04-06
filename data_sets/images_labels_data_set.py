@@ -15,8 +15,6 @@ class ImagesLabelsDataSet(DataSetBase):
           labels: 1D numpy.ndarray of shape (num images)
         """
 
-        _check_constructor_arguments_valid(images, labels)
-
         super().__init__(images, labels)
 
         # Convert shape from [num examples, rows, columns, depth] to [num examples, rows*columns]
@@ -38,18 +36,4 @@ def normalize(ndarray):
     if ndarray.dtype == numpy.uint8:
         return numpy.multiply(ndarray.astype(numpy.float32), 1.0/255.0)
     return ndarray
-
-
-def invert(ndarray):
-    assert isinstance(ndarray, numpy.ndarray)
-    assert ndarray.dtype == numpy.float32
-
-    return numpy.subtract(1.0, ndarray)
-
-
-def _check_constructor_arguments_valid(images, labels):
-    return
-    assert len(images.shape) == 4, \
-        'images must have 4 dimensions: number of images, image height, image width, color depth.' \
-        'Actual shape: {}'.format(images.shape)
 
