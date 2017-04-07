@@ -1,32 +1,15 @@
 
+from test_base import TestBase, create_item_dict
 from item import Item
-from shopping_api import ShoppingAPI, Category
 
-import unittest
-from unittest.mock import Mock
 from functools import partial
-from os.path import join, isfile, isdir
+from os.path import join, isfile
 from os import sep
-from shutil import rmtree
 
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
 
-class ItemTest(unittest.TestCase):
-
-    MOCK_TITLE = 'Mock title'
-    MOCK_DESCRIPTION = 'Mock description <strong>with HTML</strong>'
-    DOWNLOAD_ROOT = '/tmp/test-style-scout'
-
-    def setUp(self):
-        self.api = Mock(spec=ShoppingAPI)
-        self.api.get_item = create_item_dict  # Mock(return_value=self.item_data)
-        self.category = Mock(spec=Category)
-        self.category.name_path = ['0', '1']
-
-    def tearDown(self):
-        if isdir(self.DOWNLOAD_ROOT):
-            rmtree(self.DOWNLOAD_ROOT)
+class ItemTest(TestBase):
 
     def test_simple_create(self):
         item = Item(self.api, self.category, 1)
@@ -115,11 +98,3 @@ class ItemTest(unittest.TestCase):
         item.download_images()  # should just ignore the error
 
 
-def create_item_dict(item_id, specifics=None, picture_url=None):
-    return {
-        'ItemID': item_id,
-        'Title': ItemTest.MOCK_TITLE,
-        'Description': ItemTest.MOCK_DESCRIPTION,
-        'ItemSpecifics': specifics,
-        'PictureURL': picture_url
-    }

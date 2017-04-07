@@ -123,6 +123,7 @@ def get_valid_tags(items, min_count):
     return {
         t: n for t, n in count_all_tags(items).items()
         if n >= min_count
+        if 'UNDEFINED' not in t
     }
 
 
@@ -186,31 +187,32 @@ if args.download_images:
         print(i, '/', len(items), end=' ')
         item.download_images(verbose=True)
 
+
+def update_tags(items, valid_tags):
+    for item in items:
+        item.set_tags(set(valid_tags.keys()))
+
+
 for page in range(args.page_from, args.page_to + 1):
 
     print('\nPage {}, {} distinct items'.format(page, len(items)))
 
     try:
-
         items = update_items(items, page, args.items_per_page)
-
+    finally:
         valid_tags = get_valid_tags(items, args.min_valid_tag)
-
         if args.verbose:
             print_tags(valid_tags)
-
-        for item in items:
-            item.set_tags(set(valid_tags.keys()))
-
-    finally:
+        update_tags(items, valid_tags)
         dump_objects_to_file(args.item_file, items)
+
 
 from data_sets import EbayDataSets
 from variable_inception import variable_inception
 
 data = EbayDataSets.get_data(args.images_file, items, valid_tags, args.image_size)
 
-model = variable_inception(input_shape=(*data.size, data.depth), classes=data.num_classes)
+model = variable_inception(input_shape=(*data.size, data.DEPTH), classes=data.num_classes)
 
 model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
 
