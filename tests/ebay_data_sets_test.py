@@ -54,15 +54,19 @@ class EbayDataSetsTest(TestBase):
     def test_get_data_creates_npz(self):
         items = [Item(self.api, self.category, 1), Item(self.api, self.category, 2)]
 
+        valid_labels = ['1', '2']
         EbayDataSets.get_data(
-            join(self.DOWNLOAD_ROOT, 'test'), items=items, valid_labels=['1', '2'], image_size=SIZE
+            join(self.DOWNLOAD_ROOT, 'ebay_data_sets_test'),
+            items=items, valid_labels=valid_labels, image_size=SIZE
         )
 
-        self.assertTrue(isfile(join(self.DOWNLOAD_ROOT, 'test.npz')))
-        npzfile = numpy.load(join(self.DOWNLOAD_ROOT, 'test.npz'))
+        self.assertTrue(isfile(join(self.DOWNLOAD_ROOT, 'ebay_data_sets_test.npz')))
+        npzfile = numpy.load(join(self.DOWNLOAD_ROOT, 'ebay_data_sets_test.npz'))
         self.assertCountEqual(
             [
                 'train_images', 'train_labels', 'test_images', 'test_labels',
                 'validation_images', 'validation_labels'
             ], npzfile.files
         )
+        self.assertEqual((len(items), SIZE, SIZE, EbayDataSets.DEPTH), npzfile['train_images'].shape)
+        self.assertEqual((len(items), len(valid_labels)), npzfile['train_labels'].shape)
