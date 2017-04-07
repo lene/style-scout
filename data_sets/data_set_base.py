@@ -10,7 +10,6 @@ class DataSetBase:
         self._num_examples = input.shape[0]
         self._input = input
         self._labels = labels
-        self._epochs_completed = 0
         self._index_in_epoch = 0
 
     @property
@@ -24,10 +23,6 @@ class DataSetBase:
     @property
     def num_examples(self):
         return self._num_examples
-
-    @property
-    def epochs_completed(self):
-        return self._epochs_completed
 
     def next_batch(self, batch_size):
         """Return the next `batch_size` examples from this data set."""
@@ -60,6 +55,5 @@ def _check_constructor_arguments_valid(input, labels):
         'input not of type numpy.ndarray, but ' + type(input).__name__
     assert isinstance(labels, numpy.ndarray), \
         'labels not of type numpy.ndarray, but ' + type(input).__name__
-    # assert len(labels.shape) == 1, 'labels must have one dimension: number of labels '+str(labels.shape)
     assert input.shape[0] == labels.shape[0], \
         'number of input records: {} != number of labels: {}'.format(input.shape[0], labels.shape[0])
