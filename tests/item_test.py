@@ -40,11 +40,16 @@ class ItemTest(TestBase):
 
     def test_get_possible_tags_without_specifics(self):
         item = Item(self.api, self.category, 1)
-        tags = item.get_possible_tags()
+        tags = item.get_possible_tags(add_undefined=True)
         for tag_label in Item.TAG_LIST.values():
             self.assertIn('{}:UNDEFINED'.format(tag_label), tags)
         self.assertIn(self.category.name_path[-1], tags)
         self.assertNotIn(self.category.name_path[0], tags)
+
+    def test_get_possible_tags_without_undefined(self):
+        item = Item(self.api, self.category, 1)
+        tags = item.get_possible_tags(add_undefined=False)
+        self.assertEquals({self.category.name_path[-1]}, tags)
 
     def test_get_possible_tags_with_one_specific(self):
         self.api.get_item = partial(
