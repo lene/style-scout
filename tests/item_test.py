@@ -38,7 +38,7 @@ class ItemTest(TestBase):
         with self.assertRaises(ValueError):
             Item.set_liked(items, 3)
 
-    def test_get_possible_tags_without_specifics(self):
+    def test_get_possible_tags_without_specifics_with_undefined(self):
         item = Item(self.api, self.category, 1)
         tags = item.get_possible_tags(add_undefined=True)
         for tag_label in Item.TAG_LIST.values():

@@ -7,7 +7,7 @@ __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
 class ImagesLabelsDataSet(DataSetBase):
 
-    def __init__(self, images, labels, depth=1):
+    def __init__(self, images, labels, depth=1, reshape=None):
         """Construct a DataSet.
 
         Args:
@@ -18,7 +18,9 @@ class ImagesLabelsDataSet(DataSetBase):
         super().__init__(images, labels)
 
         # Convert shape from [num examples, rows, columns, depth] to [num examples, rows*columns]
-        # images = images.reshape(images.shape[0], depth * images.shape[1] * images.shape[2])
+        if reshape:
+            # TODO use reshape as the shape to reshape into
+            images = images.reshape(images.shape[0], depth * images.shape[1] * images.shape[2])
         images = normalize(images)
         self._input = images
 
