@@ -16,18 +16,19 @@ class Item:
     def __init__(self, api, category, item_id):
         try:
             item = api.get_item(item_id)
-            self.category = category
             self.id = item['ItemID']
             self.title = item['Title']
             self.description = self._clean_description(item['Description'])
             self.item_specifics = self._get_specifics(item.get('ItemSpecifics', {}))
             self.picture_urls = item.get('PictureURL', [])
-            self.picture_files = []
-            self.tags = set()
             self._valid = True
         except AttributeError:
             self.item_specifics = {}
             self._valid = False
+        finally:
+            self.category = category
+            self.picture_files = []
+            self.tags = set()
 
     def like(self):
         self.tags.add('<3')

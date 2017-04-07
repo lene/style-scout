@@ -85,18 +85,15 @@ class EbayDataSets(ImageFileDataSets):
         import os.path
         images, labels = [], []
         for i, item in enumerate(self.items):
-            print('Extracting images: {}/{}'.format(i, len(self.items)), end='\r')
+            print('Extracting images: {}/{}'.format(i+1, len(self.items)), end='\r')
             item.download_images(verbose=False)
-            try:
-                for image_file in item.picture_files:
-                    try:
-                        image = Image.open(os.path.join(image_file)).convert('RGB')
-                    except OSError:
-                        continue
-                    images.append(numpy.asarray(self.downscale(image, method=add_border)))
-                    labels.append(tuple(item.tags))
-            except AttributeError:
-                continue
+            for image_file in item.picture_files:
+                try:
+                    image = Image.open(os.path.join(image_file)).convert('RGB')
+                except OSError:
+                    continue
+                images.append(numpy.asarray(self.downscale(image, method=add_border)))
+                labels.append(tuple(item.tags))
         print()
 
         return numpy.asarray(images), numpy.asarray(labels)
