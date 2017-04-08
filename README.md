@@ -8,8 +8,9 @@ Using neural networks to detect clothes of a style you like
   does not perform very well.
 
 # Rough roadmap/TODO
-* find an alternative to pickle to storing data
-  * verify whether dill avoids MemoryError
+* only include items which have all necessary tags for a category set
+* all save files under one folder instead of having to specify them all
+* find a way to not keep the entire data set in memory
 * Find an efficient way to like items
   * eBay collections? check out API on them
 * check whether including undefined tags as tag:UNDEFINED improves or deteriorates performance

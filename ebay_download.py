@@ -58,6 +58,9 @@ def parse_command_line():
         '--download-images', action='store_true', help="Download images"
     )
     parser.add_argument(
+        '--complete-tags-only', action='store_true', help="Filter out incomplete tags"
+    )
+    parser.add_argument(
         '--images-file', default=IMAGES_FILE,
         help='Pickle file containing precomputed image data set'
     )
@@ -169,65 +172,78 @@ def import_likes(api, filename, items):
             add_liked_items(api, items, category, item_ids)
 
 
-args = parse_command_line()
+def filter_items_without_complete_tags(items):
+    def has_complete_tags(item):
+        def has_tag_category(item, tag_category):
+            return any(tag_category in tag for tag in item.tags)
 
-with open(args.ebay_auth_file) as file:
-    auth = json.load(file)
+        return all(has_tag_category(item, tag_category) for tag_category in item.category.necessary_tags)
 
-items = load_objects_from_file(args.item_file)
-
-api = ShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
-categories = Category.search_categories(api)
-
-if args.likes_file:
-    import_likes(api, args.likes_file, items)
-
-if args.download_images:
-    for i, item in enumerate(items):
-        print(i, '/', len(items), end=' ')
-        item.download_images(verbose=True)
+    print(len(items))
+    items = [item for item in items if has_complete_tags(item)]
+    print(len(items))
+    return items
 
 
 def update_tags(items, valid_tags):
     for item in items:
         item.set_tags(set(valid_tags.keys()))
 
+if __name__ == '__main__':
+    args = parse_command_line()
 
-for page in range(args.page_from, args.page_to + 1):
+    with open(args.ebay_auth_file) as file:
+        auth = json.load(file)
 
-    print('\nPage {}, {} distinct items'.format(page, len(items)))
+    items = load_objects_from_file(args.item_file)
 
-    try:
-        items = update_items(items, page, args.items_per_page)
-    finally:
-        valid_tags = get_valid_tags(items, args.min_valid_tag)
-        if args.verbose:
-            print_tags(valid_tags)
-        update_tags(items, valid_tags)
-        dump_objects_to_file(args.item_file, items)
+    api = ShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
+    categories = Category.search_categories(api)
 
+    if args.likes_file:
+        import_likes(api, args.likes_file, items)
 
-from data_sets import EbayDataSets
-from variable_inception import variable_inception
+    if args.download_images:
+        for i, item in enumerate(items):
+            print(i, '/', len(items), end=' ')
+            item.download_images(verbose=True)
 
-data = EbayDataSets.get_data(args.images_file, items, valid_tags, args.image_size)
+    for page in range(args.page_from, args.page_to + 1):
 
-model = variable_inception(input_shape=(*data.size, data.DEPTH), classes=data.num_classes)
+        print('\nPage {}, {} distinct items'.format(page, len(items)))
 
-model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
+        try:
+            items = update_items(items, page, args.items_per_page)
+        finally:
+            valid_tags = get_valid_tags(items, args.min_valid_tag)
+            if args.verbose:
+                print_tags(valid_tags)
+            update_tags(items, valid_tags)
+            if args.complete_tags_only:
+                items = filter_items_without_complete_tags(items)
+            dump_objects_to_file(args.item_file, items)
 
-if isfile(args.weights_file):
-    print('Loading ' + args.weights_file)
-    model.load_weights(args.weights_file)
+    from data_sets import EbayDataSets
+    from variable_inception import variable_inception
 
-train = data.train.input.reshape(len(data.train.input), args.image_size, args.image_size, 3)
+    data = EbayDataSets.get_data(args.images_file, items, valid_tags, args.image_size)
 
-print(train.shape, data.train.labels.shape)
-if args.num_epochs:
-    model.fit(train, data.train.labels, epochs=args.num_epochs)
-    model.save_weights(args.weights_file)
- 
-test = data.test.input.reshape(len(data.test.input), args.image_size, args.image_size, 3)
-loss_and_metrics = model.evaluate(test, data.test.labels)
-print()
-print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
+    model = variable_inception(input_shape=(*data.size, data.DEPTH), classes=data.num_classes)
+
+    model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
+
+    if isfile(args.weights_file):
+        print('Loading ' + args.weights_file)
+        model.load_weights(args.weights_file)
+
+    train = data.train.input.reshape(len(data.train.input), args.image_size, args.image_size, 3)
+
+    print(train.shape, data.train.labels.shape)
+    if args.num_epochs:
+        model.fit(train, data.train.labels, epochs=args.num_epochs)
+        model.save_weights(args.weights_file)
+
+    test = data.test.input.reshape(len(data.test.input), args.image_size, args.image_size, 3)
+    loss_and_metrics = model.evaluate(test, data.test.labels)
+    print()
+    print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])

@@ -14,12 +14,12 @@ class EbayDataSets(ImageFileDataSets):
             data_file += '.npz'
         if data_file is not None and isfile(data_file):
             print('Loading ' + data_file)
-            npzfile = numpy.load(data_file)
+            npz = numpy.load(data_file)
             data = cls(
                 items, valid_labels, (image_size, image_size), 0, extract=False,
-                train_images=npzfile['train_images'], train_labels=npzfile['train_labels'],
-                test_images=npzfile['test_images'], test_labels=npzfile['test_labels'],
-                validation_images=npzfile['validation_images'], validation_labels=npzfile['validation_labels']
+                train_images=npz['train_images'], train_labels=npz['train_labels'],
+                test_images=npz['test_images'], test_labels=npz['test_labels'],
+                validation_images=npz['validation_images'], validation_labels=npz['validation_labels']
             )
         else:
             data = cls(items, valid_labels, (image_size, image_size), 0, extract=True)

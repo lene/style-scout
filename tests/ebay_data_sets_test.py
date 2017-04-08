@@ -1,4 +1,4 @@
-from test_base import TestBase, create_item_dict
+from tests.test_base import TestBase, create_item_dict
 
 from data_sets import EbayDataSets
 from item import Item
