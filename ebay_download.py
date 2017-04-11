@@ -203,11 +203,6 @@ if __name__ == '__main__':
     if args.likes_file:
         import_likes(api, args.likes_file, items)
 
-    if args.download_images:
-        for i, item in enumerate(items):
-            print(i, '/', len(items), end=' ')
-            item.download_images(verbose=True)
-
     for page in range(args.page_from, args.page_to + 1):
 
         print('\nPage {}, {} distinct items'.format(page, len(items)))
@@ -222,6 +217,11 @@ if __name__ == '__main__':
             if args.complete_tags_only:
                 items = filter_items_without_complete_tags(items)
             dump_objects_to_file(args.item_file, items)
+
+    if args.download_images:
+        for i, item in enumerate(items):
+            print(i+1, '/', len(items), end=' ')
+            item.download_images(verbose=True)
 
     from data_sets import EbayDataSets
     from variable_inception import variable_inception
