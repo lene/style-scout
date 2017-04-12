@@ -17,7 +17,7 @@ class EbayDownloaderIO:
     ):
         makedirs(base_dir, exist_ok=True)
         self.base_dir = base_dir
-        self.items_file = join(self.base_dir, items_file or _filename('items', 'pickle', image_size))
+        self.items_file = join(self.base_dir, items_file or _filename('items', 'pickle', None))
         self.images_file = join(self.base_dir, images_file or _filename('images', 'npz', image_size))
         self.weights_file = join(self.base_dir, weights_file or _filename('weights', 'hdf5', image_size))
         self.likes_file = likes_file if isfile(likes_file) \

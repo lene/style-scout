@@ -11,7 +11,6 @@ from category import Category
 from ebay_downloader_io import EbayDownloaderIO
 
 
-ITEMS_PER_CATEGORY = 20
 MIN_TAG_NUM = 10
 SAVE_FOLDER = 'data'
 DEFAULT_SIZE = 139
@@ -25,8 +24,8 @@ def parse_command_line():
         '--verbose', '-v', action='store_true', help="Print info about extracted tags"
     )
     parser.add_argument(
-        '--items-per-page', default=ITEMS_PER_CATEGORY, type=int,
-        help="Page size (once per every category)"
+        '--items-per-page', default=0, type=int,
+        help="Page size (once per every category) (0 to disable downloading items)"
     )
     parser.add_argument(
         '--page-from', default=1, type=int, help="Page number from which to start"
@@ -112,7 +111,6 @@ def count_all_tags(items):
     return counted_tags
 
 
-
 def get_valid_tags(items, min_count):
     return {
         t: n for t, n in count_all_tags(items).items()
@@ -148,38 +146,41 @@ def update_tags(items, valid_tags):
         item.set_tags(set(valid_tags.keys()))
 
 
+def download_item_page(items):
+    if args.verbose:
+        print('\nPage {}, {} distinct items'.format(page, len(items)))
+    try:
+        items = update_items(items, page, args.items_per_page)
+    finally:
+        valid_tags = get_valid_tags(items, args.min_valid_tag)
+        if args.verbose:
+            print_tags(valid_tags)
+        update_tags(items, valid_tags)
+        if args.complete_tags_only:
+            items = filter_items_without_complete_tags(items)
+        io.save_items(items)
+        return valid_tags
+
+
 if __name__ == '__main__':
     args = parse_command_line()
 
     with open(args.ebay_auth_file) as file:
         auth = json.load(file)
 
+    api = ShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
+    categories = Category.search_categories(api)
+
     io = EbayDownloaderIO(
         args.save_folder, args.image_size, args.item_file, args.images_file, args.weights_file,
         args.likes_file, args.verbose
     )
     items = io.load_items()
-
-    api = ShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
-    categories = Category.search_categories(api)
-
     items = io.import_likes(api, items)
 
     for page in range(args.page_from, args.page_to + 1):
 
-        if args.verbose:
-            print('\nPage {}, {} distinct items'.format(page, len(items)))
-
-        try:
-            items = update_items(items, page, args.items_per_page)
-        finally:
-            valid_tags = get_valid_tags(items, args.min_valid_tag)
-            if args.verbose:
-                print_tags(valid_tags)
-            update_tags(items, valid_tags)
-            if args.complete_tags_only:
-                items = filter_items_without_complete_tags(items)
-            io.save_items(items)
+        valid_tags = download_item_page(items)
 
     if args.download_images:
         for i, item in enumerate(items):
