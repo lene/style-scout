@@ -20,7 +20,8 @@ class EbayDownloaderIO:
         self.items_file = join(self.base_dir, items_file or _filename('items', 'pickle', None))
         self.images_file = join(self.base_dir, images_file or _filename('images', 'npz', image_size))
         self.weights_file = join(self.base_dir, weights_file or _filename('weights', 'hdf5', image_size))
-        self.likes_file = likes_file if isfile(likes_file) \
+        self.likes_file = None if not likes_file \
+            else likes_file if isfile(likes_file) \
             else join(self.base_dir, likes_file) if isfile(join(self.base_dir, likes_file)) \
             else None
         self.verbose = verbose
