@@ -40,6 +40,7 @@ class ShoppingAPI:
         assert limit <= 100, 'Not yet implemented: Searching for more than one page'
         query = {
             'categoryId': [category.id],
+            # 'sortOrder': 'EndTimeSoonest',
             'paginationInput': {'entriesPerPage': limit, 'pageNumber': page},
         }
         response = self._search_api.execute('findItemsAdvanced', query)

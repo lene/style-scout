@@ -1,28 +1,28 @@
 import json
-from pickle import dump, load
 
 from argparse import ArgumentParser
 from collections import defaultdict
 from operator import itemgetter
 from os.path import isfile
 
-from os import rename, remove
 
 from shopping_api import ShoppingAPI
 from category import Category
+from ebay_downloader_io import EbayDownloaderIO
 
-PICKLE = 'items.pickle'
 
 ITEMS_PER_CATEGORY = 20
 MIN_TAG_NUM = 10
-WEIGHTS_FILE = 'ebay.hdf5'
-IMAGES_FILE = 'ebay_images.pickle'
+SAVE_FOLDER = 'data'
 DEFAULT_SIZE = 139
 
 
 def parse_command_line():
     parser = ArgumentParser(
-        description="Download information about eBay items as training data for style neural network"
+        description="Download information about eBay items as training data for neural network recognizing style"
+    )
+    parser.add_argument(
+        '--verbose', '-v', action='store_true', help="Print info about extracted tags"
     )
     parser.add_argument(
         '--items-per-page', default=ITEMS_PER_CATEGORY, type=int,
@@ -35,15 +35,18 @@ def parse_command_line():
         '--page-to', default=1, type=int, help="Page number up to which to read"
     )
     parser.add_argument(
-        '--min-valid-tag', default=MIN_TAG_NUM, type=int,
-        help="Minimum number of times a tag has to occur to be considered valid"
+        '--save-folder', default=SAVE_FOLDER,
+        help='Folder under which to store items, images and weights'
     )
     parser.add_argument(
-        '--verbose', '-v', action='store_true', help="Print info about extracted tags"
-    )
-    parser.add_argument(
-        '--item-file', default=PICKLE, help="Pickle file in which downloaded items are stored"
+        '--item-file', default=None, help="Pickle file from which to load downloaded items"
     )    
+    parser.add_argument(
+        '--images-file', default=None, help='Pickle file from which to load precomputed image data set'
+    )
+    parser.add_argument(
+        '--weights-file', '-w', default=None, help='HDF5 file from which to load precomputed set of weights'
+    )
     parser.add_argument(
         '--ebay-auth-file', default='ebay_auth.json',
         help="JSON file containing the eBay authorization IDs"
@@ -55,18 +58,14 @@ def parse_command_line():
         '--ebay-site_id', type=int, default=77, help="eBay site ID (77 for Germany)"
     )    
     parser.add_argument(
+        '--min-valid-tag', default=MIN_TAG_NUM, type=int,
+        help="Minimum number of times a tag has to occur to be considered valid"
+    )
+    parser.add_argument(
         '--download-images', action='store_true', help="Download images"
     )
     parser.add_argument(
         '--complete-tags-only', action='store_true', help="Filter out incomplete tags"
-    )
-    parser.add_argument(
-        '--images-file', default=IMAGES_FILE,
-        help='Pickle file containing precomputed image data set'
-    )
-    parser.add_argument(
-        '--weights-file', '-w', default=WEIGHTS_FILE,
-        help='HDF5 file containing a precomputed set of weights for this neural network.'
     )
     parser.add_argument(
         '--num-epochs', '-n', type=int, default=1,
@@ -113,14 +112,6 @@ def count_all_tags(items):
     return counted_tags
 
 
-def dump_objects_to_file(filename, objects):
-    if isfile(filename):
-        if isfile(filename + '.bak'):
-            remove(filename + '.bak')
-        rename(filename, filename + '.bak')
-    with open(filename, 'wb') as file:
-        dump(objects, file)
-
 
 def get_valid_tags(items, min_count):
     return {
@@ -130,46 +121,13 @@ def get_valid_tags(items, min_count):
     }
 
 
-def load_objects_from_file(filename):
-    if isfile(filename):
-        with open(filename, 'rb') as file:
-            return load(file)
-    return []
-
-
 def update_items(items, page, per_page):
     if per_page:
         for category in categories:
             items += api.get_category_items(category, limit=per_page, page=page)
-            print('{} done, {} items in total'.format(category.name, len(items)))
+            if args.verbose:
+                print('{} done, {} items in total'.format(category.name, len(items)))
     return remove_duplicate_items(items)
-
-
-def add_liked_items(api, items, category, liked_item_ids):
-    from item import Item
-    present_item_ids = set(i.id for i in items)
-    for liked in liked_item_ids:
-        if liked in present_item_ids:
-            Item.set_liked(items, liked)
-        else:
-            new_item = Item(api, category, liked)
-            new_item.like()
-            items.append(new_item)
-
-
-def import_likes(api, filename, items):
-
-    if not isfile(filename):
-        return
-
-    with open(filename, 'r') as f:
-        liked = json.load(f)
-
-    for category_id, item_ids in liked.items():
-        if category_id.isdigit():
-            category = Category.by_id(category_id)
-            print(category.name)
-            add_liked_items(api, items, category, item_ids)
 
 
 def filter_items_without_complete_tags(items):
@@ -189,23 +147,28 @@ def update_tags(items, valid_tags):
     for item in items:
         item.set_tags(set(valid_tags.keys()))
 
+
 if __name__ == '__main__':
     args = parse_command_line()
 
     with open(args.ebay_auth_file) as file:
         auth = json.load(file)
 
-    items = load_objects_from_file(args.item_file)
+    io = EbayDownloaderIO(
+        args.save_folder, args.image_size, args.item_file, args.images_file, args.weights_file,
+        args.likes_file, args.verbose
+    )
+    items = io.load_items()
 
     api = ShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
     categories = Category.search_categories(api)
 
-    if args.likes_file:
-        import_likes(api, args.likes_file, items)
+    items = io.import_likes(api, items)
 
     for page in range(args.page_from, args.page_to + 1):
 
-        print('\nPage {}, {} distinct items'.format(page, len(items)))
+        if args.verbose:
+            print('\nPage {}, {} distinct items'.format(page, len(items)))
 
         try:
             items = update_items(items, page, args.items_per_page)
@@ -216,34 +179,32 @@ if __name__ == '__main__':
             update_tags(items, valid_tags)
             if args.complete_tags_only:
                 items = filter_items_without_complete_tags(items)
-            dump_objects_to_file(args.item_file, items)
+            io.save_items(items)
 
     if args.download_images:
         for i, item in enumerate(items):
-            print(i+1, '/', len(items), end=' ')
-            item.download_images(verbose=True)
+            if args.verbose:
+                print(i+1, '/', len(items), end=' ')
+            item.download_images(verbose=args.verbose)
 
-    from data_sets import EbayDataSets
     from variable_inception import variable_inception
 
-    data = EbayDataSets.get_data(args.images_file, items, valid_tags, args.image_size)
+    image_data = io.get_images(items, valid_tags, args.image_size)
 
-    model = variable_inception(input_shape=(*data.size, data.DEPTH), classes=data.num_classes)
+    model = variable_inception(input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes)
 
     model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
 
-    if isfile(args.weights_file):
-        print('Loading ' + args.weights_file)
-        model.load_weights(args.weights_file)
+    io.load_weights(model)
 
-    train = data.train.input.reshape(len(data.train.input), args.image_size, args.image_size, 3)
+    train = image_data.train.input.reshape(len(image_data.train.input), args.image_size, args.image_size, 3)
 
-    print(train.shape, data.train.labels.shape)
+    print(train.shape, image_data.train.labels.shape)
     if args.num_epochs:
-        model.fit(train, data.train.labels, epochs=args.num_epochs)
-        model.save_weights(args.weights_file)
+        model.fit(train, image_data.train.labels, epochs=args.num_epochs)
+        io.save_weights(model)
 
-    test = data.test.input.reshape(len(data.test.input), args.image_size, args.image_size, 3)
-    loss_and_metrics = model.evaluate(test, data.test.labels)
+    test = image_data.test.input.reshape(len(image_data.test.input), args.image_size, args.image_size, 3)
+    loss_and_metrics = model.evaluate(test, image_data.test.labels)
     print()
     print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
