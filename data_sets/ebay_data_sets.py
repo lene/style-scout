@@ -14,7 +14,7 @@ class EbayDataSets(ImageFileDataSets):
         if data_file is not None and isfile(data_file):
             data = cls.create_from_file(data_file, image_size, items, valid_labels)
         else:
-            data = cls(items, valid_labels, (image_size, image_size), 0, extract=True)
+            data = cls(items, valid_labels, (image_size, image_size), 0, extract=True, verbose=verbose)
             cls.save_to_file(data, data_file)
         return data
 
