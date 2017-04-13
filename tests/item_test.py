@@ -102,4 +102,12 @@ class ItemTest(TestBase):
 
         item.download_images()  # should just ignore the error
 
+    def test_remove_duplicates(self):
+        items = [Item(self.api, self.category, 1), Item(self.api, self.category, 1)]
+        self.assertEqual(items[0], Item.remove_duplicates(items)[0])
+
+    def test_remove_duplicates_without_duplicates(self):
+        items = [Item(self.api, self.category, 1), Item(self.api, self.category, 2)]
+        self.assertCountEqual(items, Item.remove_duplicates(items))
+
 

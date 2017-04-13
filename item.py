@@ -104,6 +104,20 @@ class Item:
         except URLError:
             return None
 
+    @classmethod
+    def remove_duplicates(cls, items):
+        ids = set()
+        new_items = []
+        for item in items:
+            if item.id not in ids:
+                # if isinstance(item.category, int):
+                #     print(item.title, item.category)
+                #     continue
+                new_items.append(item)
+                ids.add(item.id)
+        print(len(items), '->', len(new_items), 'items')
+        return new_items
+
     def __str__(self):
             return """Id: {}
     Title: {}

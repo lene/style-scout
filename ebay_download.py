@@ -8,6 +8,7 @@ from os.path import isfile
 
 from shopping_api import ShoppingAPI
 from category import Category
+from item import Item
 from ebay_downloader_io import EbayDownloaderIO
 
 
@@ -89,20 +90,6 @@ def print_tags(tags, num_most_popular=50):
     print(len(tags), 'distinct tags')
 
 
-def remove_duplicate_items(items):
-    ids = set()
-    new_items = []
-    for item in items:
-        if item.id not in ids:
-            if isinstance(item.category, int):
-                print(item.title, item.category)
-                continue
-            new_items.append(item)
-            ids.add(item.id)
-    print(len(items), '->', len(new_items), 'items')
-    return new_items
-
-
 def count_all_tags(items):
     counted_tags = defaultdict(int)
     for item in items:
@@ -125,7 +112,7 @@ def update_items(items, page, per_page):
             items += api.get_category_items(category, limit=per_page, page=page)
             if args.verbose:
                 print('{} done, {} items in total'.format(category.name, len(items)))
-    return remove_duplicate_items(items)
+    return Item.remove_duplicates(items)
 
 
 def filter_items_without_complete_tags(items):
