@@ -7,6 +7,7 @@ import json
 from data_sets import EbayDataSets
 from category import Category
 from item import Item
+from items import Items
 
 
 class EbayDownloaderIO:
@@ -30,8 +31,8 @@ class EbayDownloaderIO:
         if isfile(self.items_file):
             self._print_status('Loading', self.items_file)
             with open(self.items_file, 'rb') as file:
-                return pickle.load(file)
-        return []
+                return Items(pickle.load(file), self.verbose)
+        return Items([], self.verbose)
 
     def save_items(self, objects):
         self._print_status('Saving', self.items_file)
@@ -43,7 +44,7 @@ class EbayDownloaderIO:
             pickle.dump(objects, file)
 
     def import_likes(self, api, items):
-
+        print('import_likes', items)
         if not self.likes_file or not isfile(self.likes_file):
             return items
 
@@ -81,7 +82,7 @@ def add_liked_items(api, items, category, liked_item_ids):
     present_item_ids = set(i.id for i in items)
     for liked in liked_item_ids:
         if liked in present_item_ids:
-            Item.set_liked(items, liked)
+            items.set_liked(liked)
         else:
             new_item = Item(api, category, liked)
             new_item.like()

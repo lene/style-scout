@@ -75,14 +75,6 @@ class Item:
         return processor.process_tag(tag_label, tag_value)
 
     @classmethod
-    def set_liked(cls, items, item_id):
-        for item in items:
-            if item.id == item_id:
-                item.like()
-                return
-        raise ValueError("Item {} not in items".format(item_id))
-
-    @classmethod
     def download_image(cls, url, show=False):
         from os.path import join, isfile
         from os import makedirs
@@ -103,17 +95,6 @@ class Item:
             return filename
         except URLError:
             return None
-
-    @classmethod
-    def remove_duplicates(cls, items):
-        ids = set()
-        new_items = []
-        for item in items:
-            if item.id not in ids:
-                new_items.append(item)
-                ids.add(item.id)
-        print(len(items), '->', len(new_items), 'items')
-        return new_items
 
     def __str__(self):
             return """Id: {}
@@ -149,3 +130,4 @@ class Item:
         except (TypeError, AttributeError):
             print(item_specifics)
             raise
+

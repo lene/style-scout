@@ -1,14 +1,11 @@
 import json
 
 from argparse import ArgumentParser
-from collections import defaultdict
 from operator import itemgetter
-from os.path import isfile
 
 
 from shopping_api import ShoppingAPI
 from category import Category
-from item import Item
 from ebay_downloader_io import EbayDownloaderIO
 
 
@@ -90,29 +87,13 @@ def print_tags(tags, num_most_popular=50):
     print(len(tags), 'distinct tags')
 
 
-def count_all_tags(items):
-    counted_tags = defaultdict(int)
-    for item in items:
-        for tag in item.get_possible_tags():
-            counted_tags[tag] += 1
-    return counted_tags
-
-
-def get_valid_tags(items, min_count):
-    return {
-        t: n for t, n in count_all_tags(items).items()
-        if n >= min_count
-        if 'UNDEFINED' not in t
-    }
-
-
 def update_items(items, page, per_page):
     if per_page:
         for category in categories:
-            items += api.get_category_items(category, limit=per_page, page=page)
+            items.extend(api.get_category_items(category, limit=per_page, page=page))
             if args.verbose:
                 print('{} done, {} items in total'.format(category.name, len(items)))
-    return Item.remove_duplicates(items)
+    items.remove_duplicates()
 
 
 def filter_items_without_complete_tags(items):
@@ -137,9 +118,9 @@ def download_item_page(items):
     if args.verbose:
         print('\nPage {}, {} distinct items'.format(page, len(items)))
     try:
-        items = update_items(items, page, args.items_per_page)
+        update_items(items, page, args.items_per_page)
     finally:
-        valid_tags = get_valid_tags(items, args.min_valid_tag)
+        valid_tags = items.get_valid_tags(args.min_valid_tag)
         if args.verbose:
             print_tags(valid_tags)
         update_tags(items, valid_tags)

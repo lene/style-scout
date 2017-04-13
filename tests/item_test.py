@@ -27,17 +27,6 @@ class ItemTest(TestBase):
         item.like()
         self.assertEqual({'<3'}, item.tags)
 
-    def test_set_liked(self):
-        items = [Item(self.api, self.category, 1), Item(self.api, self.category, 2)]
-        Item.set_liked(items, 1)
-        self.assertEqual({'<3'}, items[0].tags)
-        self.assertEqual(set(), items[1].tags)
-
-    def test_set_liked_raises_if_not_found(self):
-        items = [Item(self.api, self.category, 1), Item(self.api, self.category, 2)]
-        with self.assertRaises(ValueError):
-            Item.set_liked(items, 3)
-
     def test_get_possible_tags_without_specifics_with_undefined(self):
         item = Item(self.api, self.category, 1)
         tags = item.get_possible_tags(add_undefined=True)
@@ -101,13 +90,4 @@ class ItemTest(TestBase):
         item = Item(self.api, self.category, 1)
 
         item.download_images()  # should just ignore the error
-
-    def test_remove_duplicates(self):
-        items = [Item(self.api, self.category, 1), Item(self.api, self.category, 1)]
-        self.assertEqual(items[0], Item.remove_duplicates(items)[0])
-
-    def test_remove_duplicates_without_duplicates(self):
-        items = [Item(self.api, self.category, 1), Item(self.api, self.category, 2)]
-        self.assertCountEqual(items, Item.remove_duplicates(items))
-
 
