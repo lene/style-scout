@@ -96,25 +96,12 @@ def update_items(items, page, per_page):
     items.remove_duplicates()
 
 
-def filter_items_without_complete_tags(items):
-    def has_complete_tags(item):
-        def has_tag_category(item, tag_category):
-            return any(tag_category in tag for tag in item.tags)
-
-        return all(has_tag_category(item, tag_category) for tag_category in item.category.necessary_tags)
-
-    print(len(items))
-    items = [item for item in items if has_complete_tags(item)]
-    print(len(items))
-    return items
-
-
 def update_tags(items, valid_tags):
     for item in items:
         item.set_tags(set(valid_tags.keys()))
 
 
-def download_item_page(items):
+def download_item_page(items, io):
     if args.verbose:
         print('\nPage {}, {} distinct items'.format(page, len(items)))
     try:
@@ -125,7 +112,7 @@ def download_item_page(items):
             print_tags(valid_tags)
         update_tags(items, valid_tags)
         if args.complete_tags_only:
-            items = filter_items_without_complete_tags(items)
+            items.filter_items_without_complete_tags()
         io.save_items(items)
         return valid_tags
 
@@ -148,7 +135,7 @@ if __name__ == '__main__':
 
     for page in range(args.page_from, args.page_to + 1):
 
-        valid_tags = download_item_page(items)
+        valid_tags = download_item_page(items, io)
 
     if args.download_images:
         for i, item in enumerate(items):

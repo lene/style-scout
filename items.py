@@ -1,8 +1,9 @@
 from collections import defaultdict
 
+
 class Items:
 
-    def __init__(self, raw_items, verbose=True):
+    def __init__(self, raw_items, verbose=False):
         self.items = raw_items
         self.verbose = verbose
 
@@ -55,3 +56,15 @@ class Items:
                 item.like()
                 return
         raise ValueError("Item {} not in items".format(item_id))
+
+    def filter_items_without_complete_tags(self):
+        def has_complete_tags(item):
+            def has_tag_category(item, tag_category):
+                return any(tag_category in tag for tag in item.tags)
+            return all(has_tag_category(item, tag_category) for tag_category in item.category.necessary_tags)
+
+        old_length = len(self)
+        items = [item for item in self.items if has_complete_tags(item)]
+        if self.verbose:
+            print(old_length, '->', len(items))
+        return Items(items, self.verbose)
