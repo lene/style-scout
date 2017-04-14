@@ -9,7 +9,7 @@ from os.path import isfile
 class EbayDataSets(ImageFileDataSets):
 
     @classmethod
-    def get_data(cls, data_file, items, valid_labels, image_size, verbose=True):
+    def get_data(cls, data_file, items, valid_labels, image_size, verbose=False):
         data_file = cls.npz_file_name(data_file)
         if data_file is not None and isfile(data_file):
             data = cls.create_from_file(data_file, image_size, items, valid_labels)
@@ -25,7 +25,7 @@ class EbayDataSets(ImageFileDataSets):
         return data_file
 
     @classmethod
-    def create_from_file(cls, data_file, image_size, items, valid_labels, verbose=True):
+    def create_from_file(cls, data_file, image_size, items, valid_labels, verbose=False):
         if verbose:
             print('Loading ' + data_file)
         npz = numpy.load(data_file)
@@ -37,7 +37,7 @@ class EbayDataSets(ImageFileDataSets):
         )
 
     @classmethod
-    def save_to_file(cls, data, data_file, verbose=True):
+    def save_to_file(cls, data, data_file, verbose=False):
         if verbose:
             print('Storing ' + data_file)
         numpy.savez_compressed(

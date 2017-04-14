@@ -14,7 +14,7 @@ class EbayDownloaderIO:
 
     def __init__(
             self, base_dir, image_size=None, items_file=None, images_file=None, weights_file=None,
-            likes_file=None, verbose=True
+            likes_file=None, verbose=False
     ):
         makedirs(base_dir, exist_ok=True)
         self.base_dir = base_dir
