@@ -68,7 +68,7 @@ class Item:
                 if add_undefined:
                     tags.add('{}:UNDEFINED'.format(tag_label))
 
-        return tags
+        return tags | self.tags
 
     def process_tag(self, tag_label, tag_value):
         processor = TagProcessor(self.TAG_LIST)
