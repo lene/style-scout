@@ -2,6 +2,10 @@ import re
 
 
 class TagProcessor:
+    """
+    Given tag values in an arbitrary, proprietary format, convert them to values in accordance with
+    what the neural network requires/expects.
+    """
 
     def __init__(self, tag_list):
         self.tag_list = tag_list

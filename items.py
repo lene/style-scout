@@ -2,7 +2,9 @@ from collections import defaultdict
 
 
 class Items:
-
+    """
+    A set of Item objects along with some utility functions.
+    """
     def __init__(self, raw_items, verbose=False):
         self.items = raw_items
         self.verbose = verbose
@@ -20,12 +22,19 @@ class Items:
         return self.items[item]
 
     def append(self, item):
+        """Adds an Item to this item set."""
         self.items.append(item)
 
     def extend(self, items):
+        """Adds a list of Item objects or an Items object to this item set."""
         self.items.extend(items if isinstance(items, list) else items.items)
 
     def remove_duplicates(self):
+        """
+        Remove all duplicate occurrences of an Item in this item set. 
+        :return: None
+        """
+        # Since Item is not hashable we need to do this manually
         ids = set()
         new_items = []
         for item in self.items:
@@ -37,6 +46,12 @@ class Items:
         self.items = new_items
 
     def get_valid_tags(self, min_count):
+        """
+        Returns the tags in this item set which occur at least min_count times, along with the 
+        number of times each tag occurs.
+        :param min_count: minimum number of occurrences for a tag to be included
+        :return: a dict of the form {tag: number_it_occurs} 
+        """
         return {
             t: n for t, n in self.count_all_tags().items()
             if n >= min_count
@@ -44,6 +59,10 @@ class Items:
         }
 
     def count_all_tags(self):
+        """
+        Returns the tags in this item set along with the number of times each tag occurs.
+        :return: a dict of the form {tag: number_it_occurs} 
+        """
         counted_tags = defaultdict(int)
         for item in self.items:
             for tag in item.get_possible_tags():
@@ -51,6 +70,11 @@ class Items:
         return counted_tags
 
     def set_liked(self, item_id):
+        """
+        Sets an Item in this item set with the specified ID to liked.
+        :param item_id: The ID of the item to be liked.
+        :return: None
+        """
         for item in self.items:
             if item.id == item_id:
                 item.like()
@@ -58,6 +82,12 @@ class Items:
         raise ValueError("Item {} not in items".format(item_id))
 
     def filter_items_without_complete_tags(self):
+        """
+        Removes all Item object in this item set which do not have all tags set that are required
+        for successful training of the neural network.
+        The exact necessary tags vary by Category.
+        :return: An Items object containing only Item objects with all necessary tags.
+        """
         def has_complete_tags(item):
             def has_tag_category(item, tag_category):
                 return any(tag_category in tag for tag in item.tags)

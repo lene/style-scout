@@ -1,7 +1,7 @@
 from ebaysdk.finding import Connection as Finding
 from ebaysdk.shopping import Connection as Shopping
 
-from item import Item
+from item import EbayItem
 from category import Category
 
 
@@ -46,7 +46,7 @@ class ShoppingAPI:
         response = self._search_api.execute('findItemsAdvanced', query)
         try:
             return [
-                Item(self, category, result['itemId'])
+                EbayItem(self, category, result['itemId'])
                 for result in response.dict()['searchResult'].get('item', [])
             ]
         except KeyError:

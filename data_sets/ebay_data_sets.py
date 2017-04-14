@@ -10,42 +10,23 @@ class EbayDataSets(ImageFileDataSets):
 
     @classmethod
     def get_data(cls, data_file, items, valid_labels, image_size, verbose=False):
-        data_file = cls.npz_file_name(data_file)
+        """
+        Read an EbayDataSet from the given file name, if present; else create a new one and save it
+        to that file name. In the end, both the data set and the savefile exist.
+        :param data_file: file name to read from/save to
+        :param items: Items object corresponding to the data set
+        :param valid_labels: Labels corresponding to the labels of the data set
+        :param image_size: Size the images are scaled to
+        :param verbose: If set, print status/progress information
+        :return: EbayDataSet read from the file or created from the passed parameters
+        """
+        data_file = cls._npz_file_name(data_file)
         if data_file is not None and isfile(data_file):
-            data = cls.create_from_file(data_file, image_size, items, valid_labels)
+            data = cls._create_from_file(data_file, image_size, items, valid_labels)
         else:
             data = cls(items, valid_labels, (image_size, image_size), 0, extract=True, verbose=verbose)
-            cls.save_to_file(data, data_file)
+            cls._save_to_file(data, data_file)
         return data
-
-    @classmethod
-    def npz_file_name(cls, data_file):
-        if len(data_file) < 5 or data_file[-4:] != '.npz':
-            data_file += '.npz'
-        return data_file
-
-    @classmethod
-    def create_from_file(cls, data_file, image_size, items, valid_labels, verbose=False):
-        if verbose:
-            print('Loading ' + data_file)
-        npz = numpy.load(data_file)
-        return cls(
-            items, valid_labels, (image_size, image_size), 0, extract=False,
-            train_images=npz['train_images'], train_labels=npz['train_labels'],
-            test_images=npz['test_images'], test_labels=npz['test_labels'],
-            validation_images=npz['validation_images'], validation_labels=npz['validation_labels']
-        )
-
-    @classmethod
-    def save_to_file(cls, data, data_file, verbose=False):
-        if verbose:
-            print('Storing ' + data_file)
-        numpy.savez_compressed(
-            data_file,
-            train_images=data.train.input, train_labels=data.train.labels,
-            test_images=data.test.input, test_labels=data.test.labels,
-            validation_images=data.validation.input, validation_labels=data.validation.labels
-        )
 
     def __init__(
             self, items, valid_labels, size, validation_share=None, extract=True,
@@ -124,6 +105,35 @@ class EbayDataSets(ImageFileDataSets):
             for tag in tags:
                 labels_one_hot[i][self.labels_to_numbers[tag]] = 1
         return labels_one_hot
+
+    @classmethod
+    def _npz_file_name(cls, data_file):
+        if len(data_file) < 5 or data_file[-4:] != '.npz':
+            data_file += '.npz'
+        return data_file
+
+    @classmethod
+    def _create_from_file(cls, data_file, image_size, items, valid_labels, verbose=False):
+        if verbose:
+            print('Loading ' + data_file)
+        npz = numpy.load(data_file)
+        return cls(
+            items, valid_labels, (image_size, image_size), 0, extract=False,
+            train_images=npz['train_images'], train_labels=npz['train_labels'],
+            test_images=npz['test_images'], test_labels=npz['test_labels'],
+            validation_images=npz['validation_images'], validation_labels=npz['validation_labels']
+        )
+
+    @classmethod
+    def _save_to_file(cls, data, data_file, verbose=False):
+        if verbose:
+            print('Storing ' + data_file)
+        numpy.savez_compressed(
+            data_file,
+            train_images=data.train.input, train_labels=data.train.labels,
+            test_images=data.test.input, test_labels=data.test.labels,
+            validation_images=data.validation.input, validation_labels=data.validation.labels
+        )
 
 
 def _check_constructor_arguments_valid(
