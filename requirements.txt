@@ -1,6 +1,7 @@
 ebaysdk
 h5py
 keras
+matplotlib
 nose
 pillow
 tensorflow

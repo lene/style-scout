@@ -2,7 +2,7 @@ import json
 
 from argparse import ArgumentParser
 from operator import itemgetter
-
+from random import randrange
 
 from shopping_api import ShoppingAPI
 from category import Category
@@ -72,6 +72,11 @@ def parse_command_line():
         '--image-size', '-s', type=int, default=DEFAULT_SIZE,
         help='Size (both width and height) to which images are resized.'
     )
+    parser.add_argument(
+        '--demo', type=int, default=10,
+        help='Number of images to try to predict as demo.'
+    )
+
     return parser.parse_args()
 
 
@@ -96,11 +101,6 @@ def update_items(items, page, per_page):
     items.remove_duplicates()
 
 
-def update_tags(items, valid_tags):
-    for item in items:
-        item.set_tags(set(valid_tags.keys()))
-
-
 def download_item_page(items, io):
     if args.verbose:
         print('\nPage {}, {} distinct items'.format(page, len(items)))
@@ -110,7 +110,7 @@ def download_item_page(items, io):
         valid_tags = items.get_valid_tags(args.min_valid_tag)
         if args.verbose:
             print_tags(valid_tags)
-        update_tags(items, valid_tags)
+        items.update_tags(valid_tags)
         if args.complete_tags_only:
             items.filter_items_without_complete_tags()
         io.save_items(items)
@@ -164,3 +164,11 @@ if __name__ == '__main__':
     loss_and_metrics = model.evaluate(test, image_data.test.labels)
     print()
     print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
+
+    for _ in range(args.demo):
+        i = randrange(len(image_data.test.input))
+        image = image_data.test.input[i]
+        label = image_data.test.labels[i]
+        image_data.show_image(image)
+        print(label)
+        print(model.predict(image_data.test.input[i:i+1], batch_size=1, verbose=1))

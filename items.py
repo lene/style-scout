@@ -98,3 +98,7 @@ class Items:
         if self.verbose:
             print(old_length, '->', len(items))
         return Items(items, self.verbose)
+
+    def update_tags(self, valid_tags):
+        for item in self.items:
+            item.set_tags(set(valid_tags.keys()))

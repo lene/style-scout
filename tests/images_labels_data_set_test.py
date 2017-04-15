@@ -1,5 +1,4 @@
 from data_sets.images_labels_data_set import ImagesLabelsDataSet, normalize
-# from .util import create_minimal_input_placeholder
 
 import numpy
 
