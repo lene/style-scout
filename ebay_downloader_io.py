@@ -83,7 +83,7 @@ class EbayDownloaderIO:
         :param image_size: size to which the images are resized
         :return: data set for the requested parameters
         """
-        return EbayDataSets.get_data(self.images_file, items, valid_tags, image_size, self.verbose)
+        return EbayDataSets.get_data(self.images_file, items, valid_tags, image_size, verbose=self.verbose)
 
     def load_weights(self, model):
         """
