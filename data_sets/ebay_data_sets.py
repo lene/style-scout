@@ -12,7 +12,7 @@ from os.path import isfile
 class EbayDataSets(ImageFileDataSets):
 
     @classmethod
-    def get_data(cls, data_file, items, valid_labels, image_size, verbose=False):
+    def get_data(cls, data_file, items, valid_labels, image_size, test_share=0.2, verbose=False):
         """
         Read an EbayDataSet from the given file name, if present; else create a new one and save it
         to that file name. In the end, both the data set and the savefile exist.
@@ -20,6 +20,7 @@ class EbayDataSets(ImageFileDataSets):
         :param items: Items object corresponding to the data set
         :param valid_labels: Labels corresponding to the labels of the data set
         :param image_size: Size the images are scaled to
+        :param test_share: fraction of the data used as test data
         :param verbose: If set, print status/progress information
         :return: EbayDataSet read from the file or created from the passed parameters
         """
@@ -27,20 +28,23 @@ class EbayDataSets(ImageFileDataSets):
         if data_file is not None and isfile(data_file):
             data = cls._create_from_file(data_file, image_size, items, valid_labels)
         else:
-            data = cls(items, valid_labels, (image_size, image_size), 0, extract=True, verbose=verbose)
+            data = cls(
+                items, valid_labels, (image_size, image_size), 0, extract=True, test_share=test_share,
+                verbose=verbose
+            )
             cls._save_to_file(data, data_file)
         return data
 
     def __init__(
-            self, items, valid_labels, size, validation_share=None, extract=True,
+            self, items, valid_labels, size, validation_share=None, test_share=0.2, extract=True,
             train_images=None, train_labels=None, test_images=None, test_labels=None,
             validation_images=None, validation_labels=None,
             verbose=False
     ):
-        """Construct the data set from images stored in subdirs under base_dir
-        :param base_dir: Where to store the MNIST data files.
-        :param x_size:
-        :param y_size:
+        """
+        Construct the data set from images belonging to items passed in
+        TODO: finish this docstring
+        :param test_share: fraction of the data used as test data
         :param validation_share:
         """
         _check_constructor_arguments_valid(
@@ -64,9 +68,11 @@ class EbayDataSets(ImageFileDataSets):
                 print('RAM needed for images and labels: {0:.2f}GB'.format(required_ram/1024/1024/1024))
 
             all_labels = self._dense_to_one_hot(all_labels)
+            if self.verbose:
+                print('all labels as one-hot:\n', all_labels)
 
             train_images, train_labels, test_images, test_labels = self.split_images(
-                all_images, all_labels, 0.8
+                all_images, all_labels, 1-test_share
             )
 
             self.validation_size = int(len(all_images) * (self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share))
