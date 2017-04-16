@@ -116,7 +116,7 @@ def download_item_page(items, io):
             print_tags(valid_tags)
         items.update_tags(valid_tags)
         if args.complete_tags_only:
-            items.filter_items_without_complete_tags()
+            items = items.filter_items_without_complete_tags()
         io.save_items(items)
         return valid_tags
 
