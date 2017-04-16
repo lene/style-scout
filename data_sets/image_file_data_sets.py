@@ -6,6 +6,7 @@ from gzip import open as gzopen
 
 from PIL import Image
 import numpy
+from copy import deepcopy
 
 from .data_sets import DataSets
 from .images_labels_data_set import ImagesLabelsDataSet
@@ -139,16 +140,22 @@ class ImageFileDataSets(DataSets):
 
     def split_images(self, images, labels, train_to_test_ratio):
         from random import shuffle
+        assert len(images) == len(labels)
+        assert 0 <= train_to_test_ratio <= 1
+        # avoid shuffling images and labels in place
+        images_ = images.copy()
+        labels_ = labels.copy()
         test_size = int(len(images)*(1-train_to_test_ratio))
         combined = list(zip(images, labels))
         shuffle(combined)
-        images[:], labels[:] = zip(*combined)
-        return images[test_size:], labels[test_size:], images[:test_size], labels[:test_size]
+        images_[:], labels_[:] = zip(*combined)
+        return images_[test_size:], labels_[test_size:], images_[:test_size], labels_[:test_size]
 
     def prediction_info(self, prediction, place):
         index, value = nth_index_and_value(prediction, place)
         label = self.get_label(index)
         return index, label, value
+
 
 def _dense_to_one_hot(labels_dense):
     """Convert class labels from scalars to one-hot vectors."""

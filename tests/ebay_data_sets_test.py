@@ -71,6 +71,52 @@ class EbayDataSetsTest(TestBase):
         self.assertEqual((len(items), SIZE, SIZE, EbayDataSets.DEPTH), npzfile['train_images'].shape)
         self.assertEqual((len(items), len(valid_labels)), npzfile['train_labels'].shape)
 
-    def test_labels_2(self):
-        data_set = EbayDataSets([], ['1', '2'], (139, 139))
-        print(data_set)
+    def test_labels_correctly_associated(self):
+        items, valid_labels = self._create_enough_items()
+
+        data_sets = EbayDataSets.get_data(
+            join(self.DOWNLOAD_ROOT, 'ebay_data_sets_test'),
+            items=items, valid_labels=valid_labels, image_size=SIZE,
+            test_share=0
+        )
+        self.assertEqual(4, len(data_sets.train.labels))
+        self.assertTrue([1., 1., 0., 0., 0., 0., 0., 0.] in data_sets.train.labels.tolist())
+        self.assertTrue([0., 0., 1., 1., 0., 0., 0., 0.] in data_sets.train.labels.tolist())
+        self.assertTrue([0., 0., 0., 0., 1., 1., 0., 0.] in data_sets.train.labels.tolist())
+        self.assertTrue([0., 0., 0., 0., 0., 0., 1., 1.] in data_sets.train.labels.tolist())
+
+    def test_labels_correctly_restored(self):
+        items, valid_labels = self._create_enough_items()
+
+        EbayDataSets.get_data(
+            join(self.DOWNLOAD_ROOT, 'ebay_data_sets_test'),
+            items=items, valid_labels=valid_labels, image_size=SIZE,
+            test_share=0, verbose=True
+        )
+
+        other_data_sets = EbayDataSets.get_data(
+            join(self.DOWNLOAD_ROOT, 'ebay_data_sets_test'),
+            items=items, valid_labels=valid_labels, image_size=SIZE,
+            test_share=0, verbose=True
+        )
+        print('eventually:')
+        print(other_data_sets.train.labels)
+        self.assertEqual(4, len(other_data_sets.train.labels))
+        self.assertTrue([1., 1., 0., 0., 0., 0., 0., 0.] in other_data_sets.train.labels.tolist())
+        self.assertTrue([0., 0., 1., 1., 0., 0., 0., 0.] in other_data_sets.train.labels.tolist())
+        self.assertTrue([0., 0., 0., 0., 1., 1., 0., 0.] in other_data_sets.train.labels.tolist())
+        self.assertTrue([0., 0., 0., 0., 0., 0., 1., 1.] in other_data_sets.train.labels.tolist())
+
+    def _create_enough_items(self):
+        # set up enough items and labels to have a decent probability of not succeeding by chance
+        item1 = Item(self.api, self.category, 1)
+        item1.tags = ['1', '2']
+        item2 = Item(self.api, self.category, 2)
+        item2.tags = ['3', '4']
+        item3 = Item(self.api, self.category, 3)
+        item3.tags = ['5', '6']
+        item4 = Item(self.api, self.category, 4)
+        item4.tags = ['7', '8']
+        valid_labels = ['1', '2', '3', '4', '5', '6', '7', '8']
+        return [item1, item2, item3, item4], valid_labels
+
