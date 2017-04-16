@@ -1,3 +1,6 @@
+from collections import OrderedDict
+from operator import itemgetter
+
 from data_sets import ImageFileDataSets, add_border
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
@@ -58,13 +61,15 @@ class EbayDataSets(ImageFileDataSets):
             all_images, all_labels = self._extract_images()
             required_ram = all_images.size*(4+1)+all_labels.nbytes
             if self.verbose:
-                print('RAM needed for images and labels: {0:.2f}GB'.format(required_ram/1024/1024/1024) )
+                print('RAM needed for images and labels: {0:.2f}GB'.format(required_ram/1024/1024/1024))
 
             all_labels = self._dense_to_one_hot(all_labels)
 
-            train_images, train_labels, test_images, test_labels = self.split_images(all_images, all_labels, 0.8)
+            train_images, train_labels, test_images, test_labels = self.split_images(
+                all_images, all_labels, 0.8
+            )
 
-            self.validation_size = int(len(all_images)*(self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share))
+            self.validation_size = int(len(all_images) * (self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share))
             validation_images = train_images[:self.validation_size]
             validation_labels = train_labels[:self.validation_size]
             train_images = train_images[self.validation_size:]
@@ -78,6 +83,19 @@ class EbayDataSets(ImageFileDataSets):
             ImagesLabelsDataSet(validation_images, validation_labels, self.DEPTH),
             ImagesLabelsDataSet(test_images, test_labels, self.DEPTH)
         )
+
+    def labels(self, predictions):
+        return {
+            self.numbers_to_labels[index]: probability
+            for index, probability in enumerate(predictions) if probability > 0
+        }
+
+    def labels_sorted_by_probability(self, predictions):
+        pairs = sorted(
+            [(label, probability) for label, probability in self.labels(predictions).items()],
+            key=itemgetter(1), reverse=True
+        )
+        return OrderedDict(pairs)
 
     def _extract_images(self):
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""

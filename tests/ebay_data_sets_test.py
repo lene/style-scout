@@ -70,3 +70,7 @@ class EbayDataSetsTest(TestBase):
         )
         self.assertEqual((len(items), SIZE, SIZE, EbayDataSets.DEPTH), npzfile['train_images'].shape)
         self.assertEqual((len(items), len(valid_labels)), npzfile['train_labels'].shape)
+
+    def test_labels_2(self):
+        data_set = EbayDataSets([], ['1', '2'], (139, 139))
+        print(data_set)

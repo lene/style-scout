@@ -2,6 +2,7 @@ import json
 
 from argparse import ArgumentParser
 from operator import itemgetter
+from pprint import pprint
 from random import randrange
 
 from shopping_api import ShoppingAPI
@@ -75,6 +76,9 @@ def parse_command_line():
     parser.add_argument(
         '--demo', type=int, default=10,
         help='Number of images to try to predict as demo.'
+    )
+    parser.add_argument(
+        '--test', '-t', action='store_true', help="Run evaluation on test data set"
     )
 
     return parser.parse_args()
@@ -155,20 +159,28 @@ if __name__ == '__main__':
 
     train = image_data.train.input.reshape(len(image_data.train.input), args.image_size, args.image_size, 3)
 
-    print(train.shape, image_data.train.labels.shape)
     if args.num_epochs:
+        train = image_data.train.input.reshape(
+            len(image_data.train.input), args.image_size, args.image_size, 3
+        )
+        print(train.shape, image_data.train.labels.shape)
         model.fit(train, image_data.train.labels, epochs=args.num_epochs)
         io.save_weights(model)
 
-    test = image_data.test.input.reshape(len(image_data.test.input), args.image_size, args.image_size, 3)
-    loss_and_metrics = model.evaluate(test, image_data.test.labels)
-    print()
-    print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
+    if args.test:
+        test = image_data.test.input.reshape(len(image_data.test.input), args.image_size, args.image_size, 3)
+        loss_and_metrics = model.evaluate(test, image_data.test.labels)
+        print()
+        print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
     for _ in range(args.demo):
         i = randrange(len(image_data.test.input))
         image = image_data.test.input[i]
         label = image_data.test.labels[i]
+        pprint(image_data.labels_sorted_by_probability(label))
         image_data.show_image(image)
-        print(label)
-        print(model.predict(image_data.test.input[i:i+1], batch_size=1, verbose=1))
+        pprint(
+            [(label, prob) for label, prob in image_data.labels_sorted_by_probability(
+                model.predict(image_data.test.input[i:i+1], batch_size=1, verbose=1)[0]
+            ).items() if prob > 0.01]
+        )
