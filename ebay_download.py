@@ -5,6 +5,8 @@ from operator import itemgetter
 from pprint import pprint
 from random import randrange
 
+from os.path import isfile
+
 from shopping_api import ShoppingAPI
 from category import Category
 from ebay_downloader_io import EbayDownloaderIO
@@ -75,10 +77,13 @@ def parse_command_line():
     )
     parser.add_argument(
         '--demo', type=int, default=10,
-        help='Number of images to try to predict as demo.'
+        help='Number of images from the test set to try to predict as demo.'
     )
     parser.add_argument(
         '--test', '-t', action='store_true', help="Run evaluation on test data set"
+    )
+    parser.add_argument(
+        '--predict', help='Image or comma-separated list to get predictions on'
     )
 
     return parser.parse_args()
@@ -121,20 +126,28 @@ def download_item_page(items, io):
         return valid_tags
 
 
-def print_prediction(data_set):
+def print_prediction(data_set, model):
     i = randrange(len(data_set.input))
     image = data_set.input[i]
     label = data_set.labels[i]
     print('actual values:')
-    pprint(image_data.labels_sorted_by_probability(label))
-    image_data.show_image(image)
+    pprint(data_set.labels_sorted_by_probability(label))
+    data_set.show_image(image)
     print('predictions:')
     pprint(
-        [(label, prob) for label, prob in image_data.labels_sorted_by_probability(
+        [(label, prob) for label, prob in data_set.labels_sorted_by_probability(
             model.predict(data_set.input[i:i + 1], batch_size=1, verbose=1)[0]
         ).items() if prob > 0.01]
     )
 
+
+def predict_images(data_set, model, filenames):
+    image_data = data_set.image_data(filenames)
+    pprint(
+        [(label, prob) for label, prob in data_set.labels_sorted_by_probability(
+            model.predict(image_data, batch_size=len(image_data), verbose=1)[0]
+        ).items() if prob > 0.01]
+    )
 
 if __name__ == '__main__':
     args = parse_command_line()
@@ -172,14 +185,6 @@ if __name__ == '__main__':
 
     io.load_weights(model)
 
-    for _ in range(args.demo):
-        i = randrange(len(image_data.train.input))
-        image = image_data.train.input[i]
-        label = image_data.train.labels[i]
-        print('labels before fitting:')
-        pprint(image_data.labels_sorted_by_probability(label))
-        image_data.show_image(image)
-
     if args.num_epochs:
         train = image_data.train.input.reshape(
             len(image_data.train.input), args.image_size, args.image_size, 3
@@ -195,5 +200,7 @@ if __name__ == '__main__':
         print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
     for _ in range(args.demo):
-        print_prediction(image_data.train)
-        print_prediction(image_data.test)
+        print_prediction(image_data.train, model)
+        # print_prediction(image_data.test)
+
+    predict_images(image_data, model, [f for f in args.predict.split(',') if isfile(f)])

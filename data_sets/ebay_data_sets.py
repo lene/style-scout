@@ -6,7 +6,7 @@ from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
 from PIL import Image
 import numpy
-from os.path import isfile
+from os.path import isfile, join
 
 
 class EbayDataSets(ImageFileDataSets):
@@ -63,13 +63,11 @@ class EbayDataSets(ImageFileDataSets):
 
         if extract:
             all_images, all_labels = self._extract_images()
+            all_labels = self._dense_to_one_hot(all_labels)
+
             required_ram = all_images.size*(4+1)+all_labels.nbytes
             if self.verbose:
                 print('RAM needed for images and labels: {0:.2f}GB'.format(required_ram/1024/1024/1024))
-
-            all_labels = self._dense_to_one_hot(all_labels)
-            if self.verbose:
-                print('all labels as one-hot:\n', all_labels)
 
             train_images, train_labels, test_images, test_labels = self.split_images(
                 all_images, all_labels, 1-test_share
@@ -102,6 +100,17 @@ class EbayDataSets(ImageFileDataSets):
             key=itemgetter(1), reverse=True
         )
         return OrderedDict(pairs)
+
+    def image_data(self, filenames):
+        images = []
+        for file in filenames:
+            try:
+                image = Image.open(join(file)).convert('RGB')
+            except OSError:
+                continue
+            images.append(numpy.asarray(self.downscale(image, method=add_border)))
+
+        return numpy.asarray(images)
 
     def _extract_images(self):
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
@@ -174,7 +183,7 @@ def _check_constructor_arguments_valid(
     else:
         # assert train_images.shape[1] == size[0]*size[1]*self.DEPTH, str(train_images.shape)
         assert len(train_images.shape) == 4
-        assert train_images.shape[1] == size[0], str(train_images.shape)
+        assert train_images.shape[1] == size[0], '{} (actual) != {} (expected)'.format(size, train_images.shape)
         assert train_images.shape[2] == size[1], str(train_images.shape)
         assert train_images.shape[3] == depth, str(train_images.shape)
         # assert test_images.shape[1] == size[0]*size[1]*self.DEPTH, str(test_images.shape)
