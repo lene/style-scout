@@ -164,6 +164,11 @@ def _check_constructor_arguments_valid(
         extract, size, depth, train_images, train_labels, test_images, test_labels,
         validation_images, validation_labels
 ):
+    assert isinstance(size, tuple)
+    assert len(size) == 2
+    assert isinstance(size[0], int)
+    assert isinstance(size[1], int)
+
     if extract:
         assert train_images is None
         assert train_labels is None
