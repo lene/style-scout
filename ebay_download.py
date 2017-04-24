@@ -81,6 +81,9 @@ def parse_command_line():
     parser.add_argument(
         '--test', '-t', action='store_true', help="Run evaluation on test data set"
     )
+    parser.add_argument(
+        '--use-single-batch', action='store_true', help="Read all data in advance"
+    )
 
     return parser.parse_args()
 
@@ -165,8 +168,10 @@ if __name__ == '__main__':
 
     from variable_inception import variable_inception
 
-    # image_data = io.get_images(items, valid_tags, args.image_size)
-    image_data = EbayDataGenerator(items, valid_tags, (args.image_size, args.image_size), args.verbose)
+    if args.use_single_batch:
+        image_data = io.get_images(items, valid_tags, args.image_size)
+    else:
+        image_data = EbayDataGenerator(items, valid_tags, (args.image_size, args.image_size), args.verbose)
 
     model = variable_inception(input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes)
 
@@ -183,13 +188,15 @@ if __name__ == '__main__':
         image_data.show_image(image)
 
     if args.num_epochs:
-        # train = image_data.train.input.reshape(
-        #     len(image_data.train.input), args.image_size, args.image_size, 3
-        # )
-        # print(train.shape, image_data.train.labels.shape)
-        model.fit_generator(image_data.generate_arrays(),
-                            steps_per_epoch=10000, epochs=args.num_epochs)
-        # model.fit(train, image_data.train.labels, epochs=args.num_epochs)
+        if args.use_single_batch:
+            train = image_data.train.input.reshape(
+                len(image_data.train.input), args.image_size, args.image_size, 3
+            )
+            model.fit(train[:469], image_data.train.labels[:469], epochs=args.num_epochs)
+        else:
+            model.fit_generator(
+                image_data.train_generator(), steps_per_epoch=len(image_data), epochs=args.num_epochs
+            )
         io.save_weights(model)
 
     if args.test:
