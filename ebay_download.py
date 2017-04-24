@@ -74,7 +74,7 @@ def parse_command_line():
         help='Size (both width and height) to which images are resized.'
     )
     parser.add_argument(
-        '--demo', type=int, default=10,
+        '--demo', type=int, default=5,
         help='Number of images to try to predict as demo.'
     )
     parser.add_argument(
