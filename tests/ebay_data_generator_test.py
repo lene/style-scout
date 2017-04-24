@@ -20,7 +20,7 @@ class EbayDataGeneratorTest(TestBase):
     def test_first(self):
         items, labels = self._generate_items_with_labels(4)
         generator = EbayDataGenerator(Items(items), labels, (139, 139))
-        for i, (image, labels) in enumerate(generator.generate_arrays()):
+        for i, (image, labels) in enumerate(generator.train_generator()):
             self.assertEqual((139, 139, 3), image.shape)
             self.assertEqual(1, labels[i])
             self.assertTrue(all(label == 0 for j, label in enumerate(labels) if j != i))

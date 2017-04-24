@@ -1,12 +1,10 @@
 from collections import OrderedDict
 from operator import itemgetter
 
-# from keras.preprocessing.image import ImageDataGenerator
-
 from data_sets import add_border
 from PIL import Image
 import numpy
-from os.path import isfile, join
+from os.path import join
 
 from items import Items
 
@@ -24,7 +22,7 @@ class EbayDataGenerator:
         """
         _check_constructor_arguments_valid(items, size, self.DEPTH)
 
-        self.items = items
+        self.items = items[:100]
         self.size = size
         self.num_features = size[0]*size[1]*self.DEPTH
         self.valid_labels = tuple(valid_labels)
@@ -32,24 +30,21 @@ class EbayDataGenerator:
         self.labels_to_numbers = {label: i for i, label in enumerate(self.valid_labels)}
         self.numbers_to_labels = {v: k for k, v in self.labels_to_numbers.items()}
         self.verbose = verbose
+        for item in self.items:
+            item.download_images(verbose=False)
 
-    def generate_arrays(self):
-        for i, item in enumerate(self.items):
-            if self.verbose:
-                print('Extracting images: {}/{}'.format(i+1, len(self.items)), end='\r')
-            item.download_images(verbose=self.verbose)
-            for image_file in item.picture_files:
-                try:
-                    image = Image.open(join(image_file)).convert('RGB')
-                except OSError:
-                    continue
-                yield numpy.asarray(self.downscale(image, method=add_border)), self._dense_to_one_hot(item.tags)
-            if self.verbose:
-                print()
-            # yield ({'input_1': x1, 'input_2': x2}, {'output': y})
-
-    def __length_hint__(self):
+    def __len__(self):
         return sum(len(item.picture_files) for item in self.items)
+
+    def train_generator(self):
+        while True:
+            for i, item in enumerate(self.items):
+                for image_file in item.picture_files:
+                    try:
+                        image = Image.open(join(image_file)).convert('RGB')
+                    except OSError:
+                        continue
+                    yield numpy.asarray(self.downscale(image, method=add_border)).reshape((1,139,139,3)), self._dense_to_one_hot(item.tags).reshape(1,46)
 
     def labels(self, predictions):
         return {
@@ -63,26 +58,6 @@ class EbayDataGenerator:
             key=itemgetter(1), reverse=True
         )
         return OrderedDict(pairs)
-
-    def _extract_images(self):
-        """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
-        import os.path
-        images, labels = [], []
-        for i, item in enumerate(self.items):
-            if self.verbose:
-                print('Extracting images: {}/{}'.format(i+1, len(self.items)), end='\r')
-            item.download_images(verbose=False)
-            for image_file in item.picture_files:
-                try:
-                    image = Image.open(os.path.join(image_file)).convert('RGB')
-                except OSError:
-                    continue
-                images.append(numpy.asarray(self.downscale(image, method=add_border)))
-                labels.append(tuple(item.tags))
-        if self.verbose:
-            print()
-
-        return numpy.asarray(images), numpy.asarray(labels)
 
     def downscale(self, image, method=add_border):
         w, h = image.size
@@ -126,8 +101,8 @@ class EbayDataGenerator:
 
 
 def _check_constructor_arguments_valid(items, size, depth):
-    assert isinstance(items, Items)
-    assert isinstance(size, tuple)
-    assert len(size) == 2
-    assert isinstance(size[0], int)
-    assert isinstance(size[1], int)
+    assert isinstance(items, Items), 'items argument needs to be an Items object'
+    assert isinstance(size, tuple), 'size argument needs to be a tuple of the form (width, height)'
+    assert len(size) == 2, 'size argument needs to be a tuple of the form (width, height)'
+    assert isinstance(size[0], int), 'size argument needs to be a tuple of the form (width, height)'
+    assert isinstance(size[1], int), 'size argument needs to be a tuple of the form (width, height)'
