@@ -171,7 +171,9 @@ if __name__ == '__main__':
     if args.use_single_batch:
         image_data = io.get_images(items, valid_tags, args.image_size, test_share=0)
     else:
-        image_data = EbayDataGenerator(items, valid_tags, (args.image_size, args.image_size), args.verbose)
+        image_data = EbayDataGenerator(
+            items, valid_tags, (args.image_size, args.image_size), batch_size=32, verbose=args.verbose
+        )
 
     model = variable_inception(input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes)
 
@@ -195,7 +197,7 @@ if __name__ == '__main__':
             model.fit(train, image_data.train.labels, epochs=args.num_epochs)
         else:
             model.fit_generator(
-                image_data.train_generator(), steps_per_epoch=len(items), epochs=args.num_epochs
+                image_data.train_generator(), steps_per_epoch=len(image_data), epochs=args.num_epochs
             )
         io.save_weights(model)
 

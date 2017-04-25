@@ -13,7 +13,7 @@ class EbayDataGenerator:
 
     DEPTH = 3
 
-    def __init__(self, items, valid_labels, size, verbose=False):
+    def __init__(self, items, valid_labels, size, batch_size=32, verbose=False):
         """
         Construct the data set from images belonging to items passed in
         TODO: finish this docstring
@@ -29,29 +29,31 @@ class EbayDataGenerator:
         self.num_classes = len(valid_labels)
         self.labels_to_numbers = {label: i for i, label in enumerate(self.valid_labels)}
         self.numbers_to_labels = {v: k for k, v in self.labels_to_numbers.items()}
+        self.batch_size = batch_size
         self.verbose = verbose
         for item in self.items:
             item.download_images(verbose=False)
+        chunks = [(item.tags, picture_file) for item in self.items for picture_file in item.picture_files]
+        self.batches = [chunks[i:i + self.batch_size] for i in range(0, len(chunks), self.batch_size)]
 
     def __len__(self):
-        return sum(len(item.picture_files) for item in self.items)
+        return len(self.batches)
 
     def train_generator(self):
         while True:
-            for i, item in enumerate(self.items):
-                images = []
-                labels = []
-                for image_file in item.picture_files:
-                    try:
-                        image = Image.open(join(image_file)).convert('RGB')
-                        image = self.downscale(image, method=add_border)
-                        images.append(numpy.asarray(image))
-                        labels.append(self._dense_to_one_hot(item.tags))
-                    except OSError:
-                        continue
-                images = numpy.asarray(images)
+            for i, batch in enumerate(self.batches):
+                images = self.images_for_batch(i)
+                labels = [self._dense_to_one_hot(data_point[0]) for data_point in batch]
                 yield images.reshape((len(images), self.size[0], self.size[1], self.DEPTH)), \
-                    numpy.asarray(labels).reshape(len(images), self.num_classes)
+                    numpy.asarray(labels).reshape(len(labels), self.num_classes)
+
+    def images_for_batch(self, batch_index):
+        images = [
+            numpy.asarray(
+                self.downscale(Image.open(join(data_point[1])).convert('RGB'), method=add_border)
+            ) for data_point in self.batches[batch_index]
+        ]
+        return numpy.asarray(images)
 
     def labels(self, predictions):
         return {
@@ -76,35 +78,6 @@ class EbayDataGenerator:
         for tag in label:
             labels_one_hot[self.labels_to_numbers[tag]] = 1
         return labels_one_hot
-
-    @classmethod
-    def _npz_file_name(cls, data_file):
-        if len(data_file) < 5 or data_file[-4:] != '.npz':
-            data_file += '.npz'
-        return data_file
-
-    @classmethod
-    def _create_from_file(cls, data_file, image_size, items, valid_labels, verbose=False):
-        if verbose:
-            print('Loading ' + data_file)
-        npz = numpy.load(data_file)
-        return cls(
-            items, valid_labels, (image_size, image_size), 0, extract=False,
-            train_images=npz['train_images'], train_labels=npz['train_labels'],
-            test_images=npz['test_images'], test_labels=npz['test_labels'],
-            validation_images=npz['validation_images'], validation_labels=npz['validation_labels']
-        )
-
-    @classmethod
-    def _save_to_file(cls, data, data_file, verbose=False):
-        if verbose:
-            print('Storing ' + data_file)
-        numpy.savez_compressed(
-            data_file,
-            train_images=data.train.input, train_labels=data.train.labels,
-            test_images=data.test.input, test_labels=data.test.labels,
-            validation_images=data.validation.input, validation_labels=data.validation.labels
-        )
 
 
 def _check_constructor_arguments_valid(items, size, depth):

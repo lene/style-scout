@@ -9,7 +9,10 @@ from functools import partial
 from os.path import join, isfile
 from os import sep
 
+
 class EbayDataGeneratorTest(TestBase):
+
+    NUM_IMAGES = 4
 
     def setUp(self):
         super().setUp()
@@ -17,20 +20,41 @@ class EbayDataGeneratorTest(TestBase):
         self.api.get_item = partial(create_item_dict, picture_url=['file://' + self.test_pic])
         Item.download_root = self.DOWNLOAD_ROOT
 
-    def test_first(self):
-        items, labels = self._generate_items_with_labels(4)
+    def test_generator_returns_all_images_and_labels_in_data_set(self):
+        items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
         generator = EbayDataGenerator(Items(items), labels, (139, 139))
-        for i, (image, labels) in enumerate(generator.train_generator()):
-            self.assertEqual((139, 139, 3), image.shape)
-            self.assertEqual(1, labels[i])
-            self.assertTrue(all(label == 0 for j, label in enumerate(labels) if j != i))
+        for i, (images, labels) in enumerate(generator.train_generator()):
+            if i >= self.NUM_IMAGES:
+                break
+            self.assertEqual((self.NUM_IMAGES, 139, 139, 3), images.shape)
+            self.assertEqual(1, labels[i][i])
+            self.assertTrue(all(label == 0 for j, label in enumerate(labels[i]) if j != i))
 
-    def _generate_items(self, num_items):
-        raw_items = [Item(self.api, self.category, i+1) for i in range(num_items)]
-        return Items(raw_items)
+    def test_generator_returns_batch_of_correct_size(self):
+        items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
+        generator = EbayDataGenerator(Items(items), labels, (139, 139), batch_size=2)
+
+        images, labels = next(generator.train_generator())
+        self.assertEqual((2, 139, 139, 3), images.shape)
+        self.assertEqual((2, self.NUM_IMAGES), labels.shape)
+
+    def test_generator_repeats_after_returning_full_data_set(self):
+        items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
+        generator = EbayDataGenerator(Items(items), labels, (139, 139), batch_size=2)
+
+        images0, labels0 = next(generator.train_generator())
+        _, _ = next(generator.train_generator())
+        images1, labels1 = next(generator.train_generator())
+        for i in range(len(labels0)):
+            for j in range(len(labels0[i])):
+                self.assertEqual(labels0[i][j], labels1[i][j])
 
     def _generate_items_with_labels(self, num_items):
         items = self._generate_items(num_items)
         for i, item in enumerate(items):
             item.tags = [str(i + 1)]
         return items, [str(i+1) for i in range(num_items)]
+
+    def _generate_items(self, num_items):
+        raw_items = [Item(self.api, self.category, i+1) for i in range(num_items)]
+        return Items(raw_items)
