@@ -22,7 +22,7 @@ class EbayDataGenerator:
         """
         _check_constructor_arguments_valid(items, size, self.DEPTH)
 
-        self.items = items[:100]
+        self.items = items
         self.size = size
         self.num_features = size[0]*size[1]*self.DEPTH
         self.valid_labels = tuple(valid_labels)
@@ -44,7 +44,11 @@ class EbayDataGenerator:
                         image = Image.open(join(image_file)).convert('RGB')
                     except OSError:
                         continue
-                    yield numpy.asarray(self.downscale(image, method=add_border)).reshape((1,139,139,3)), self._dense_to_one_hot(item.tags).reshape(1,46)
+                    yield numpy.asarray(
+                        self.downscale(image, method=add_border)).reshape(
+                        (1, self.size[0], self.size[1], self.DEPTH)
+                    ), \
+                    self._dense_to_one_hot(item.tags).reshape(1, self.num_classes)
 
     def labels(self, predictions):
         return {

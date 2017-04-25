@@ -32,7 +32,8 @@ class EbayDownloaderIO:
         if isfile(self.items_file):
             self._print_status('Loading', self.items_file)
             with open(self.items_file, 'rb') as file:
-                return Items(pickle.load(file), self.verbose)
+                items = pickle.load(file)
+                return Items(items, self.verbose)
         return Items([], self.verbose)
 
     def save_items(self, items):
@@ -74,16 +75,19 @@ class EbayDownloaderIO:
 
         return items
 
-    def get_images(self, items, valid_tags, image_size):
+    def get_images(self, items, valid_tags, image_size, test_share=0.2):
         """
         Loads or creates image data set with all images belonging to the given items and the labels
         determined by the passed valid_tags
         :param items: Items object for which the images and labels are returned
         :param valid_tags: List of tags which may be present in the labels of the returned data set 
         :param image_size: size to which the images are resized
+        :param test_share: portion of the data set which is used as test data
         :return: data set for the requested parameters
         """
-        return EbayDataSets.get_data(self.images_file, items, valid_tags, image_size, verbose=self.verbose)
+        return EbayDataSets.get_data(
+            self.images_file, items, valid_tags, image_size, test_share=test_share, verbose=self.verbose
+        )
 
     def load_weights(self, model):
         """
