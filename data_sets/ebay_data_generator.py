@@ -39,16 +39,19 @@ class EbayDataGenerator:
     def train_generator(self):
         while True:
             for i, item in enumerate(self.items):
+                images = []
+                labels = []
                 for image_file in item.picture_files:
                     try:
                         image = Image.open(join(image_file)).convert('RGB')
+                        image = self.downscale(image, method=add_border)
+                        images.append(numpy.asarray(image))
+                        labels.append(self._dense_to_one_hot(item.tags))
                     except OSError:
                         continue
-                    yield numpy.asarray(
-                        self.downscale(image, method=add_border)).reshape(
-                        (1, self.size[0], self.size[1], self.DEPTH)
-                    ), \
-                    self._dense_to_one_hot(item.tags).reshape(1, self.num_classes)
+                images = numpy.asarray(images)
+                yield images.reshape((len(images), self.size[0], self.size[1], self.DEPTH)), \
+                    numpy.asarray(labels).reshape(len(images), self.num_classes)
 
     def labels(self, predictions):
         return {
