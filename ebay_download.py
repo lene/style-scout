@@ -192,11 +192,10 @@ if __name__ == '__main__':
             train = image_data.train.input.reshape(
                 len(image_data.train.input), args.image_size, args.image_size, 3
             )
-            # 100: 469, 200: 913, 400: 1851
             model.fit(train, image_data.train.labels, epochs=args.num_epochs)
         else:
             model.fit_generator(
-                image_data.train_generator(), steps_per_epoch=len(image_data), epochs=args.num_epochs
+                image_data.train_generator(), steps_per_epoch=len(items), epochs=args.num_epochs
             )
         io.save_weights(model)
 
