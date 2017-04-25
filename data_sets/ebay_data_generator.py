@@ -1,19 +1,33 @@
 from collections import OrderedDict
 from operator import itemgetter
+from functools import wraps
+from os.path import join, isfile
 
-from data_sets import add_border
 from PIL import Image
 import numpy
-from os.path import join
 
 from items import Items
+from data_sets import add_border
+
+
+def batch_cache(method):
+    @wraps(method)
+    def _impl(self, batch_index):
+        if isfile(self.cache_file(batch_index)):
+            npz = numpy.load(self.cache_file(batch_index))
+            return npz['images']
+        else:
+            images = method(self, batch_index)
+            numpy.savez_compressed(self.cache_file(batch_index), images=images)
+            return images
+    return _impl
 
 
 class EbayDataGenerator:
 
     DEPTH = 3
 
-    def __init__(self, items, valid_labels, size, batch_size=32, verbose=False):
+    def __init__(self, items, valid_labels, size, batch_size=32, cache_dir='/tmp', verbose=False):
         """
         Construct the data set from images belonging to items passed in
         TODO: finish this docstring
@@ -30,6 +44,7 @@ class EbayDataGenerator:
         self.labels_to_numbers = {label: i for i, label in enumerate(self.valid_labels)}
         self.numbers_to_labels = {v: k for k, v in self.labels_to_numbers.items()}
         self.batch_size = batch_size
+        self.cache_dir = cache_dir
         self.verbose = verbose
         for item in self.items:
             item.download_images(verbose=False)
@@ -47,13 +62,20 @@ class EbayDataGenerator:
                 yield images.reshape((len(images), self.size[0], self.size[1], self.DEPTH)), \
                     numpy.asarray(labels).reshape(len(labels), self.num_classes)
 
+    @batch_cache
     def images_for_batch(self, batch_index):
-        images = [
+        images = numpy.asarray([
             numpy.asarray(
                 self.downscale(Image.open(join(data_point[1])).convert('RGB'), method=add_border)
             ) for data_point in self.batches[batch_index]
-        ]
-        return numpy.asarray(images)
+        ])
+        return images
+
+    def cache_file(self, batch_index):
+        return join(
+            self.cache_dir,
+            'style_scout_{:05d}_{:03d}_{:04d}.npz'.format(len(self.items), self.size[0], batch_index)
+        )
 
     def labels(self, predictions):
         return {
