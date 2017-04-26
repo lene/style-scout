@@ -67,16 +67,14 @@ def parse_command_line():
         '--complete-tags-only', action='store_true', help="Filter out incomplete tags"
     )
     parser.add_argument(
-        '--num-epochs', '-n', type=int, default=1,
-        help='How many times to iterate.'
+        '--num-epochs', '-n', type=int, default=1, help='How many times to iterate.'
     )
     parser.add_argument(
         '--image-size', '-s', type=int, default=DEFAULT_SIZE,
         help='Size (both width and height) to which images are resized.'
     )
     parser.add_argument(
-        '--demo', type=int, default=5,
-        help='Number of images to try to predict as demo.'
+        '--demo', type=int, default=5, help='Number of images to try to predict as demo.'
     )
     parser.add_argument(
         '--test', '-t', action='store_true', help="Run evaluation on test data set"
@@ -85,8 +83,10 @@ def parse_command_line():
         '--use-single-batch', action='store_true', help="Read all data in advance"
     )
     parser.add_argument(
-        '--batch-size', type=int, default=32,
-        help='Batch size used in fitting the model.'
+        '--batch-size', type=int, default=32, help='Batch size used in fitting the model.'
+    )
+    parser.add_argument(
+        '--cache-dir', default='/tmp', help="Directory to contain the cached image data"
     )
 
     return parser.parse_args()
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     else:
         image_data = EbayDataGenerator(
             items, valid_tags, (args.image_size, args.image_size),
-            batch_size=args.batch_size, verbose=args.verbose
+            batch_size=args.batch_size, cache_dir=args.cache_dir, verbose=args.verbose
         )
 
     model = variable_inception(input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes)
