@@ -43,7 +43,7 @@ class Items(WithVerbose):
             if item.id not in ids:
                 new_items.append(item)
                 ids.add(item.id)
-                self._print_status(len(self), '->', len(new_items), 'items')
+        self._print_status(len(self), '->', len(new_items), 'items')
         self.items = new_items
 
     def get_valid_tags(self, min_count):

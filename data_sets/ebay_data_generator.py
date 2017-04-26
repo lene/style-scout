@@ -8,6 +8,7 @@ from items import Items
 from data_sets import add_border
 from data_sets.labeled_items import LabeledItems
 from with_verbose import WithVerbose
+from data_sets.contains_images import ContainsImages
 
 
 def batch_cache(images_generator):
@@ -27,13 +28,12 @@ def batch_cache(images_generator):
     return _impl
 
 
-class EbayDataGenerator(LabeledItems, WithVerbose):
+class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
     """
     Returns the image data and labels for a data set in batches (of configurable size) instead of keeping them
     all in memory at once.
     """
 
-    DEPTH = 3
     CACHE_FILE_PREFIX = 'style_scout'
 
     def __init__(self, items, valid_labels, size, batch_size=32, cache_dir='/tmp', verbose=False):
@@ -48,10 +48,9 @@ class EbayDataGenerator(LabeledItems, WithVerbose):
         """
         _check_constructor_arguments_valid(items, size, self.DEPTH)
         LabeledItems.__init__(self, items, valid_labels)
+        ContainsImages.__init__(self, *size)
         WithVerbose.__init__(self, verbose)
 
-        self.size = size
-        self.num_features = size[0]*size[1]*self.DEPTH
         self.batch_size = batch_size
         self.cache_dir = cache_dir
         for item in self.items:
@@ -101,11 +100,6 @@ class EbayDataGenerator(LabeledItems, WithVerbose):
                 self.CACHE_FILE_PREFIX, len(self.items), self.size[0], batch_index
             )
         )
-
-    def downscale(self, image, method=add_border):
-        w, h = image.size
-        image = method(image, w, h)
-        return numpy.asarray(image.resize(self.size, Image.BICUBIC))
 
     def _dense_to_one_hot(self, label):
         labels_one_hot = numpy.zeros(self.num_classes)

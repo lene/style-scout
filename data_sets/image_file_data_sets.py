@@ -6,10 +6,10 @@ from gzip import open as gzopen
 
 from PIL import Image
 import numpy
-from copy import deepcopy
 
-from .data_sets import DataSets
-from .images_labels_data_set import ImagesLabelsDataSet
+from data_sets.data_sets import DataSets
+from data_sets.images_labels_data_set import ImagesLabelsDataSet
+from data_sets.contains_images import ContainsImages
 
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
@@ -18,27 +18,10 @@ __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 IMAGENET_SIZE = 299
 
 
-def crop_bottom(image, w, h):
-    if w > h:
-        image = image.crop(((w - h) / 2, 0, w - (w - h) / 2, h))
-    elif h > w:
-        image = image.crop((0, 0, w, w))
-    return image
-
-
-def add_border(image, w, h):
-    if w == h:
-        return image
-    new_image = Image.new("RGB", (max(w, h), max(w, h)))
-    new_image.paste(image, (0, 0))
-    return new_image
-
-
-class ImageFileDataSets(DataSets):
+class ImageFileDataSets(DataSets, ContainsImages):
     """Data sets (training, validation and test data) containing RGB image files."""
 
     DEFAULT_VALIDATION_SHARE = 0.2
-    DEPTH = 3
 
     @classmethod
     def get_data(cls, data_file=None, image_directory=None, image_size=IMAGENET_SIZE):
@@ -66,10 +49,9 @@ class ImageFileDataSets(DataSets):
         :param validation_share:
         :param one_hot:
         """
+        ContainsImages.__init__(self, x_size, y_size)
         self.one_hot = one_hot
         self.base_dir = base_dir
-        self.size = (x_size, y_size)
-        self.num_features = x_size*y_size*self.DEPTH
 
         all_images, all_labels = self._extract_images(base_dir)
 
@@ -100,9 +82,6 @@ class ImageFileDataSets(DataSets):
 
     ############################################################################
 
-    def _extract_image_from_url(self, url, labels):
-        pass
-
     def _extract_images(self, base_dir):
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
         import os.path
@@ -125,18 +104,6 @@ class ImageFileDataSets(DataSets):
                 labels.append(label)
 
         return numpy.asarray(images), numpy.asarray(labels)
-
-    def downscale(self, image, method=crop_bottom):
-        w, h = image.size
-        image = method(image, w, h)
-        return image.resize(self.size, Image.BICUBIC)
-
-    @staticmethod
-    def show_image(rgb_values, label=''):
-        import matplotlib.pyplot as plt
-        plt.imshow(rgb_values, cmap='gray')
-        plt.title(label)
-        plt.show()
 
     def split_images(self, images, labels, train_to_test_ratio):
         from random import shuffle

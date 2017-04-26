@@ -1,8 +1,9 @@
-from data_sets import ImageFileDataSets, add_border
+from data_sets import ImageFileDataSets
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
 from data_sets.labeled_items import LabeledItems
 from with_verbose import WithVerbose
+from data_sets.contains_images import ContainsImages, add_border
 
 from PIL import Image
 import numpy
@@ -62,9 +63,8 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
             train_images, train_labels, test_images, test_labels, validation_images, validation_labels
         )
         LabeledItems.__init__(self, items, valid_labels)
+        ContainsImages.__init__(self, *size)
         WithVerbose.__init__(self, verbose)
-        self.size = size
-        self.num_features = size[0]*size[1]*self.DEPTH
 
         if extract:
             all_images, all_labels = self._extract_images()
