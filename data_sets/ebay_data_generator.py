@@ -7,6 +7,7 @@ import numpy
 from items import Items
 from data_sets import add_border
 from data_sets.labeled_items import LabeledItems
+from with_verbose import WithVerbose
 
 
 def batch_cache(images_generator):
@@ -26,7 +27,7 @@ def batch_cache(images_generator):
     return _impl
 
 
-class EbayDataGenerator(LabeledItems):
+class EbayDataGenerator(LabeledItems, WithVerbose):
     """
     Returns the image data and labels for a data set in batches (of configurable size) instead of keeping them
     all in memory at once.
@@ -47,12 +48,12 @@ class EbayDataGenerator(LabeledItems):
         """
         _check_constructor_arguments_valid(items, size, self.DEPTH)
         LabeledItems.__init__(self, items, valid_labels)
+        WithVerbose.__init__(self, verbose)
 
         self.size = size
         self.num_features = size[0]*size[1]*self.DEPTH
         self.batch_size = batch_size
         self.cache_dir = cache_dir
-        self.verbose = verbose
         for item in self.items:
             item.download_images(verbose=False)
         chunks = [(item.tags, picture_file) for item in self.items for picture_file in item.picture_files]

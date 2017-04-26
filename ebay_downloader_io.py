@@ -8,21 +8,22 @@ from data_sets import EbayDataSets
 from category import Category
 from item import Item
 from items import Items
+from with_verbose import WithVerbose
 
 
-class EbayDownloaderIO:
+class EbayDownloaderIO(WithVerbose):
 
     def __init__(
             self, base_dir, image_size=None, items_file=None, images_file=None, weights_file=None,
             likes_file=None, verbose=False
     ):
+        WithVerbose.__init__(self, verbose)
         makedirs(base_dir, exist_ok=True)
         self.base_dir = base_dir
         self.items_file = join(self.base_dir, items_file or _filename('items', 'pickle', None))
         self.images_file = join(self.base_dir, images_file or _filename('images', 'npz', image_size))
         self.weights_file = join(self.base_dir, weights_file or _filename('weights', 'hdf5', image_size))
         self.likes_file = self._likes_filename(likes_file)
-        self.verbose = verbose
 
     def load_items(self):
         """
@@ -107,10 +108,6 @@ class EbayDownloaderIO:
         """
         self._print_status('Saving', self.weights_file)
         model.save_weights(self.weights_file)
-
-    def _print_status(self, *args):
-        if self.verbose:
-            print(*args)
 
     def _likes_filename(self, likes_file):
         return None if not likes_file \

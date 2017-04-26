@@ -1,13 +1,15 @@
 from collections import defaultdict
 
+from with_verbose import WithVerbose
 
-class Items:
+
+class Items(WithVerbose):
     """
     A set of Item objects along with some utility functions.
     """
     def __init__(self, raw_items, verbose=False):
+        WithVerbose.__init__(self, verbose)
         self.items = raw_items
-        self.verbose = verbose
 
     def __iter__(self):
         return self.items.__iter__()
@@ -41,8 +43,7 @@ class Items:
             if item.id not in ids:
                 new_items.append(item)
                 ids.add(item.id)
-        if self.verbose:
-            print(len(self), '->', len(new_items), 'items')
+                self._print_status(len(self), '->', len(new_items), 'items')
         self.items = new_items
 
     def get_valid_tags(self, min_count):
@@ -95,8 +96,7 @@ class Items:
 
         old_length = len(self)
         items = [item for item in self.items if has_complete_tags(item)]
-        if self.verbose:
-            print(old_length, '->', len(items))
+        self._print_status(old_length, '->', len(items))
         return Items(items, self.verbose)
 
     def update_tags(self, valid_tags):

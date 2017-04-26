@@ -2,13 +2,14 @@ from data_sets import ImageFileDataSets, add_border
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
 from data_sets.labeled_items import LabeledItems
+from with_verbose import WithVerbose
 
 from PIL import Image
 import numpy
 from os.path import isfile
 
 
-class EbayDataSets(ImageFileDataSets, LabeledItems):
+class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
 
     @classmethod
     def get_data(cls, data_file, items, valid_labels, image_size, test_share=0.2, verbose=False):
@@ -61,19 +62,18 @@ class EbayDataSets(ImageFileDataSets, LabeledItems):
             train_images, train_labels, test_images, test_labels, validation_images, validation_labels
         )
         LabeledItems.__init__(self, items, valid_labels)
+        WithVerbose.__init__(self, verbose)
         self.size = size
         self.num_features = size[0]*size[1]*self.DEPTH
-        self.verbose = verbose
 
         if extract:
             all_images, all_labels = self._extract_images()
             required_ram = all_images.size*(4+1)+all_labels.nbytes
-            if self.verbose:
-                print('RAM needed for images and labels: {0:.2f}GB'.format(required_ram/1024/1024/1024))
+            self._print_status(
+                'RAM needed for images and labels: {0:.2f}GB'.format(required_ram/1024/1024/1024)
+            )
 
             all_labels = self._dense_to_one_hot(all_labels)
-            if self.verbose:
-                print('all labels as one-hot:\n', all_labels)
 
             train_images, train_labels, test_images, test_labels = self.split_images(
                 all_images, all_labels, 1-test_share
@@ -99,8 +99,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems):
         import os.path
         images, labels = [], []
         for i, item in enumerate(self.items):
-            if self.verbose:
-                print('Extracting images: {}/{}'.format(i+1, len(self.items)), end='\r')
+            self._print_status('Extracting images: {}/{}'.format(i+1, len(self.items)), end='\r')
             item.download_images(verbose=False)
             for image_file in item.picture_files:
                 try:
@@ -109,8 +108,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems):
                     continue
                 images.append(numpy.asarray(self.downscale(image, method=add_border)))
                 labels.append(tuple(item.tags))
-        if self.verbose:
-            print()
+        self._print_status()
 
         return numpy.asarray(images), numpy.asarray(labels)
 
