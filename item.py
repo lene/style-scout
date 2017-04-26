@@ -107,7 +107,7 @@ class Item:
         try:
             if not isfile(filename):
                 urlretrieve(url, filename)
-            cls._show_image(filename, show)
+                cls._show_image(filename, show)
             return filename
         except URLError:
             return None
