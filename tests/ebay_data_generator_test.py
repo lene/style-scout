@@ -6,8 +6,9 @@ from item import Item
 from items import Items
 
 from functools import partial
-from os.path import join, isfile
+from os.path import join, isdir
 from os import sep
+from os import makedirs
 
 
 class EbayDataGeneratorTest(TestBase):
@@ -19,10 +20,12 @@ class EbayDataGeneratorTest(TestBase):
         self.test_pic = join(sep, *__file__.split('/')[:-1], 'data', 'test.jpg')
         self.api.get_item = partial(create_item_dict, picture_url=['file://' + self.test_pic])
         Item.download_root = self.DOWNLOAD_ROOT
+        self.cache_dir = join(self.DOWNLOAD_ROOT, 'cache')
+        makedirs(self.cache_dir)
 
     def test_generator_returns_all_images_and_labels_in_data_set(self):
         items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
-        generator = EbayDataGenerator(Items(items), labels, (139, 139))
+        generator = EbayDataGenerator(Items(items), labels, (139, 139), cache_dir=self.cache_dir)
         for i, (images, labels) in enumerate(generator.train_generator()):
             if i >= self.NUM_IMAGES:
                 break
@@ -32,7 +35,7 @@ class EbayDataGeneratorTest(TestBase):
 
     def test_generator_returns_batch_of_correct_size(self):
         items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
-        generator = EbayDataGenerator(Items(items), labels, (139, 139), batch_size=2)
+        generator = EbayDataGenerator(Items(items), labels, (139, 139), batch_size=2, cache_dir=self.cache_dir)
 
         images, labels = next(generator.train_generator())
         self.assertEqual((2, 139, 139, 3), images.shape)
@@ -40,7 +43,7 @@ class EbayDataGeneratorTest(TestBase):
 
     def test_generator_repeats_after_returning_full_data_set(self):
         items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
-        generator = EbayDataGenerator(Items(items), labels, (139, 139), batch_size=2)
+        generator = EbayDataGenerator(Items(items), labels, (139, 139), batch_size=2, cache_dir=self.cache_dir)
 
         images0, labels0 = next(generator.train_generator())
         _, _ = next(generator.train_generator())
