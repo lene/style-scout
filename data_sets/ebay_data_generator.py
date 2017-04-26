@@ -56,20 +56,20 @@ class EbayDataGenerator:
 
     def train_generator(self):
         while True:
-            for i, batch in enumerate(self.batches):
-                images = self.images_for_batch(i)
-                labels = [self._dense_to_one_hot(data_point[0]) for data_point in batch]
-                yield images.reshape((len(images), self.size[0], self.size[1], self.DEPTH)), \
-                    numpy.asarray(labels).reshape(len(labels), self.num_classes)
+            for i in range(len(self.batches)):
+                yield self.images_for_batch(i), self.labels_for_batch(i)
+
+    def labels_for_batch(self, batch_index):
+        return numpy.asarray(
+            [self._dense_to_one_hot(data_point[0]) for data_point in self.batches[batch_index]]
+        )
 
     @batch_cache
     def images_for_batch(self, batch_index):
-        images = numpy.asarray([
-            numpy.asarray(
-                self.downscale(Image.open(join(data_point[1])).convert('RGB'), method=add_border)
-            ) for data_point in self.batches[batch_index]
+        return numpy.asarray([
+            self.downscale(Image.open(join(data_point[1])).convert('RGB'), method=add_border)
+            for data_point in self.batches[batch_index]
         ])
-        return images
 
     def cache_file(self, batch_index):
         return join(

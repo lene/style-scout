@@ -6,9 +6,8 @@ from item import Item
 from items import Items
 
 from functools import partial
-from os.path import join, isdir
-from os import sep
-from os import makedirs
+from os.path import join
+from os import sep, makedirs
 
 
 class EbayDataGeneratorTest(TestBase):
