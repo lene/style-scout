@@ -1,15 +1,14 @@
-from collections import OrderedDict
-from operator import itemgetter
-
 from data_sets import ImageFileDataSets, add_border
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
+from data_sets.labeled_items import LabeledItems
+
 from PIL import Image
 import numpy
 from os.path import isfile
 
 
-class EbayDataSets(ImageFileDataSets):
+class EbayDataSets(ImageFileDataSets, LabeledItems):
 
     @classmethod
     def get_data(cls, data_file, items, valid_labels, image_size, test_share=0.2, verbose=False):
@@ -51,14 +50,9 @@ class EbayDataSets(ImageFileDataSets):
             extract, size, self.DEPTH,
             train_images, train_labels, test_images, test_labels, validation_images, validation_labels
         )
-
-        self.items = items
+        LabeledItems.__init__(self, items, valid_labels)
         self.size = size
         self.num_features = size[0]*size[1]*self.DEPTH
-        self.valid_labels = tuple(valid_labels)
-        self.num_classes = len(valid_labels)
-        self.labels_to_numbers = {label: i for i, label in enumerate(self.valid_labels)}
-        self.numbers_to_labels = {v: k for k, v in self.labels_to_numbers.items()}
         self.verbose = verbose
 
         if extract:
@@ -89,19 +83,6 @@ class EbayDataSets(ImageFileDataSets):
             ImagesLabelsDataSet(validation_images, validation_labels, self.DEPTH),
             ImagesLabelsDataSet(test_images, test_labels, self.DEPTH)
         )
-
-    def labels(self, predictions):
-        return {
-            self.numbers_to_labels[index]: probability
-            for index, probability in enumerate(predictions) if probability > 0
-        }
-
-    def labels_sorted_by_probability(self, predictions):
-        pairs = sorted(
-            [(label, probability) for label, probability in self.labels(predictions).items()],
-            key=itemgetter(1), reverse=True
-        )
-        return OrderedDict(pairs)
 
     def _extract_images(self):
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
