@@ -42,9 +42,19 @@ class EbayDataSets(ImageFileDataSets, LabeledItems):
     ):
         """
         Construct the data set from images belonging to items passed in
-        TODO: finish this docstring
+        :param items: Items object corresponding to the data set
+        :param valid_labels: Labels corresponding to the labels of the data set
+        :param size: tuple(width, height): Size the images are scaled to
         :param test_share: fraction of the data used as test data
-        :param validation_share:
+        :param validation_share: fraction of the data used as validation data
+        :param extract: If False, initialize the object directly from the following data
+        :param train_images: Image data to be used as features for the training set
+        :param train_labels: Labels to be used as labels for the training set
+        :param test_images: Image data to be used as features for the test set
+        :param test_labels: Labels to be used as labels for the test set
+        :param validation_images: Image data to be used as features for the validation set
+        :param validation_labels: Labels to be used as labels for the validation set
+        :param verbose: If set, print status/progress information
         """
         _check_constructor_arguments_valid(
             extract, size, self.DEPTH,
