@@ -1,6 +1,9 @@
 # ebay authentication tokens
 *_auth.json
 
+# list of liked items
+likes.json
+
 # IDE configuration
 .idea
 dir.sh

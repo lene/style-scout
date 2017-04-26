@@ -1,3 +1,5 @@
+from os import remove
+
 from tag_processor import TagProcessor
 
 import re
@@ -114,10 +116,16 @@ class Item:
     def _show_image(cls, filename, show):
         from PIL import Image
         if show:
-            # for debugging/following the status, mostly
-            with Image.open(filename) as image:
-                # image.show()
-                print(filename, image.size)
+            try:
+                # for debugging/following the status, mostly
+                with Image.open(filename) as image:
+                    # image.show()
+                    print(filename, image.size)
+            except OSError:
+                try:
+                    remove(filename)
+                except FileNotFoundError:
+                    pass
 
     def __str__(self):
             return """Id: {}
