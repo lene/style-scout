@@ -84,6 +84,10 @@ def parse_command_line():
     parser.add_argument(
         '--use-single-batch', action='store_true', help="Read all data in advance"
     )
+    parser.add_argument(
+        '--batch-size', type=int, default=32,
+        help='Batch size used in fitting the model.'
+    )
 
     return parser.parse_args()
 
@@ -172,7 +176,8 @@ if __name__ == '__main__':
         image_data = io.get_images(items, valid_tags, args.image_size, test_share=0)
     else:
         image_data = EbayDataGenerator(
-            items, valid_tags, (args.image_size, args.image_size), batch_size=32, verbose=args.verbose
+            items, valid_tags, (args.image_size, args.image_size),
+            batch_size=args.batch_size, verbose=args.verbose
         )
 
     model = variable_inception(input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes)
@@ -194,7 +199,7 @@ if __name__ == '__main__':
             train = image_data.train.input.reshape(
                 len(image_data.train.input), args.image_size, args.image_size, 3
             )
-            model.fit(train, image_data.train.labels, epochs=args.num_epochs)
+            model.fit(train, image_data.train.labels, epochs=args.num_epochs, batch_size=args.batch_size)
         else:
             model.fit_generator(
                 image_data.train_generator(), steps_per_epoch=len(image_data), epochs=args.num_epochs
