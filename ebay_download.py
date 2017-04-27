@@ -2,10 +2,7 @@ import json
 
 from argparse import ArgumentParser
 from operator import itemgetter
-from pprint import pprint
-from random import randrange
 
-from data_sets.ebay_data_generator import EbayDataGenerator
 from shopping_api import ShoppingAPI
 from category import Category
 from ebay_downloader_io import EbayDownloaderIO
@@ -41,12 +38,6 @@ def parse_command_line():
         '--item-file', default=None, help="Pickle file from which to load downloaded items"
     )    
     parser.add_argument(
-        '--images-file', default=None, help='Pickle file from which to load precomputed image data set'
-    )
-    parser.add_argument(
-        '--weights-file', '-w', default=None, help='HDF5 file from which to load precomputed set of weights'
-    )
-    parser.add_argument(
         '--ebay-auth-file', default='ebay_auth.json',
         help="JSON file containing the eBay authorization IDs"
     )    
@@ -65,28 +56,6 @@ def parse_command_line():
     )
     parser.add_argument(
         '--complete-tags-only', action='store_true', help="Filter out incomplete tags"
-    )
-    parser.add_argument(
-        '--num-epochs', '-n', type=int, default=1, help='How many times to iterate.'
-    )
-    parser.add_argument(
-        '--image-size', '-s', type=int, default=DEFAULT_SIZE,
-        help='Size (both width and height) to which images are resized.'
-    )
-    parser.add_argument(
-        '--demo', type=int, default=5, help='Number of images to try to predict as demo.'
-    )
-    parser.add_argument(
-        '--test', '-t', action='store_true', help="Run evaluation on test data set"
-    )
-    parser.add_argument(
-        '--use-single-batch', action='store_true', help="Read all data in advance"
-    )
-    parser.add_argument(
-        '--batch-size', type=int, default=32, help='Batch size used in fitting the model.'
-    )
-    parser.add_argument(
-        '--cache-dir', default='/tmp', help="Directory to contain the cached image data"
     )
 
     return parser.parse_args()
@@ -129,21 +98,6 @@ def download_item_page(items, io):
         return valid_tags
 
 
-def print_prediction(data_set):
-    i = randrange(len(data_set.input))
-    image = data_set.input[i]
-    label = data_set.labels[i]
-    print('actual values:')
-    pprint(image_data.labels_sorted_by_probability(label))
-    image_data.show_image(image)
-    print('predictions:')
-    pprint(
-        [(label, prob) for label, prob in image_data.labels_sorted_by_probability(
-            model.predict(data_set.input[i:i + 1], batch_size=1, verbose=1)[0]
-        ).items() if prob > 0.01]
-    )
-
-
 if __name__ == '__main__':
     args = parse_command_line()
 
@@ -154,8 +108,7 @@ if __name__ == '__main__':
     categories = Category.search_categories(api)
 
     io = EbayDownloaderIO(
-        args.save_folder, args.image_size, args.item_file, args.images_file, args.weights_file,
-        args.likes_file, args.verbose
+        args.save_folder, items_file=args.item_file, likes_file=args.likes_file, verbose=args.verbose
     )
     items = io.load_items()
     items = io.import_likes(api, items)
@@ -169,49 +122,3 @@ if __name__ == '__main__':
             if args.verbose:
                 print(i+1, '/', len(items), end=' ')
             item.download_images(verbose=args.verbose)
-
-    from variable_inception import variable_inception
-
-    if args.use_single_batch:
-        image_data = io.get_images(items, valid_tags, args.image_size, test_share=0)
-    else:
-        image_data = EbayDataGenerator(
-            items, valid_tags, (args.image_size, args.image_size),
-            batch_size=args.batch_size, cache_dir=args.cache_dir, verbose=args.verbose
-        )
-
-    model = variable_inception(input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes)
-
-    model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
-
-    io.load_weights(model)
-
-    for _ in range(args.demo):
-        i = randrange(len(image_data.train.input))
-        image = image_data.train.input[i]
-        label = image_data.train.labels[i]
-        print('labels before fitting:')
-        pprint(image_data.labels_sorted_by_probability(label))
-        image_data.show_image(image)
-
-    if args.num_epochs:
-        if args.use_single_batch:
-            train = image_data.train.input.reshape(
-                len(image_data.train.input), args.image_size, args.image_size, 3
-            )
-            model.fit(train, image_data.train.labels, epochs=args.num_epochs, batch_size=args.batch_size)
-        else:
-            model.fit_generator(
-                image_data.train_generator(), steps_per_epoch=len(image_data), epochs=args.num_epochs
-            )
-        io.save_weights(model)
-
-    if args.test:
-        test = image_data.test.input.reshape(len(image_data.test.input), args.image_size, args.image_size, 3)
-        loss_and_metrics = model.evaluate(test, image_data.test.labels)
-        print()
-        print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
-
-    for _ in range(args.demo):
-        print_prediction(image_data.train)
-        print_prediction(image_data.test)
