@@ -194,6 +194,7 @@ def is_image_file(filename):
 
 async def download_images(item, download_root, max_threads=10):
     from urllib.request import urlretrieve
+    from urllib.error import URLError
     import concurrent.futures
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
         loop = asyncio.get_event_loop()
@@ -202,4 +203,7 @@ async def download_images(item, download_root, max_threads=10):
                 executor, urlretrieve, url, url_to_file(download_root, url)
             ) for url in item.picture_urls if not is_image_file(url_to_file(download_root, url))
         ]
-        await asyncio.gather(*futures)
+        try:
+            await asyncio.gather(*futures)
+        except URLError:
+            pass
