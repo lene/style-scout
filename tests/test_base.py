@@ -1,10 +1,10 @@
-from shopping_api import ShoppingAPI
-from category import Category
-
 import unittest
-from unittest.mock import Mock
 from os.path import isdir
 from shutil import rmtree
+from unittest.mock import Mock
+
+from acquisition.shopping_api import ShoppingAPI
+from category import Category
 
 
 class TestBase(unittest.TestCase):

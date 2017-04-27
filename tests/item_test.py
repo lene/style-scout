@@ -1,10 +1,10 @@
 
-from tests.test_base import TestBase, create_item_dict
-from item import Item
-
 from functools import partial
-from os.path import join, isfile
 from os import sep
+from os.path import join, isfile
+
+from acquisition.item import Item
+from tests.test_base import TestBase, create_item_dict
 
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 

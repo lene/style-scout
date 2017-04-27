@@ -1,7 +1,7 @@
 
+from acquisition.item import Item
+from acquisition.items import Items
 from tests.test_base import TestBase
-from item import Item
-from items import Items
 
 
 class ItemsTest(TestBase):

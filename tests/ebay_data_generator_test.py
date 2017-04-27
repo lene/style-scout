@@ -1,13 +1,12 @@
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
-from tests.test_base import TestBase, create_item_dict
-
-from data_sets import EbayDataGenerator
-from item import Item
-from items import Items
-
 from functools import partial
-from os.path import join
 from os import sep, makedirs
+from os.path import join
+
+from acquisition.item import Item
+from acquisition.items import Items
+from data_sets import EbayDataGenerator
+from tests.test_base import TestBase, create_item_dict
 
 
 class EbayDataGeneratorTest(TestBase):

@@ -1,12 +1,10 @@
 import json
-
 from argparse import ArgumentParser
 from operator import itemgetter
 
-from shopping_api import ShoppingAPI
+from acquisition.ebay_downloader_io import EbayDownloaderIO
+from acquisition.shopping_api import ShoppingAPI
 from category import Category
-from ebay_downloader_io import EbayDownloaderIO
-
 
 MIN_TAG_NUM = 10
 SAVE_FOLDER = 'data'

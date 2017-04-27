@@ -1,13 +1,12 @@
-from tests.test_base import TestBase, create_item_dict
-
-from data_sets import EbayDataSets
-from item import Item
+from functools import partial
+from os import sep
+from os.path import join, isfile
 
 import numpy
 
-from functools import partial
-from os.path import join, isfile
-from os import sep
+from acquisition.item import Item
+from data_sets import EbayDataSets
+from tests.test_base import TestBase, create_item_dict
 
 SIZE = 139
 

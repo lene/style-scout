@@ -1,14 +1,14 @@
 
+import json
+import pickle
 from os import makedirs, rename, remove
 from os.path import isfile, join
-import pickle
-import json
 
-from data_sets import EbayDataSets
+from acquisition.item import Item
+from acquisition.items import Items
 from category import Category
-from item import Item
-from items import Items
-from with_verbose import WithVerbose
+from data_sets import EbayDataSets
+from utils.with_verbose import WithVerbose
 
 
 class EbayDownloaderIO(WithVerbose):

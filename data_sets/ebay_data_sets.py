@@ -1,13 +1,14 @@
+from os.path import isfile
+
+import numpy
+from PIL import Image
+
 from data_sets import ImageFileDataSets
+from data_sets.contains_images import ContainsImages, add_border
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
 from data_sets.labeled_items import LabeledItems
-from with_verbose import WithVerbose
-from data_sets.contains_images import ContainsImages, add_border
-
-from PIL import Image
-import numpy
-from os.path import isfile
+from utils.with_verbose import WithVerbose
 
 
 class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):

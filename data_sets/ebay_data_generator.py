@@ -1,14 +1,14 @@
 from functools import wraps
 from os.path import join, isfile
 
-from PIL import Image
 import numpy
+from PIL import Image
 
-from items import Items
+from acquisition.items import Items
 from data_sets import add_border
-from data_sets.labeled_items import LabeledItems
-from with_verbose import WithVerbose
 from data_sets.contains_images import ContainsImages
+from data_sets.labeled_items import LabeledItems
+from utils.with_verbose import WithVerbose
 
 
 def batch_cache(images_generator):
@@ -54,7 +54,7 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
         self.batch_size = batch_size
         self.cache_dir = cache_dir
         for item in self.items:
-            item.download_images(verbose=False)
+            item.download_images(verbose=verbose)
         chunks = [(item.tags, picture_file) for item in self.items for picture_file in item.picture_files]
         self.batches = [chunks[i:i + self.batch_size] for i in range(0, len(chunks), self.batch_size)]
 

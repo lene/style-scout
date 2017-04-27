@@ -1,11 +1,10 @@
-from os import remove
-
-from tag_processor import TagProcessor
-
 import re
 from collections import defaultdict
+from os import remove
 
-from items import Items
+from acquisition.tag_processor import TagProcessor
+
+
 class Item:
     """
     An eBay item along with some utility functions to make it useful as input to a neural network.

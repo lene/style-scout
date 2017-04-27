@@ -1,7 +1,7 @@
 from ebaysdk.finding import Connection as Finding
 from ebaysdk.shopping import Connection as Shopping
 
-from item import EbayItem
+from acquisition.item import EbayItem
 from category import Category
 
 

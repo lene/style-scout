@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from operator import itemgetter
 
-from items import Items
+from acquisition.items import Items
 
 
 class LabeledItems:

@@ -1,11 +1,11 @@
+from argparse import ArgumentParser
 from pprint import pprint
 from random import randrange
-from argparse import ArgumentParser
 
-from variable_inception import variable_inception
+from acquisition.ebay_downloader_io import EbayDownloaderIO
 from data_sets.ebay_data_generator import EbayDataGenerator
-from ebay_downloader_io import EbayDownloaderIO
-from with_verbose import WithVerbose
+from utils.with_verbose import WithVerbose
+from variable_inception import variable_inception
 
 MIN_TAG_NUM = 10
 SAVE_FOLDER = 'data'
