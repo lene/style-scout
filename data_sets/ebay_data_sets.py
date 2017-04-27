@@ -101,7 +101,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         images, labels = [], []
         for i, item in enumerate(self.items):
             self._print_status('Extracting images: {}/{}'.format(i+1, len(self.items)), end='\r')
-            item.download_images(verbose=False)
+            item.download_images()
             for image_file in item.picture_files:
                 try:
                     image = Image.open(os.path.join(image_file)).convert('RGB')

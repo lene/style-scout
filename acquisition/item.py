@@ -1,6 +1,8 @@
 import re
+from os.path import join, isfile
 from collections import defaultdict
-from os import remove
+from os import remove, makedirs
+import asyncio
 
 from acquisition.tag_processor import TagProcessor
 
@@ -15,6 +17,7 @@ class Item:
         'muster': 'pattern', 'absatzhöhe': 'heel height',
         # 'material': 'material', 'obermaterial': 'material',
     }
+    MAX_DOWNLOAD_THREADS = 18  # limit imposed by the eBay API (actually we don't use the API, but BSTS)
 
     def __init__(self, api, category, item_id):
         try:
@@ -41,19 +44,29 @@ class Item:
     def valid(self):
         return self._valid
 
-    def download_images(self, verbose=False):
+    def download_images(self):
         """
         Download the images associated with this Item to self.download_root.
         :param verbose: If set, print a progress message
         :return: None
         """
+        import urllib.error
+        makedirs(self.download_root, exist_ok=True)
+        loop = asyncio.get_event_loop()
         try:
-            for i, picture_url in enumerate(self.picture_urls):
-                downloaded = self.download_image(picture_url, verbose and i == 0)
-                if downloaded:
-                    self.picture_files.append(downloaded)
-        except AttributeError:
-            return
+            loop.run_until_complete(
+                download_images(self, self.download_root, max_threads=self.MAX_DOWNLOAD_THREADS)
+            )
+        except urllib.error.ContentTooShortError:
+            print('\nContentTooShortError, retrying...')
+            loop.run_until_complete(
+                download_images(self, self.download_root, max_threads=self.MAX_DOWNLOAD_THREADS//4)
+            )
+
+        self.picture_files = [
+            url_to_file(self.download_root, url)
+            for url in self.picture_urls if is_image_file(url_to_file(self.download_root, url))
+        ]
 
     def set_tags(self, all_available_tags):
         """
@@ -87,29 +100,6 @@ class Item:
         """
         processor = TagProcessor(self.TAG_LIST)
         return processor.process_tag(tag_label, tag_value)
-
-    @classmethod
-    def download_image(cls, url, show=False):
-        """
-        Downloads the single image at the URL url to cls.download_root
-        :param url: URL to download the image from
-        :param show: If True, show (nonblocking) the image for debugging purposes
-        :return: None
-        """
-        from os.path import join, isfile
-        from os import makedirs
-        from urllib.request import urlretrieve
-        from urllib.error import URLError
-
-        makedirs(join(cls.download_root), exist_ok=True)
-        filename = join(cls.download_root, '_'.join(url.split('/')[-4:]))
-        try:
-            if not isfile(filename):
-                urlretrieve(url, filename)
-                cls._show_image(filename, show)
-            return filename
-        except URLError:
-            return None
 
     @classmethod
     def _show_image(cls, filename, show):
@@ -185,3 +175,31 @@ class Item:
 
 class EbayItem(Item):
     pass
+
+
+def url_to_file(download_root, url):
+    return join(download_root, '_'.join(url.split('/')[-4:]))
+
+
+def is_image_file(filename):
+    from PIL import Image
+    if not isfile(filename):
+        return False
+    try:
+        Image.open(filename)
+        return True
+    except OSError:
+        return False
+
+
+async def download_images(item, download_root, max_threads=10):
+    from urllib.request import urlretrieve
+    import concurrent.futures
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
+        loop = asyncio.get_event_loop()
+        futures = [
+            loop.run_in_executor(
+                executor, urlretrieve, url, url_to_file(download_root, url)
+            ) for url in item.picture_urls if not is_image_file(url_to_file(download_root, url))
+        ]
+        await asyncio.gather(*futures)

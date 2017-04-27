@@ -53,8 +53,7 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
 
         self.batch_size = batch_size
         self.cache_dir = cache_dir
-        for item in self.items:
-            item.download_images(verbose=verbose)
+        self.items.download_images()
         chunks = [(item.tags, picture_file) for item in self.items for picture_file in item.picture_files]
         self.batches = [chunks[i:i + self.batch_size] for i in range(0, len(chunks), self.batch_size)]
 

@@ -132,9 +132,8 @@ class TrainingRunner(WithVerbose):
         model = variable_inception(input_shape=(*image_data.size, image_data.DEPTH),
                                    classes=image_data.num_classes)
         model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
-        self._print_status('model compiled')
+        self._print_status('Model compiled')
         self.io.load_weights(model)
-        self._print_status('weights loaded')
         return model
 
     def run_test(self):
