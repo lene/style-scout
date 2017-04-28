@@ -105,7 +105,7 @@ def delete_images_not_in_items(items, image_base_dir):
     all_images = {join(image_base_dir, f) for f in listdir(image_base_dir) if isfile(join(image_base_dir, f))}
     images_to_delete = all_images - images_to_keep
     for i, file in enumerate(images_to_delete):
-        print(i, '/', len(images_to_delete))
+        print(i, '/', len(images_to_delete), end='\r')
         remove(file)
     # print(list(images_to_delete)[:10])
     # print(len(images_to_delete))
