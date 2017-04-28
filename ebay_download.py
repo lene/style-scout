@@ -13,7 +13,7 @@ DEFAULT_SIZE = 139
 
 def parse_command_line():
     parser = ArgumentParser(
-        description="Download information about eBay items as training data for neural network recognizing style"
+        description="Download information about eBay items as training data for style rcognition neural network"
     )
     parser.add_argument(
         '--verbose', '-v', action='store_true', help="Print info about extracted tags"
@@ -55,6 +55,9 @@ def parse_command_line():
     parser.add_argument(
         '--complete-tags-only', action='store_true', help="Filter out incomplete tags"
     )
+    parser.add_argument(
+        '--clean-image-files', help="remove all image files under this folder which do not belong to an item"
+    )
 
     return parser.parse_args()
 
@@ -71,7 +74,7 @@ def print_tags(tags, num_most_popular=50):
     print(len(tags), 'distinct tags')
 
 
-def update_items(items, page, per_page):
+def update_items(items, categories, page, per_page):
     if per_page:
         for category in categories:
             items.extend(api.get_category_items(category, limit=per_page, page=page))
@@ -80,20 +83,35 @@ def update_items(items, page, per_page):
     items.remove_duplicates()
 
 
-def download_item_page(items, io):
+def download_item_page(items, categories, io):
     if args.verbose:
         print('\nPage {}, {} distinct items'.format(page, len(items)))
     try:
-        update_items(items, page, args.items_per_page)
+        update_items(items, categories, page, args.items_per_page)
     finally:
         valid_tags = items.get_valid_tags(args.min_valid_tag)
         if args.verbose:
             print_tags(valid_tags)
         items.update_tags(valid_tags)
-        if args.complete_tags_only:
-            items = items.filter_items_without_complete_tags()
         io.save_items(items)
         return valid_tags
+
+
+def delete_images_not_in_items(items, image_base_dir):
+    from os import listdir, remove
+    from os.path import isfile, join
+    items.download_images()
+    images_to_keep = {image_file for i in items for image_file in i.picture_files}
+    all_images = {join(image_base_dir, f) for f in listdir(image_base_dir) if isfile(join(image_base_dir, f))}
+    images_to_delete = all_images - images_to_keep
+    for i, file in enumerate(images_to_delete):
+        print(i, '/', len(images_to_delete))
+        remove(file)
+    # print(list(images_to_delete)[:10])
+    # print(len(images_to_delete))
+    # print(list(images_to_keep)[:10])
+    # print(len(images_to_keep))
+    print()
 
 
 if __name__ == '__main__':
@@ -111,12 +129,15 @@ if __name__ == '__main__':
     items = io.load_items()
     items = io.import_likes(api, items)
 
-    for page in range(args.page_from, args.page_to + 1):
+    if args.clean_image_files:
+        delete_images_not_in_items(items, args.clean_image_files)
+        exit(0)
 
-        valid_tags = download_item_page(items, io)
+    for page in range(args.page_from, args.page_to + 1):
+        valid_tags = download_item_page(items, categories, io)
+
+    if args.complete_tags_only:
+        items = items.filter_items_without_complete_tags()
 
     if args.download_images:
-        for i, item in enumerate(items):
-            if args.verbose:
-                print(i+1, '/', len(items), end=' ')
-            item.download_images(verbose=args.verbose)
+        items.download_images()
