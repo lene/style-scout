@@ -107,10 +107,6 @@ def delete_images_not_in_items(items, image_base_dir):
     for i, file in enumerate(images_to_delete):
         print(i, '/', len(images_to_delete), end='\r')
         remove(file)
-    # print(list(images_to_delete)[:10])
-    # print(len(images_to_delete))
-    # print(list(images_to_keep)[:10])
-    # print(len(images_to_keep))
     print()
 
 
@@ -141,3 +137,4 @@ if __name__ == '__main__':
 
     if args.download_images:
         items.download_images()
+        io.save_items(items)

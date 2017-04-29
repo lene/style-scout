@@ -52,6 +52,8 @@ class Item:
         """
         import urllib.error
         makedirs(self.download_root, exist_ok=True)
+        if len(self.picture_files) == len(self.picture_urls) and all(is_image_file(f) for f in self.picture_files):
+            return
         loop = asyncio.get_event_loop()
         try:
             loop.run_until_complete(
