@@ -51,6 +51,8 @@ class Item:
         :return: None
         """
         import urllib.error
+        from http.client import RemoteDisconnected
+
         makedirs(self.download_root, exist_ok=True)
         if len(self.picture_files) == len(self.picture_urls) and all(is_image_file(f) for f in self.picture_files):
             return
@@ -59,8 +61,8 @@ class Item:
             loop.run_until_complete(
                 download_images(self, self.download_root, max_threads=self.MAX_DOWNLOAD_THREADS)
             )
-        except urllib.error.ContentTooShortError:
-            print('\nContentTooShortError, retrying...')
+        except (urllib.error.ContentTooShortError, RemoteDisconnected) as e:
+            print('\n{}, retrying...'.format(e))
             loop.run_until_complete(
                 download_images(self, self.download_root, max_threads=self.MAX_DOWNLOAD_THREADS//4)
             )
@@ -197,6 +199,7 @@ def is_image_file(filename):
 async def download_images(item, download_root, max_threads=10):
     from urllib.request import urlretrieve
     from urllib.error import URLError
+    from http.client import RemoteDisconnected
     import concurrent.futures
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
         loop = asyncio.get_event_loop()
@@ -207,5 +210,5 @@ async def download_images(item, download_root, max_threads=10):
         ]
         try:
             await asyncio.gather(*futures)
-        except URLError:
+        except (URLError, RemoteDisconnected):
             pass

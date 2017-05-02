@@ -55,8 +55,8 @@ class Items(WithVerbose):
         for i, item in enumerate(self.items):
             self._print_status('Downloading images ({}/{})'.format(i + 1, len(self.items)), end='\r')
             item.download_images()
+        self.items = [item for item in self.items if item.picture_files]
         self._print_status()
-
 
     def get_valid_tags(self, min_count):
         """
