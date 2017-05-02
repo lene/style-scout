@@ -46,6 +46,11 @@ class Items(WithVerbose):
         self._print_status(len(self), '->', len(new_items), 'items')
         self.items = new_items
 
+    def remove_crap(self):
+        new_items = [item for item in self.items if hasattr(item, 'id') and hasattr(item, 'picture_urls')]
+        self._print_status(len(self), '->', len(new_items), 'items')
+        self.items = new_items
+
     def download_images(self):
         for i, item in enumerate(self.items):
             self._print_status('Downloading images ({}/{})'.format(i + 1, len(self.items)), end='\r')
