@@ -10,6 +10,7 @@ class Items(WithVerbose):
     def __init__(self, raw_items, verbose=False):
         WithVerbose.__init__(self, verbose)
         self.items = raw_items
+        self.is_download_complete = False
 
     def __iter__(self):
         return self.items.__iter__()
@@ -52,10 +53,13 @@ class Items(WithVerbose):
         self.items = new_items
 
     def download_images(self):
+        if self.is_download_complete:
+            return 
         for i, item in enumerate(self.items):
             self._print_status('Downloading images ({}/{})'.format(i + 1, len(self.items)), end='\r')
             item.download_images()
         self.items = [item for item in self.items if item.picture_files]
+        self.is_download_complete = True
         self._print_status()
 
     def get_valid_tags(self, min_count):

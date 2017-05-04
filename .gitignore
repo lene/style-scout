@@ -4,9 +4,10 @@
 # list of liked items
 likes.json
 
-# IDE configuration
+# IDE and shell configuration
 .idea
 dir.sh
+.venv
 
 # generated data
 data

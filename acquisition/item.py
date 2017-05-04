@@ -2,6 +2,10 @@ import re
 from os.path import join, isfile
 from collections import defaultdict
 from os import remove, makedirs
+from urllib.request import urlretrieve
+from urllib.error import URLError, ContentTooShortError
+from http.client import RemoteDisconnected
+import concurrent.futures
 import asyncio
 
 from acquisition.tag_processor import TagProcessor
@@ -50,26 +54,21 @@ class Item:
         :param verbose: If set, print a progress message
         :return: None
         """
-        import urllib.error
-        from http.client import RemoteDisconnected
-
         makedirs(self.download_root, exist_ok=True)
         if len(self.picture_files) == len(self.picture_urls) and all(is_image_file(f) for f in self.picture_files):
             return
+
         loop = asyncio.get_event_loop()
         try:
-            loop.run_until_complete(
-                download_images(self, self.download_root, max_threads=self.MAX_DOWNLOAD_THREADS)
-            )
-        except (urllib.error.ContentTooShortError, RemoteDisconnected) as e:
+            loop.run_until_complete(self._download_images(max_threads=self.MAX_DOWNLOAD_THREADS))
+        except ContentTooShortError as e:
             print('\n{}, retrying...'.format(e))
-            loop.run_until_complete(
-                download_images(self, self.download_root, max_threads=self.MAX_DOWNLOAD_THREADS//4)
-            )
+            loop.run_until_complete(self._download_images(max_threads=self.MAX_DOWNLOAD_THREADS//4))
+        except (URLError, RemoteDisconnected):
+            pass
 
         self.picture_files = [
-            url_to_file(self.download_root, url)
-            for url in self.picture_urls if is_image_file(url_to_file(self.download_root, url))
+            self.url_to_file(url) for url in self.picture_urls if is_image_file(self.url_to_file(url))
         ]
 
     def set_tags(self, all_available_tags):
@@ -106,6 +105,10 @@ class Item:
         return processor.process_tag(tag_label, tag_value)
 
     @classmethod
+    def url_to_file(cls, url):
+        return join(cls.download_root, '_'.join(url.split('/')[-4:]))
+
+    @classmethod
     def _show_image(cls, filename, show):
         from PIL import Image
         if show:
@@ -119,6 +122,15 @@ class Item:
                     remove(filename)
                 except FileNotFoundError:
                     pass
+
+    async def _download_images(self, max_threads):
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
+            loop = asyncio.get_event_loop()
+            futures = [
+                loop.run_in_executor(executor, urlretrieve, url, self.url_to_file(url))
+                for url in self.picture_urls if not is_image_file(self.url_to_file(url))
+            ]
+            await asyncio.gather(*futures)
 
     def __str__(self):
             return """Id: {}
@@ -181,10 +193,6 @@ class EbayItem(Item):
     pass
 
 
-def url_to_file(download_root, url):
-    return join(download_root, '_'.join(url.split('/')[-4:]))
-
-
 def is_image_file(filename):
     from PIL import Image
     if not isfile(filename):
@@ -195,20 +203,3 @@ def is_image_file(filename):
     except OSError:
         return False
 
-
-async def download_images(item, download_root, max_threads=10):
-    from urllib.request import urlretrieve
-    from urllib.error import URLError
-    from http.client import RemoteDisconnected
-    import concurrent.futures
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
-        loop = asyncio.get_event_loop()
-        futures = [
-            loop.run_in_executor(
-                executor, urlretrieve, url, url_to_file(download_root, url)
-            ) for url in item.picture_urls if not is_image_file(url_to_file(download_root, url))
-        ]
-        try:
-            await asyncio.gather(*futures)
-        except (URLError, RemoteDisconnected):
-            pass
