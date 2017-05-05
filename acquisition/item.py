@@ -44,6 +44,10 @@ class Item:
         """Set this Item to liked."""
         self.tags.add('<3')
 
+    def unlike(self):
+        """Set this Item to liked."""
+        self.tags.discard('<3')
+
     @property
     def valid(self):
         return self._valid

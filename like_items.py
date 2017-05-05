@@ -15,7 +15,8 @@ SAVE_FOLDER = 'data'
 def parse_command_line():
     parser = ArgumentParser(
         description="""Simple GUI to like/dislike eBay items.
-Use 'l' key to like an item, 'd' to dislike it and 's' or 'q' to stop the program.""",
+Use 'l' key to like an item, 'd' to dislike it, 'n' to skip it (leaving the like status
+untouched), 'b' to view the previous item and 's' or 'q' to stop the program.""",
         formatter_class=RawTextHelpFormatter
     )
     parser.add_argument('--save-folder', default=SAVE_FOLDER, help='Folder under which items are stored')
@@ -26,30 +27,32 @@ Use 'l' key to like an item, 'd' to dislike it and 's' or 'q' to stop the progra
     parser.add_argument(
         '--likes-file', help="JSON file containing the liked item IDs"
     )
+    parser.add_argument('--size', type=int, default=400)
 
     return parser.parse_args()
 
 
 class LikeItemsUI:
 
-    IMAGE_SIZE = (400, 400)
-
-    def __init__(self, app, items, start):
+    def __init__(self, app, items, start, size):
         self.item_no = start
         self.items = items
         self.app = app
+        self.image_size = (size, size)
+        self.liked = len([i for i in self.items[:start] if '<3' in i.tags])
 
         self.app.addLabel('title', 'Like or dislike eBay items here')
 
-        self.app.addLabel('item_no', '{}/{}'.format(self.item_no, len(self.items)))
         self.app.startLabelFrame("Simple", 0, 0)
         for image_no in range(4):
-            image = Image.new('RGB', self.IMAGE_SIZE)
+            image = Image.new('RGB', self.image_size)
             image.save('/tmp/i{}.gif'.format(image_no))
             self.app.addImage(
                 'image_{}'.format(image_no), '/tmp/i{}.gif'.format(image_no), image_no // 2, image_no % 2
             )
         self.app.stopLabelFrame()
+
+        self.app.addLabel('item_no', '{}/{}'.format(self.item_no, len(self.items)))
 
         self.app.addListBox('tags', [])
         self.app.setListBoxRows('tags', 8)
@@ -60,16 +63,17 @@ class LikeItemsUI:
         self.app.bindKey('d', self.dislike)
         self.app.bindKey('s', self.stop)
         self.app.bindKey('q', self.stop)
+        self.app.bindKey('b', self.back)
+        self.app.bindKey('n', self.next)
 
         self.update_content()
 
-    def downscale(self, image, size):
+    def downscale(self, image):
         w, h = image.size
         image = add_border(image, w, h)
-        return image.resize(size, Image.BICUBIC)
+        return image.resize(self.image_size, Image.BICUBIC)
 
     def press(self, btn):
-        print('BTN', btn)
         if btn == "Stop":
             pprint([i.tags for i in self.items[:self.item_no]])
             self.app.stop()
@@ -77,30 +81,42 @@ class LikeItemsUI:
             self.items[self.item_no].like()
             self.next_item()
         else:
+            self.items[self.item_no].unlike()
             self.next_item()
 
     def stop(self, _):
         self.press('Stop')
 
     def like(self, _):
+        self.liked += 1
         self.press('Like')
 
     def dislike(self, _):
         self.press('Dislike')
 
+    def back(self, _):
+        self.item_no -= 1
+        self.update_content()
+
+    def next(self, _):
+        self.item_no += 1
+        self.update_content()
+
     def next_item(self):
         self.item_no += 1
+        if self.item_no >= len(self.items):
+            self.stop(None)
         self.update_content()
 
     def update_content(self):
         item = self.items[self.item_no]
-        self.app.setLabel('item_no', '{}/{}'.format(self.item_no, len(self.items)))
+        self.app.setLabel('item_no', '{}/{} ({} Liked)'.format(self.item_no, len(self.items), self.liked))
         self.app.updateListItems('tags', self.items[self.item_no].tags)
         for image_no in range(4):
             try:
-                image = self.downscale(Image.open(item.picture_files[image_no]), self.IMAGE_SIZE)
+                image = self.downscale(Image.open(item.picture_files[image_no]))
             except IndexError:
-                image = Image.new('RGB', self.IMAGE_SIZE)
+                image = Image.new('RGB', self.image_size)
             image.save('/tmp/i{}.gif'.format(image_no))
             app.reloadImage('image_{}'.format(image_no), '/tmp/i{}.gif'.format(image_no))
 
@@ -118,14 +134,16 @@ else:
 with open(item_file_name, 'rb') as pickle_file:
     items = load(pickle_file)
 
-app = gui()
+try:
+    app = gui()
 
-ui = LikeItemsUI(app, items, start)
+    ui = LikeItemsUI(app, items, start, args.size)
 
-app.go()
+    app.go()
+finally:
+    item_file_name += '.{}'.format(ui.item_no)
+    with open(join(item_file_name), 'wb') as pickle_file:
+        dump(items, pickle_file)
 
-with open(join(item_file_name + '.{}.liked'.format(ui.item_no)), 'wb') as pickle_file:
-    dump(items, pickle_file)
-
-with open(STATE_FILE, 'wb') as pickle_file:
-    dump({'item_file': item_file_name, 'start': ui.item_no}, pickle_file)
+    with open(STATE_FILE, 'wb') as pickle_file:
+        dump({'item_file': item_file_name, 'start': ui.item_no}, pickle_file)

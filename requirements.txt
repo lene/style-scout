@@ -1,3 +1,4 @@
+appjar
 ebaysdk
 h5py
 keras
