@@ -137,4 +137,5 @@ if __name__ == '__main__':
 
     if args.download_images:
         items.download_images()
-        io.save_items(items)
+
+    io.save_items(items)

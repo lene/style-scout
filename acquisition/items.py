@@ -54,7 +54,7 @@ class Items(WithVerbose):
 
     def download_images(self):
         if self.is_download_complete:
-            return 
+            return
         for i, item in enumerate(self.items):
             self._print_status('Downloading images ({}/{})'.format(i + 1, len(self.items)), end='\r')
             item.download_images()
