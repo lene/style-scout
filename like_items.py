@@ -1,6 +1,6 @@
 from appJar import gui
 from pickle import load, dump
-from argparse import ArgumentParser
+from argparse import ArgumentParser, RawTextHelpFormatter
 from os.path import join, isfile
 from PIL import Image
 from pprint import pprint
@@ -13,7 +13,11 @@ SAVE_FOLDER = 'data'
 
 
 def parse_command_line():
-    parser = ArgumentParser(description="Simple GUI to like/dislike eBay items")
+    parser = ArgumentParser(
+        description="""Simple GUI to like/dislike eBay items.
+Use 'l' key to like an item, 'd' to dislike it and 's' or 'q' to stop the program.""",
+        formatter_class=RawTextHelpFormatter
+    )
     parser.add_argument('--save-folder', default=SAVE_FOLDER, help='Folder under which items are stored')
     parser.add_argument('--start', type=int, default=0)
     parser.add_argument(
@@ -55,6 +59,7 @@ class LikeItemsUI:
         self.app.bindKey('l', self.like)
         self.app.bindKey('d', self.dislike)
         self.app.bindKey('s', self.stop)
+        self.app.bindKey('q', self.stop)
 
         self.update_content()
 
@@ -100,13 +105,13 @@ class LikeItemsUI:
             app.reloadImage('image_{}'.format(image_no), '/tmp/i{}.gif'.format(image_no))
 
 
+args = parse_command_line()
 if isfile(STATE_FILE):
     with open(STATE_FILE, 'rb') as pickle_file:
         params = load(pickle_file)
     item_file_name = params['item_file']
     start = params['start']
 else:
-    args = parse_command_line()
     item_file_name = join(args.save_folder, args.item_file)
     start = args.start
 
