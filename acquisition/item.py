@@ -134,10 +134,14 @@ class Item:
 
     def __str__(self):
             return """Id: {}
-    Title: {}
+    Title: {} {}
     Specifics: {}
     Tags: {}
-    Pix: {}""".format(self.id, self.title, self.item_specifics, self.tags, self.picture_urls)
+    Pix: {}""".format(
+                self.id, self.title,
+                '\n    <3' if '<3' in self.tags else '',
+                self.item_specifics, self.tags, self.picture_urls
+            )
 
     @staticmethod
     def _clean_description(description):
