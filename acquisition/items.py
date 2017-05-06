@@ -63,7 +63,7 @@ class Items(WithVerbose):
             self._print_status(
                 'Downloading images ({}/{}) ETA: {}'.format(
                     i + 1, len(self.items),
-                    timedelta(seconds=elapsed_time * (len(self) - i) / (i+1))
+                    timedelta(seconds=int(elapsed_time * (len(self) - i) / (i+1)))
                 ), end='\r'
             )
             item.download_images()
