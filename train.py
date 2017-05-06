@@ -53,6 +53,9 @@ def parse_command_line():
         '--use-single-batch', action='store_true', help="Read all data in advance"
     )
     parser.add_argument(
+        '--likes-only', action='store_true', help="Only train against likes"
+    )
+    parser.add_argument(
         '--batch-size', type=int, default=32, help='Batch size used in fitting the model.'
     )
     parser.add_argument(
@@ -83,6 +86,7 @@ class TrainingRunner(WithVerbose):
         WithVerbose.__init__(self, args.verbose)
         self.image_size = args.image_size
         self.min_valid_tag = args.min_valid_tag
+        self.likes_only = args.likes_only
         self.use_single_batch = args.use_single_batch
         self.batch_size = args.batch_size
         self.cache_dir = args.cache_dir
@@ -114,7 +118,14 @@ class TrainingRunner(WithVerbose):
 
     def get_image_data(self):
         items = self.io.load_items()
-        valid_tags = items.get_valid_tags(self.min_valid_tag)
+        if self.likes_only:
+            valid_tags = {
+                '<3': items.get_valid_tags(1)['<3'],
+                'Damenmode': items.get_valid_tags(1)['Damenmode'],
+                'Damenschuhe': items.get_valid_tags(1)['Damenschuhe']
+            }
+        else:
+            valid_tags = items.get_valid_tags(self.min_valid_tag)
         items.update_tags(valid_tags)
         if self.use_single_batch:
             image_data = self.io.get_images(items, valid_tags, self.image_size, test_share=0)
@@ -131,7 +142,10 @@ class TrainingRunner(WithVerbose):
     def setup_model(self, image_data):
         model = variable_inception(input_shape=(*image_data.size, image_data.DEPTH),
                                    classes=image_data.num_classes)
-        model.compile(loss="categorical_crossentropy", optimizer='sgd', metrics=['accuracy'])
+        model.compile(
+            loss="categorical_crossentropy",
+            optimizer='sgd', metrics=['accuracy']
+        )
         self._print_status('Model compiled')
         self.io.load_weights(model)
         return model
