@@ -1,4 +1,6 @@
 from collections import defaultdict
+from time import time
+from datetime import timedelta
 
 from utils.with_verbose import WithVerbose
 
@@ -55,8 +57,15 @@ class Items(WithVerbose):
     def download_images(self):
         if self.is_download_complete:
             return
+        start_time = time()
         for i, item in enumerate(self.items):
-            self._print_status('Downloading images ({}/{})'.format(i + 1, len(self.items)), end='\r')
+            elapsed_time = time() - start_time
+            self._print_status(
+                'Downloading images ({}/{}) ETA: {}'.format(
+                    i + 1, len(self.items),
+                    timedelta(seconds=elapsed_time * (len(self) - i) / (i+1))
+                ), end='\r'
+            )
             item.download_images()
         self.items = [item for item in self.items if item.picture_files]
         self.is_download_complete = True
