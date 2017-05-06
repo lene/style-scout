@@ -9,6 +9,7 @@ from acquisition.items import Items
 from category import Category
 from data_sets import EbayDataSets
 from utils.with_verbose import WithVerbose
+from ebaysdk.exception import ConnectionError
 
 
 class EbayDownloaderIO(WithVerbose):
@@ -122,9 +123,12 @@ def _add_liked_items(api, items, category, liked_item_ids):
         if liked in present_item_ids:
             items.set_liked(liked)
         else:
-            new_item = Item(api, category, liked)
-            new_item.like()
-            items.append(new_item)
+            try:
+                new_item = Item(api, category, liked)
+                new_item.like()
+                items.append(new_item)
+            except ConnectionError as e:
+                print(e)
 
 
 def _filename(what, extension, image_size):

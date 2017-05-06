@@ -6,6 +6,7 @@ from PIL import Image
 from pprint import pprint
 
 from data_sets.contains_images import add_border
+from category import Category
 
 STATE_FILE = 'data/like_items.state'
 
@@ -35,7 +36,7 @@ untouched), 'b' to view the previous item and 's' or 'q' to stop the program."""
 class LikeItemsUI:
 
     def __init__(self, app, items, start, size, liked_only=False):
-        self.item_no = start
+        self.item_no = 0 if liked_only else start
         self.items = [i for i in items if '<3' in i.tags] if liked_only else items
         self.app = app
         self.image_size = (size, size)
@@ -77,7 +78,7 @@ class LikeItemsUI:
 
     def press(self, btn):
         if btn == "Stop":
-            pprint([i.tags for i in self.items[:self.item_no]])
+            self.print_summary()
             self.app.stop()
         elif btn == 'Like':
             self.items[self.item_no].like()
@@ -112,7 +113,7 @@ class LikeItemsUI:
     def update_content(self):
         item = self.items[self.item_no]
         self.app.setLabel('item_no', '{}/{} ({} Liked)'.format(self.item_no, len(self.items), self.liked))
-        self.app.updateListItems('tags', self.items[self.item_no].tags)
+        self.app.updateListItems('tags', sorted(self.items[self.item_no].tags))
         for image_no in range(4):
             try:
                 image = self.downscale(Image.open(item.picture_files[image_no]))
@@ -120,6 +121,18 @@ class LikeItemsUI:
                 image = Image.new('RGB', self.image_size)
             image.save('/tmp/i{}.gif'.format(image_no))
             app.reloadImage('image_{}'.format(image_no), '/tmp/i{}.gif'.format(image_no))
+
+    def print_summary(self):
+        all_items = self.items[:self.item_no]
+        all_liked = [i for i in all_items if '<3' in i.tags]
+        by_category = {}
+        for category in sorted(Category.NECESSARY_TAGS.keys()):
+            by_category[category] = [i for i in all_liked if category in i.tags]
+            print(
+                category,
+                len(by_category[category]),
+                sum(len(i.picture_files) for i in by_category[category])
+            )
 
 
 args = parse_command_line()
