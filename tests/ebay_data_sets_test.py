@@ -28,8 +28,6 @@ class EbayDataSetsTest(TestBase):
         self.assertEqual(0, data_sets.num_classes)
 
     def test_labels(self):
-        self.setUp()
-
         items = [Item(self.api, self.category, 1), Item(self.api, self.category, 2)]
         data_sets = EbayDataSets(
             items=items, valid_labels=['1', '2'], size=(SIZE, SIZE)

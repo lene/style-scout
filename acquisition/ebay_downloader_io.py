@@ -121,6 +121,8 @@ class EbayDownloaderIO(WithVerbose):
         model.save_weights(weights_file)
 
     def weights_file(self, fit_type='', num_items=0):
+        if self.weights_file_base and isfile(self.weights_file_base):
+            return self.weights_file_base
         return _filename(
             self.weights_file_base, 'hdf5', fit_type, self._number_to_string(num_items), self.image_size
         )
@@ -134,6 +136,8 @@ class EbayDownloaderIO(WithVerbose):
         return str(num_items)
 
     def _weights_file_base(self, weights_file):
+        if weights_file and isfile(join(self.base_dir, weights_file)):
+            return join(self.base_dir, weights_file)
         if weights_file is None:
             weights_file = 'weights'
         return join(self.base_dir, weights_file.replace('.hdf5', ''))
@@ -160,7 +164,7 @@ def _add_liked_items(api, items, category, liked_item_ids):
 
 
 def _filename(what, extension, *args):
-    return "_".join(str(arg) for arg in [what] + list(args) if arg) + ".{}".format(extension)
+    return "_".join(str(arg) for arg in (what,) + args if arg) + ".{}".format(extension)
 
 
 def _check_constructor_arguments_valid(image_size, items_file, images_file, weights_file, likes_file):

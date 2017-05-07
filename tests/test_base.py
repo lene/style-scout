@@ -1,5 +1,6 @@
 import unittest
 from os.path import isdir
+from os import makedirs
 from shutil import rmtree
 from unittest.mock import Mock
 
@@ -18,6 +19,7 @@ class TestBase(unittest.TestCase):
         self.api.get_item = create_item_dict  # Mock(return_value=self.item_data)
         self.category = Mock(spec=Category)
         self.category.name_path = ['0', '1']
+        makedirs(self.DOWNLOAD_ROOT, exist_ok=False)
 
     def tearDown(self):
         if isdir(self.DOWNLOAD_ROOT):

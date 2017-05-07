@@ -1,6 +1,7 @@
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
 from os.path import join
+from pathlib import Path
 
 from tests.test_base import TestBase
 from acquisition.ebay_downloader_io import EbayDownloaderIO
@@ -58,6 +59,13 @@ class EbayDownloaderIOTest(TestBase):
             join(self.DOWNLOAD_ROOT, '{}_full_1001_{}.hdf5'.format(self.WEIGHTS_FILE_BASE, self.IMAGE_SIZE)),
             io.weights_file('full', 1001)
         )
+
+    def test_existing_weight_file_name_is_left_intact(self):
+        Path(self.DOWNLOAD_ROOT, 'test.hdf5').touch(exist_ok=True)
+        io = EbayDownloaderIO(
+            self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, weights_file='test.hdf5'
+        )
+        self.assertEqual(join(self.DOWNLOAD_ROOT, 'test.hdf5'), io.weights_file('full', 1000))
 
     def test_load_items_from_existing_file(self):
         self.skipTest('Test not yet implemented')
