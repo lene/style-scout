@@ -1,9 +1,41 @@
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
-import unittest
+from os.path import join
+
+from tests.test_base import TestBase
+from acquisition.ebay_downloader_io import EbayDownloaderIO
 
 
-class EbayDownloaderIOTest(unittest.TestCase):
+class EbayDownloaderIOTest(TestBase):
+
+    ITEMS_FILE = 'items.pickle'
+    WEIGHTS_FILE_BASE = 'weights'
+    IMAGE_SIZE = 16
+
+    def test_init_with_all_none(self):
+        EbayDownloaderIO(self.DOWNLOAD_ROOT)
+
+    def test_init_with_items_file(self):
+        io = EbayDownloaderIO(self.DOWNLOAD_ROOT, items_file=self.ITEMS_FILE)
+        self.assertEqual(io.items_file, join(self.DOWNLOAD_ROOT, self.ITEMS_FILE))
+
+    def test_init_with_items_file_and_image_size(self):
+        io = EbayDownloaderIO(self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, items_file=self.ITEMS_FILE)
+        self.assertEqual(io.items_file, join(self.DOWNLOAD_ROOT, self.ITEMS_FILE))
+
+    def test_init_with_weights_file_also_needs_image_size(self):
+        with self.assertRaises(AssertionError):
+            EbayDownloaderIO(self.DOWNLOAD_ROOT, weights_file=self.WEIGHTS_FILE_BASE)
+
+    def test_init_with_weights_file_and_image_size(self):
+        io = EbayDownloaderIO(
+            self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, weights_file=self.WEIGHTS_FILE_BASE
+        )
+        self.assertEqual(io.weights_file_base, join(self.DOWNLOAD_ROOT, self.WEIGHTS_FILE_BASE))
+        self.assertEqual(
+            join(self.DOWNLOAD_ROOT, '{}_{}.hdf5'.format(self.WEIGHTS_FILE_BASE, self.IMAGE_SIZE)),
+            io.weights_file()
+        )
 
     def test_load_items_from_existing_file(self):
         self.skipTest('Test not yet implemented')

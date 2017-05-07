@@ -18,12 +18,14 @@ class EbayDownloaderIO(WithVerbose):
             self, base_dir, image_size=None, items_file=None, images_file=None, weights_file=None,
             likes_file=None, verbose=False
     ):
+        _check_constructor_arguments_valid(image_size, items_file, images_file, weights_file, likes_file)
         WithVerbose.__init__(self, verbose)
         makedirs(base_dir, exist_ok=True)
         self.base_dir = base_dir
+        self.image_size = image_size
         self.items_file = join(self.base_dir, items_file or _filename('items', 'pickle', None))
         self.images_file = join(self.base_dir, images_file or _filename('images', 'npz', image_size))
-        self.weights_file = join(self.base_dir, weights_file or _filename('weights', 'hdf5', image_size))
+        self.weights_file_base = self._weights_file_base(weights_file)
         self.likes_file = self._likes_filename(likes_file)
 
     def load_items(self):
@@ -93,24 +95,36 @@ class EbayDownloaderIO(WithVerbose):
             self.images_file, items, valid_tags, image_size, test_share=test_share, verbose=self.verbose
         )
 
-    def load_weights(self, model):
+    def load_weights(self, model, *suffix):
         """
         Load the precomputed weights for the given neural network
         :param model: Keras model for the neural network
+        :param suffix: arbitrary suffix to append to file name
         :return: None
         """
-        if isfile(self.weights_file):
-            self._print_status('Loading', self.weights_file)
-            model.load_weights(self.weights_file)
+        weights_file = self.weights_file(suffix)
+        if isfile(weights_file):
+            self._print_status('Loading', weights_file)
+            model.load_weights(weights_file)
 
-    def save_weights(self, model):
+    def save_weights(self, model, *suffix):
         """
         Save the computed weights for the given neural network
         :param model: Keras model for the neural network
+        :param suffix: arbitrary suffix to append to file name
         :return: None
         """
-        self._print_status('Saving', self.weights_file)
-        model.save_weights(self.weights_file)
+        weights_file = self.weights_file(suffix)
+        self._print_status('Saving', weights_file)
+        model.save_weights(weights_file)
+
+    def weights_file(self, *suffix):
+        return _filename(self.weights_file_base, 'hdf5', *suffix, self.image_size)
+
+    def _weights_file_base(self, weights_file):
+        if weights_file is None:
+            weights_file = 'weights'
+        return join(self.base_dir, weights_file.replace('.hdf5', ''))
 
     def _likes_filename(self, likes_file):
         return None if not likes_file \
@@ -133,5 +147,11 @@ def _add_liked_items(api, items, category, liked_item_ids):
                 print(e)
 
 
-def _filename(what, extension, image_size):
-    return "{}_{}.{}".format(what, image_size, extension) if image_size else "{}.{}".format(what, extension)
+def _filename(what, extension, *args):
+    return "_".join(str(arg) for arg in [what] + list(args) if arg) + ".{}".format(extension)
+
+
+def _check_constructor_arguments_valid(image_size, items_file, images_file, weights_file, likes_file):
+    if images_file or weights_file:
+        assert isinstance(image_size, int)
+
