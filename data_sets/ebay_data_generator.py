@@ -1,5 +1,6 @@
 from functools import wraps
 from os.path import join, isfile
+from random import shuffle
 
 import numpy
 from PIL import Image
@@ -17,12 +18,12 @@ def batch_cache(images_generator):
     returns the requested data from the cache, otherwise generates them and writes them to the cache file.
     """
     @wraps(images_generator)
-    def _impl(self, batch_index):
+    def _impl(self, batches, batch_index):
         if isfile(self.cache_file(batch_index)):
             npz = numpy.load(self.cache_file(batch_index))
             return npz['images']
         else:
-            images = images_generator(self, batch_index)
+            images = images_generator(self, batches, batch_index)
             numpy.savez_compressed(self.cache_file(batch_index), images=images)
             return images
     return _impl
@@ -36,7 +37,7 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
 
     CACHE_FILE_PREFIX = 'style_scout'
 
-    def __init__(self, items, valid_labels, size, batch_size=32, cache_dir='/tmp', verbose=False):
+    def __init__(self, items, valid_labels, size, test_share=0.2, batch_size=32, cache_dir='/tmp', verbose=False):
         """
         Construct the generator from images and labels belonging to items passed in
         :param items: Items object corresponding to the data set
@@ -53,39 +54,66 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
 
         self.batch_size = batch_size
         self.cache_dir = cache_dir
+
+        self._setup_batches(test_share)
+
+    def _setup_batches(self, test_share):
         self.items.download_images()
         chunks = [(item.tags, picture_file) for item in self.items for picture_file in item.picture_files]
+        shuffle(chunks)
         self.batches = [chunks[i:i + self.batch_size] for i in range(0, len(chunks), self.batch_size)]
+        self.train_chunks = chunks[:int(len(chunks) * (1 - test_share))]
+        self.test_chunks = chunks[int(len(chunks) * (1 - test_share)):]
+        self.train_batches = self._generate_batches(self.train_chunks)
+        self.test_batches = self._generate_batches(self.test_chunks)
 
-    def __len__(self):
-        return len(self.batches)
+    def _generate_batches(self, chunks):
+        return [chunks[i:i + self.batch_size] for i in range(0, len(chunks), self.batch_size)]
+
+    def train_length(self):
+        return len(self.train_batches)
+
+    def test_length(self):
+        return len(self.test_batches)
 
     def train_generator(self):
         """
         Generator function returning all images and their labels used as training set
         """
         while True:
-            for i in range(len(self.batches)):
-                yield self.images_for_batch(i), self.labels_for_batch(i)
+            for i in range(self.train_length()):
+                yield (
+                    self.images_for_batch(self.train_batches, i),
+                    self.labels_for_batch(self.train_batches, i)
+                )
+            shuffle(self.train_chunks)
+            self.train_batches = self._generate_batches(self.train_chunks)
 
-    @batch_cache
-    def images_for_batch(self, batch_index):
+    def test_generator(self):
+        """
+        Generator function returning all images and their labels in the test set
+        """
+        while True:
+            for i in range(self.test_length()):
+                yield self.images_for_batch(self.test_batches, i), self.labels_for_batch(self.test_batches, i)
+
+    def images_for_batch(self, batches, batch_index):
         """
         :param batch_index: index of the batch (0 <= batch_index <= len(self)
         :return: image data for batch number batch_index
         """
         return numpy.asarray([
             self.downscale(Image.open(join(data_point[1])).convert('RGB'), method=add_border)
-            for data_point in self.batches[batch_index]
+            for data_point in batches[batch_index]
         ])
 
-    def labels_for_batch(self, batch_index):
+    def labels_for_batch(self, batches, batch_index):
         """
         :param batch_index: index of the batch (0 <= batch_index <= len(self)
         :return: labels for batch number batch_index
         """
         return numpy.asarray(
-            [self._dense_to_one_hot(data_point[0]) for data_point in self.batches[batch_index]]
+            [self._dense_to_one_hot(data_point[0]) for data_point in batches[batch_index]]
         )
 
     def cache_file(self, batch_index):

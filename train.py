@@ -112,9 +112,19 @@ class TrainingRunner(WithVerbose):
                 )
             else:
                 model.fit_generator(
-                    image_data.train_generator(), steps_per_epoch=len(image_data), epochs=self.num_epochs
+                    image_data.train_generator(), steps_per_epoch=image_data.train_length(), epochs=self.num_epochs
                 )
             self.io.save_weights(model)
+
+        if self.test:
+            if self.use_single_batch:
+                loss_and_metrics = model.evaluate(image_data.test.input, image_data.test.labels)
+            else:
+                loss_and_metrics = model.evaluate_generator(
+                    image_data.test_generator(), steps=image_data.test_length(), max_q_size=2
+                )
+            print()
+            print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
     def get_image_data(self):
         items = self.io.load_items()
@@ -140,8 +150,9 @@ class TrainingRunner(WithVerbose):
         return image_data
 
     def setup_model(self, image_data):
-        model = variable_inception(input_shape=(*image_data.size, image_data.DEPTH),
-                                   classes=image_data.num_classes)
+        model = variable_inception(
+            input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes
+        )
         model.compile(
             loss="categorical_crossentropy",
             optimizer='sgd', metrics=['accuracy']
@@ -149,13 +160,6 @@ class TrainingRunner(WithVerbose):
         self._print_status('Model compiled')
         self.io.load_weights(model)
         return model
-
-    def run_test(self):
-        if self.test:
-            test = image_data.test.input
-            loss_and_metrics = model.evaluate(test, image_data.test.labels)
-            print()
-            print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
     def run_predictions(self):
         for _ in range(self.demo):
@@ -173,4 +177,5 @@ class TrainingRunner(WithVerbose):
 
 
 if __name__ == '__main__':
-    TrainingRunner(args=parse_command_line()).run()
+    runner = TrainingRunner(args=parse_command_line())
+    runner.run()
