@@ -35,6 +35,8 @@ class EbayDownloaderIO(WithVerbose):
             self._print_status('Loading', self.items_file)
             with open(self.items_file, 'rb') as file:
                 items = pickle.load(file)
+                if isinstance(items, Items):
+                    return items
                 return Items(items, self.verbose)
         return Items([], self.verbose)
 

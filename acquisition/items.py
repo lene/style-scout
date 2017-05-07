@@ -58,6 +58,7 @@ class Items(WithVerbose):
         if self.is_download_complete:
             return
         start_time = time()
+        elapsed_time = 0
         for i, item in enumerate(self.items):
             elapsed_time = time() - start_time
             self._print_status(
@@ -69,7 +70,9 @@ class Items(WithVerbose):
             item.download_images()
         self.items = [item for item in self.items if item.picture_files]
         self.is_download_complete = True
-        self._print_status()
+        self._print_status(
+            '{} items downloaded in {}'.format(len(self), timedelta(seconds=int(elapsed_time))) + ' ' * 12
+        )
 
     def get_valid_tags(self, min_count):
         """
