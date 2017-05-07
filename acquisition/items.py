@@ -9,10 +9,10 @@ class Items(WithVerbose):
     """
     A set of Item objects along with some utility functions.
     """
-    def __init__(self, raw_items, verbose=False):
+    def __init__(self, raw_items, verbose=False, is_download_complete=False):
         WithVerbose.__init__(self, verbose)
         self.items = raw_items
-        self.is_download_complete = False
+        self.is_download_complete = is_download_complete
 
     def __iter__(self):
         return self.items.__iter__()
@@ -33,6 +33,14 @@ class Items(WithVerbose):
     def extend(self, items):
         """Adds a list of Item objects or an Items object to this item set."""
         self.items.extend(items if isinstance(items, list) else items.items)
+
+    def filter(self, category=None):
+        if not category:
+            raise ValueError()
+        return Items(
+            [item for item in self.items if item.category.name.lower().startswith(category.lower())],
+            self.verbose, self.is_download_complete
+        )
 
     def remove_duplicates(self):
         """

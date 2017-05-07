@@ -10,6 +10,7 @@ import numpy
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
 from data_sets.contains_images import ContainsImages
+from utils.with_verbose import WithVerbose
 
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
@@ -18,7 +19,7 @@ __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 IMAGENET_SIZE = 299
 
 
-class ImageFileDataSets(DataSets, ContainsImages):
+class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
     """Data sets (training, validation and test data) containing RGB image files."""
 
     DEFAULT_VALIDATION_SHARE = 0.2
@@ -41,7 +42,7 @@ class ImageFileDataSets(DataSets, ContainsImages):
                 call(('gzip', uncompressed_file))
             return data
 
-    def __init__(self, base_dir, x_size, y_size, validation_share=None, one_hot=False):
+    def __init__(self, base_dir, x_size, y_size, validation_share=None, one_hot=False, verbose=False):
         """Construct the data set from images stored in subdirs under base_dir
         :param base_dir: Where to store the MNIST data files.
         :param x_size:
@@ -50,6 +51,7 @@ class ImageFileDataSets(DataSets, ContainsImages):
         :param one_hot:
         """
         ContainsImages.__init__(self, x_size, y_size)
+        WithVerbose.__init__(self, verbose)
         self.one_hot = one_hot
         self.base_dir = base_dir
 
@@ -73,6 +75,7 @@ class ImageFileDataSets(DataSets, ContainsImages):
             ImagesLabelsDataSet(validation_images, validation_labels, self.DEPTH),
             ImagesLabelsDataSet(test_images, test_labels, self.DEPTH)
         )
+        self._print_status('Image data loaded')
 
     def get_label(self, number):
         try:
@@ -85,16 +88,16 @@ class ImageFileDataSets(DataSets, ContainsImages):
     def _extract_images(self, base_dir):
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
         import os.path
-        print('Extracting', base_dir)
+        self._print_status('Extracting', base_dir)
         images, labels = [], []
         all_dirs = list(walk(base_dir))
         i = 0
         for root, dirs, files in all_dirs:
             label = root.split('/')[-1]
-            print(label, "%.2f%%" % (i/len(all_dirs)*100))
+            self._print_status(label, "%.2f%%" % (i/len(all_dirs)*100))
             i += 1
             for j, file in enumerate(files):
-                print(j, '/', len(files), end='\r')
+                self._print_status(j, '/', len(files), end='\r')
                 try:
                     image = Image.open(os.path.join(root, file)).convert('RGB')
                 except OSError:

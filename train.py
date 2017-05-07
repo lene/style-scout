@@ -49,18 +49,10 @@ def parse_command_line():
     parser.add_argument(
         '--test', '-t', action='store_true', help="Run evaluation on test data set"
     )
-    parser.add_argument(
-        '--use-single-batch', action='store_true', help="Read all data in advance"
-    )
-    parser.add_argument(
-        '--likes-only', action='store_true', help="Only train against likes"
-    )
-    parser.add_argument(
-        '--batch-size', type=int, default=32, help='Batch size used in fitting the model.'
-    )
-    parser.add_argument(
-        '--cache-dir', default='/tmp', help="Directory to contain the cached image data"
-    )
+    parser.add_argument('--use-single-batch', action='store_true', help="Read all data in advance")
+    parser.add_argument('--likes-only', action='store_true', help="Only train against likes")
+    parser.add_argument('--category', help='Only train against items of this category')
+    parser.add_argument('--batch-size', type=int, default=32, help='Batch size used in fitting the model.')
 
     return parser.parse_args()
 
@@ -90,9 +82,9 @@ class TrainingRunner(WithVerbose):
         self.image_size = args.image_size
         self.min_valid_tag = args.min_valid_tag
         self.likes_only = args.likes_only
+        self.category = args.category
         self.use_single_batch = args.use_single_batch
         self.batch_size = args.batch_size
-        self.cache_dir = args.cache_dir
         self.demo = args.demo
         self.num_epochs = args.num_epochs
         self.test = args.test
@@ -100,6 +92,7 @@ class TrainingRunner(WithVerbose):
             args.save_folder, args.image_size, args.item_file, args.images_file, args.weights_file,
             verbose=self.verbose
         )
+        self.loss_function = 'mean_squared_error'
 
     def run(self):
 
@@ -117,7 +110,7 @@ class TrainingRunner(WithVerbose):
                 model.fit_generator(
                     image_data.train_generator(), steps_per_epoch=image_data.train_length(), epochs=self.num_epochs
                 )
-            self.io.save_weights(model, 'likes' if self.likes_only else 'full', image_data.num_items)
+            self.io.save_weights(model, self._fit_type(), self._num_items)
 
         if self.test:
             if self.use_single_batch:
@@ -130,19 +123,10 @@ class TrainingRunner(WithVerbose):
             print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
         for _ in range(self.demo):
-            print_prediction(image_data, image_data, model)
+            print_prediction(image_data, model)
 
     def get_image_data(self):
-        items = self.io.load_items()
-        if self.likes_only:
-            valid_tags = {
-                '<3': items.get_valid_tags(1)['<3'],
-                'Damenmode': items.get_valid_tags(1)['Damenmode'],
-                'Damenschuhe': items.get_valid_tags(1)['Damenschuhe']
-            }
-        else:
-            valid_tags = items.get_valid_tags(self.min_valid_tag)
-        items.update_tags(valid_tags)
+        items, valid_tags = self._prepare_items()
         if self.use_single_batch:
             image_data = self.io.get_images(items, valid_tags, self.image_size, test_share=0)
         else:
@@ -150,33 +134,41 @@ class TrainingRunner(WithVerbose):
                 items, valid_tags, (self.image_size, self.image_size),
                 batch_size=self.batch_size, verbose=self.verbose
             )
-        self._print_status('Image data loaded')
-        # self._see_if_labels_are_correct(image_data)
 
         return image_data
+
+    def _prepare_items(self):
+        items = self.io.load_items()
+        self._num_items = len(items)
+        if self.likes_only:
+            valid_tags = {
+                '<3': items.get_valid_tags(1)['<3'],
+                # 'Damenmode': items.get_valid_tags(1)['Damenmode'],
+                # 'Damenschuhe': items.get_valid_tags(1)['Damenschuhe']
+            }
+        else:
+            valid_tags = items.get_valid_tags(self.min_valid_tag)
+        if self.category:
+            items = items.filter(category=self.category)
+            if len(items) == 0:
+                raise ValueError('No items of category ' + self.category)
+        items.update_tags(valid_tags)
+        self._print_status('{} items, {} liked'.format(len(items), len([i for i in items if '<3' in i.tags])))
+        return items, valid_tags
 
     def setup_model(self, image_data):
         model = variable_inception(
             input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes
         )
-        model.compile(
-            loss="categorical_crossentropy",
-            optimizer='sgd', metrics=['accuracy']
-        )
+        model.compile(loss=self.loss_function, optimizer='sgd', metrics=['accuracy'])
+
         self._print_status('Model compiled')
-        self.io.load_weights(model, 'likes' if self.likes_only else 'full', image_data.num_items)
+        self.io.load_weights(model, self._fit_type(), self._num_items)
         return model
 
-    def _see_if_labels_are_correct(self, image_data):
-        # for _ in range(self.demo):
-            image, label = next(image_data.test_generator())
-            # i = randrange(len(image_data.train.input))
-            # image = image_data.train.input[i]
-            # label = image_data.train.labels[i]
-            print('Labels before fitting:')
-            for i in range(self.demo):
-                pprint(image_data.labels_sorted_by_probability(label[i]))
-                image_data.show_image(image[i])
+    def _fit_type(self):
+        type = 'likes' if self.likes_only else 'full'
+        return self.category.lower() + '_' + type if self.category else type
 
 
 if __name__ == '__main__':
