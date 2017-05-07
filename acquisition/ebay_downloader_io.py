@@ -95,31 +95,43 @@ class EbayDownloaderIO(WithVerbose):
             self.images_file, items, valid_tags, image_size, test_share=test_share, verbose=self.verbose
         )
 
-    def load_weights(self, model, *suffix):
+    def load_weights(self, model, fit_type='', num_items=0):
         """
         Load the precomputed weights for the given neural network
         :param model: Keras model for the neural network
-        :param suffix: arbitrary suffix to append to file name
+        :param fit_type: currently, 'full' or 'liked'
+        :param num_items: number of items in the full data set
         :return: None
         """
-        weights_file = self.weights_file(suffix)
+        weights_file = self.weights_file(fit_type, num_items)
         if isfile(weights_file):
             self._print_status('Loading', weights_file)
             model.load_weights(weights_file)
 
-    def save_weights(self, model, *suffix):
+    def save_weights(self, model, fit_type='', num_items=0):
         """
         Save the computed weights for the given neural network
         :param model: Keras model for the neural network
-        :param suffix: arbitrary suffix to append to file name
+        :param fit_type: currently, 'full' or 'liked'
+        :param num_items: number of items in the full data set
         :return: None
         """
-        weights_file = self.weights_file(suffix)
+        weights_file = self.weights_file(fit_type, num_items)
         self._print_status('Saving', weights_file)
         model.save_weights(weights_file)
 
-    def weights_file(self, *suffix):
-        return _filename(self.weights_file_base, 'hdf5', *suffix, self.image_size)
+    def weights_file(self, fit_type='', num_items=0):
+        return _filename(
+            self.weights_file_base, 'hdf5', fit_type, self._number_to_string(num_items), self.image_size
+        )
+
+    @staticmethod
+    def _number_to_string(num_items):
+        if not num_items:
+            return ''
+        if 1000*(num_items//1000) == num_items:
+            return str(num_items)[:-3] + 'k'
+        return str(num_items)
 
     def _weights_file_base(self, weights_file):
         if weights_file is None:

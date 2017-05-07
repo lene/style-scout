@@ -65,11 +65,8 @@ def parse_command_line():
     return parser.parse_args()
 
 
-def print_prediction(data_set, image_data, model):
-    # i = randrange(len(data_set.input))
-    # image = data_set.input[i]
-    # label = data_set.labels[i]
-    images, labels = next(data_set.test_generator())
+def print_prediction(image_data, model):
+    images, labels = next(image_data.test_generator())
     i = randrange(len(images))
     image = images[i]
     label = labels[i]
@@ -78,10 +75,11 @@ def print_prediction(data_set, image_data, model):
     image_data.show_image(image)
     print('predictions:')
     pprint(
-        [(label, prob) for label, prob in image_data.labels_sorted_by_probability(
-            # model.predict(data_set.input[i:i + 1], batch_size=1, verbose=1)[0]
+        [(label, prob)
+         for label, prob in image_data.labels_sorted_by_probability(
             model.predict(images[i:i + 1], batch_size=1, verbose=1)[0]
-        ).items() if prob > 0.01]
+         ).items()
+         if prob > 0.01]
     )
 
 
@@ -119,7 +117,7 @@ class TrainingRunner(WithVerbose):
                 model.fit_generator(
                     image_data.train_generator(), steps_per_epoch=image_data.train_length(), epochs=self.num_epochs
                 )
-            self.io.save_weights(model, 'likes' if self.likes_only else 'full', image_data.train_length())
+            self.io.save_weights(model, 'likes' if self.likes_only else 'full', image_data.num_items)
 
         if self.test:
             if self.use_single_batch:
@@ -133,8 +131,6 @@ class TrainingRunner(WithVerbose):
 
         for _ in range(self.demo):
             print_prediction(image_data, image_data, model)
-            # print_prediction(image_data.train, image_data, model)
-            # print_prediction(image_data.test, image_data, model)
 
     def get_image_data(self):
         items = self.io.load_items()
@@ -168,7 +164,7 @@ class TrainingRunner(WithVerbose):
             optimizer='sgd', metrics=['accuracy']
         )
         self._print_status('Model compiled')
-        self.io.load_weights(model)
+        self.io.load_weights(model, 'likes' if self.likes_only else 'full', image_data.num_items)
         return model
 
     def _see_if_labels_are_correct(self, image_data):

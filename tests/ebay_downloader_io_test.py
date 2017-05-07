@@ -37,6 +37,28 @@ class EbayDownloaderIOTest(TestBase):
             io.weights_file()
         )
 
+    def test_init_with_additional_info(self):
+        io = EbayDownloaderIO(
+            self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, weights_file=self.WEIGHTS_FILE_BASE
+        )
+        self.assertEqual(
+            join(self.DOWNLOAD_ROOT, '{}_full_10_{}.hdf5'.format(self.WEIGHTS_FILE_BASE, self.IMAGE_SIZE)),
+            io.weights_file('full', 10)
+        )
+
+    def test_thousands_are_replaced_with_k(self):
+        io = EbayDownloaderIO(
+            self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, weights_file=self.WEIGHTS_FILE_BASE
+        )
+        self.assertEqual(
+            join(self.DOWNLOAD_ROOT, '{}_full_1k_{}.hdf5'.format(self.WEIGHTS_FILE_BASE, self.IMAGE_SIZE)),
+            io.weights_file('full', 1000)
+        )
+        self.assertEqual(
+            join(self.DOWNLOAD_ROOT, '{}_full_1001_{}.hdf5'.format(self.WEIGHTS_FILE_BASE, self.IMAGE_SIZE)),
+            io.weights_file('full', 1001)
+        )
+
     def test_load_items_from_existing_file(self):
         self.skipTest('Test not yet implemented')
 

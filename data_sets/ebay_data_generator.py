@@ -53,7 +53,7 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
         WithVerbose.__init__(self, verbose)
 
         self.batch_size = batch_size
-
+        self.num_items = len(items)
         self._setup_batches(test_share)
 
     def _setup_batches(self, test_share):
