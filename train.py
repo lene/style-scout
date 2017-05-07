@@ -66,16 +66,21 @@ def parse_command_line():
 
 
 def print_prediction(data_set, image_data, model):
-    i = randrange(len(data_set.input))
-    image = data_set.input[i]
-    label = data_set.labels[i]
+    # i = randrange(len(data_set.input))
+    # image = data_set.input[i]
+    # label = data_set.labels[i]
+    images, labels = next(data_set.test_generator())
+    i = randrange(len(images))
+    image = images[i]
+    label = labels[i]
     print('actual values:')
     pprint(image_data.labels_sorted_by_probability(label))
     image_data.show_image(image)
     print('predictions:')
     pprint(
         [(label, prob) for label, prob in image_data.labels_sorted_by_probability(
-            model.predict(data_set.input[i:i + 1], batch_size=1, verbose=1)[0]
+            # model.predict(data_set.input[i:i + 1], batch_size=1, verbose=1)[0]
+            model.predict(images[i:i + 1], batch_size=1, verbose=1)[0]
         ).items() if prob > 0.01]
     )
 
@@ -114,7 +119,7 @@ class TrainingRunner(WithVerbose):
                 model.fit_generator(
                     image_data.train_generator(), steps_per_epoch=image_data.train_length(), epochs=self.num_epochs
                 )
-            self.io.save_weights(model)
+            self.io.save_weights(model, 'likes' if self.likes_only else 'full', image_data.train_length())
 
         if self.test:
             if self.use_single_batch:
@@ -125,6 +130,11 @@ class TrainingRunner(WithVerbose):
                 )
             print()
             print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
+
+        for _ in range(self.demo):
+            print_prediction(image_data, image_data, model)
+            # print_prediction(image_data.train, image_data, model)
+            # print_prediction(image_data.test, image_data, model)
 
     def get_image_data(self):
         items = self.io.load_items()
@@ -142,10 +152,10 @@ class TrainingRunner(WithVerbose):
         else:
             image_data = EbayDataGenerator(
                 items, valid_tags, (self.image_size, self.image_size),
-                batch_size=self.batch_size, cache_dir=self.cache_dir, verbose=self.verbose
+                batch_size=self.batch_size, verbose=self.verbose
             )
         self._print_status('Image data loaded')
-        self._see_if_labels_are_correct(image_data)
+        # self._see_if_labels_are_correct(image_data)
 
         return image_data
 
@@ -161,19 +171,16 @@ class TrainingRunner(WithVerbose):
         self.io.load_weights(model)
         return model
 
-    def run_predictions(self):
-        for _ in range(self.demo):
-            print_prediction(image_data.train, image_data, model)
-            print_prediction(image_data.test, image_data, model)
-
     def _see_if_labels_are_correct(self, image_data):
-        for _ in range(self.demo):
-            i = randrange(len(image_data.train.input))
-            image = image_data.train.input[i]
-            label = image_data.train.labels[i]
+        # for _ in range(self.demo):
+            image, label = next(image_data.test_generator())
+            # i = randrange(len(image_data.train.input))
+            # image = image_data.train.input[i]
+            # label = image_data.train.labels[i]
             print('Labels before fitting:')
-            pprint(image_data.labels_sorted_by_probability(label))
-            image_data.show_image(image)
+            for i in range(self.demo):
+                pprint(image_data.labels_sorted_by_probability(label[i]))
+                image_data.show_image(image[i])
 
 
 if __name__ == '__main__':
