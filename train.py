@@ -1,11 +1,14 @@
 from argparse import ArgumentParser
 from pprint import pprint
 from random import randrange
+from PIL import Image
+import numpy
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
 from data_sets.ebay_data_generator import EbayDataGenerator
 from utils.with_verbose import WithVerbose
 from variable_inception import variable_inception
+from data_sets.contains_images import add_border
 
 MIN_TAG_NUM = 10
 SAVE_FOLDER = 'data'
@@ -57,21 +60,25 @@ def parse_command_line():
     return parser.parse_args()
 
 
-def print_prediction(image_data, model):
+def print_predictions(image_data, model):
     images, labels = next(image_data.test_generator())
     i = randrange(len(images))
-    image = images[i]
-    label = labels[i]
+    print_prediction(images[i:i + 1], labels[i], image_data, model)
+
+
+def print_prediction(images, label, image_data, model):
     print('actual values:')
     pprint(image_data.labels_sorted_by_probability(label))
-    image_data.show_image(image)
+    image_data.show_image(images)
     print('predictions:')
     pprint(
-        [(label, prob)
-         for label, prob in image_data.labels_sorted_by_probability(
-            model.predict(images[i:i + 1], batch_size=1, verbose=1)[0]
-         ).items()
-         if prob > 0.01]
+        [
+            (label, prob)
+            for label, prob in image_data.labels_sorted_by_probability(
+                model.predict(images.reshape(1, *image_data.size, image_data.DEPTH), batch_size=1, verbose=1)[0]
+            ).items()
+            if prob > 0.01
+        ]
     )
 
 
@@ -122,8 +129,24 @@ class TrainingRunner(WithVerbose):
             print()
             print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
-        for _ in range(self.demo):
-            print_prediction(image_data, model)
+        for item in [i for i in self._prepare_items()[0] if '<3' in i.tags][:self.demo]:
+            images = numpy.asarray([
+                image_data.downscale(Image.open(file).convert('RGB'), method=add_border)
+                for file in item.picture_files
+            ])
+            for image in images:
+                image_data.show_image(image)
+            predictions = model.predict(images, batch_size=len(images), verbose=1)
+            for prediction in predictions:
+                pprint(
+                    [
+                        (label, prob)
+                        for label, prob in image_data.labels_sorted_by_probability(prediction).items()
+                        if prob > 0.01
+                    ]
+                )
+        # for _ in range(self.demo):
+        #     print_predictions(image_data, model)
 
     def get_image_data(self):
         items, valid_tags = self._prepare_items()
@@ -141,11 +164,10 @@ class TrainingRunner(WithVerbose):
         items = self.io.load_items()
         self._num_items = len(items)
         if self.likes_only:
-            valid_tags = {
-                '<3': items.get_valid_tags(1)['<3'],
-                # 'Damenmode': items.get_valid_tags(1)['Damenmode'],
-                # 'Damenschuhe': items.get_valid_tags(1)['Damenschuhe']
-            }
+            for item in items:
+                if not '<3' in item.tags:
+                    item.tags.add('</3')
+            valid_tags = {'<3': None, '</3': None}
         else:
             valid_tags = items.get_valid_tags(self.min_valid_tag)
         if self.category:
