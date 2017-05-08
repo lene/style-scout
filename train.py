@@ -17,7 +17,7 @@ DEFAULT_SIZE = 139
 
 def parse_command_line():
     parser = ArgumentParser(
-        description="Download information about eBay items as training data for neural network recognizing style"
+        description="Train neural networks recognizing style from liked eBay items"
     )
     parser.add_argument(
         '--verbose', '-v', action='store_true', help="Print info about extracted tags"
@@ -40,14 +40,14 @@ def parse_command_line():
         '--weights-file', '-w', default=None, help='HDF5 file from which to load precomputed set of weights'
     )
     parser.add_argument(
-        '--num-epochs', '-n', type=int, default=1, help='How many times to iterate.'
+        '--num-epochs', '-n', type=int, default=1, help='How many times to iterate'
     )
     parser.add_argument(
         '--image-size', '-s', type=int, default=DEFAULT_SIZE,
-        help='Size (both width and height) to which images are resized.'
+        help='Size (both width and height) to which images are resized'
     )
     parser.add_argument(
-        '--demo', type=int, default=5, help='Number of images to try to predict as demo.'
+        '--demo', type=int, default=0, help='Number of images to try to predict as demo'
     )
     parser.add_argument(
         '--test', '-t', action='store_true', help="Run evaluation on test data set"
@@ -55,7 +55,8 @@ def parse_command_line():
     parser.add_argument('--use-single-batch', action='store_true', help="Read all data in advance")
     parser.add_argument('--likes-only', action='store_true', help="Only train against likes")
     parser.add_argument('--category', help='Only train against items of this category')
-    parser.add_argument('--batch-size', type=int, default=32, help='Batch size used in fitting the model.')
+    parser.add_argument('--batch-size', type=int, default=32, help='Batch size used in fitting the model')
+    parser.add_argument('--optimizer', default='adam', help='Optimizer used to fit the model')
 
     return parser.parse_args()
 
@@ -100,6 +101,7 @@ class TrainingRunner(WithVerbose):
             verbose=self.verbose
         )
         self.loss_function = 'mean_squared_error'
+        self.optimizer = 'sgd'
 
     def run(self):
 
@@ -182,7 +184,7 @@ class TrainingRunner(WithVerbose):
         model = variable_inception(
             input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes
         )
-        model.compile(loss=self.loss_function, optimizer='sgd', metrics=['accuracy'])
+        model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
 
         self._print_status('Model compiled')
         self.io.load_weights(model, self._fit_type(), self._num_items)
