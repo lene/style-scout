@@ -52,7 +52,6 @@ def parse_command_line():
     parser.add_argument(
         '--test', '-t', action='store_true', help="Run evaluation on test data set"
     )
-    parser.add_argument('--use-single-batch', action='store_true', help="Read all data in advance")
     parser.add_argument('--likes-only', action='store_true', help="Only train against likes")
     parser.add_argument('--category', help='Only train against items of this category')
     parser.add_argument('--batch-size', type=int, default=32, help='Batch size used in fitting the model')
@@ -91,7 +90,6 @@ class TrainingRunner(WithVerbose):
         self.min_valid_tag = args.min_valid_tag
         self.likes_only = args.likes_only
         self.category = args.category
-        self.use_single_batch = args.use_single_batch
         self.batch_size = args.batch_size
         self.demo = args.demo
         self.num_epochs = args.num_epochs
@@ -110,24 +108,16 @@ class TrainingRunner(WithVerbose):
         model = self.setup_model(image_data)
 
         if self.num_epochs:
-            if self.use_single_batch:
-                model.fit(
-                    image_data.train.input, image_data.train.labels,
-                    epochs=self.num_epochs, batch_size=self.batch_size
-                )
-            else:
-                model.fit_generator(
-                    image_data.train_generator(), steps_per_epoch=image_data.train_length(), epochs=self.num_epochs
-                )
+            model.fit_generator(
+                image_data.train_generator(),
+                steps_per_epoch=image_data.train_length(), epochs=self.num_epochs
+            )
             self.io.save_weights(model, self._fit_type(), self._num_items)
 
         if self.test:
-            if self.use_single_batch:
-                loss_and_metrics = model.evaluate(image_data.test.input, image_data.test.labels)
-            else:
-                loss_and_metrics = model.evaluate_generator(
-                    image_data.test_generator(), steps=image_data.test_length(), max_q_size=2
-                )
+            loss_and_metrics = model.evaluate_generator(
+                image_data.test_generator(), steps=image_data.test_length(), max_q_size=2
+            )
             print()
             print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
@@ -147,18 +137,13 @@ class TrainingRunner(WithVerbose):
                         if prob > 0.01
                     ]
                 )
-        # for _ in range(self.demo):
-        #     print_predictions(image_data, model)
 
     def get_image_data(self):
         items, valid_tags = self._prepare_items()
-        if self.use_single_batch:
-            image_data = self.io.get_images(items, valid_tags, self.image_size, test_share=0)
-        else:
-            image_data = EbayDataGenerator(
-                items, valid_tags, (self.image_size, self.image_size),
-                batch_size=self.batch_size, verbose=self.verbose
-            )
+        image_data = EbayDataGenerator(
+            items, valid_tags, (self.image_size, self.image_size),
+            batch_size=self.batch_size, verbose=self.verbose
+        )
 
         return image_data
 
@@ -167,7 +152,7 @@ class TrainingRunner(WithVerbose):
         self._num_items = len(items)
         if self.likes_only:
             for item in items:
-                if not '<3' in item.tags:
+                if '<3' not in item.tags:
                     item.tags.add('</3')
             valid_tags = {'<3': None, '</3': None}
         else:
