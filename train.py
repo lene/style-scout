@@ -3,6 +3,7 @@ from pprint import pprint
 from random import randrange
 from PIL import Image
 import numpy
+from keras.callbacks import ModelCheckpoint
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
 from data_sets.ebay_data_generator import EbayDataGenerator
@@ -110,7 +111,8 @@ class TrainingRunner(WithVerbose):
         if self.num_epochs:
             model.fit_generator(
                 image_data.train_generator(),
-                steps_per_epoch=image_data.train_length(), epochs=self.num_epochs
+                steps_per_epoch=image_data.train_length(), epochs=self.num_epochs,
+                callbacks=[ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5')]
             )
             self.io.save_weights(model, self._fit_type(), self._num_items)
 
