@@ -160,7 +160,13 @@ class TrainingRunner(WithVerbose):
             if len(items) == 0:
                 raise ValueError('No items of category ' + self.category)
         items.update_tags(valid_tags)
-        self._print_status('{} items, {} liked'.format(len(items), len([i for i in items if '<3' in i.tags])))
+        self._print_status(
+            '{}{} items, {} liked'.format(
+                '{}: '.format(self.category) if self.category else '',
+                len(items),
+                len([i for i in items if '<3' in i.tags])
+            )
+        )
         return items, valid_tags
 
     def setup_model(self, image_data):
