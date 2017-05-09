@@ -140,12 +140,10 @@ class TrainingRunner(WithVerbose):
 
     def get_image_data(self):
         items, valid_tags = self._prepare_items()
-        image_data = EbayDataGenerator(
+        return EbayDataGenerator(
             items, valid_tags, (self.image_size, self.image_size),
             batch_size=self.batch_size, verbose=self.verbose
         )
-
-        return image_data
 
     def _prepare_items(self):
         items = self.io.load_items()
@@ -153,8 +151,8 @@ class TrainingRunner(WithVerbose):
         if self.likes_only:
             for item in items:
                 if '<3' not in item.tags:
-                    item.tags.add('</3')
-            valid_tags = {'<3': None, '</3': None}
+                    item.tags.add(':-(')
+            valid_tags = {'<3': None, ':-(': None}
         else:
             valid_tags = items.get_valid_tags(self.min_valid_tag)
         if self.category:
