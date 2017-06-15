@@ -34,6 +34,9 @@ class Items(WithVerbose):
         """Adds a list of Item objects or an Items object to this item set."""
         self.items.extend(items if isinstance(items, list) else items.items)
 
+    def categories(self):
+        return {i.category for i in self.items}
+
     def filter(self, category=None):
         if not category:
             raise ValueError()

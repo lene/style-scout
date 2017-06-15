@@ -3,7 +3,7 @@ from pprint import pprint
 from random import randrange
 from PIL import Image
 import numpy
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
 from data_sets.ebay_data_generator import EbayDataGenerator
@@ -112,7 +112,10 @@ class TrainingRunner(WithVerbose):
             model.fit_generator(
                 image_data.train_generator(),
                 steps_per_epoch=image_data.train_length(), epochs=self.num_epochs,
-                callbacks=[ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5')]
+                callbacks=[
+                    ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5', verbose=self.verbose),
+                    ReduceLROnPlateau(monitor='loss', factor=0.5, patience=2, verbose=self.verbose)
+                ]
             )
             self.io.save_weights(model, self._fit_type(), self._num_items)
 
@@ -160,7 +163,7 @@ class TrainingRunner(WithVerbose):
         if self.category:
             items = items.filter(category=self.category)
             if len(items) == 0:
-                raise ValueError('No items of category ' + self.category)
+                raise ValueError('No items of category {}: {}'.format(self.category, items.categories()))
         items.update_tags(valid_tags)
         self._print_status(
             '{}{} items, {} liked'.format(
