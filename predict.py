@@ -28,6 +28,9 @@ def parse_command_line():
         '--weights-file', '-w', default=None, help='HDF5 file from which to load precomputed set of weights'
     )
     parser.add_argument(
+        '--images-file', default=None, help='Pickle file from which to load precomputed image data set'
+    )
+    parser.add_argument(
         '--image-size', '-s', type=int, default=DEFAULT_SIZE,
         help='Size (both width and height) to which images are resized'
     )
@@ -54,7 +57,8 @@ class Predictor(WithVerbose, ContainsImages):
 
     def __init__(self, args):
         self.io = EbayDownloaderIO(
-            args.save_folder, args.image_size, weights_file=args.weights_file, verbose=args.verbose
+            args.save_folder, args.image_size, weights_file=args.weights_file, images_file=args.images_file,
+            verbose=args.verbose
         )
         self.verbose = args.verbose
         self.size = (args.image_size, args.image_size)
