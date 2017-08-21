@@ -3,12 +3,12 @@ from pprint import pprint
 from random import randrange
 from PIL import Image
 import numpy
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, TensorBoard
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
 from data_sets.ebay_data_generator import EbayDataGenerator
 from utils.with_verbose import WithVerbose
-from variable_inception import variable_inception
+from network_types import inception, xception, vgg16, vgg19, resnet50
 from data_sets.contains_images import add_border
 
 MIN_TAG_NUM = 10
@@ -57,6 +57,7 @@ def parse_command_line():
     parser.add_argument('--category', help='Only train against items of this category')
     parser.add_argument('--batch-size', type=int, default=32, help='Batch size used in fitting the model')
     parser.add_argument('--optimizer', default='adam', help='Optimizer used to fit the model')
+    parser.add_argument('--type', default='inception', help='Type of neural network used')
 
     return parser.parse_args()
 
@@ -85,6 +86,14 @@ def print_prediction(images, label, image_data, model):
 
 class TrainingRunner(WithVerbose):
 
+    NETWORK_TYPES = {
+        'inception': inception,
+        'xception': xception,
+        'vgg16': vgg16,
+        'vgg19': vgg19,
+        'resnet50': resnet50
+    }
+
     def __init__(self, args):
         WithVerbose.__init__(self, args.verbose)
         self.image_size = args.image_size
@@ -101,6 +110,7 @@ class TrainingRunner(WithVerbose):
         )
         self.loss_function = 'mean_squared_error'
         self.optimizer = 'sgd'
+        self.neural_network_type = self._decode_network_name(args.type)
 
     def run(self):
 
@@ -112,7 +122,10 @@ class TrainingRunner(WithVerbose):
             model.fit_generator(
                 image_data.train_generator(),
                 steps_per_epoch=image_data.train_length(), epochs=self.num_epochs,
-                callbacks=[ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5')]
+                callbacks=[
+                    ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5'),
+                    TensorBoard(write_images=True, histogram_freq=1)
+                ]
             )
             self.io.save_weights(model, self._fit_type(), self._num_items)
 
@@ -147,6 +160,16 @@ class TrainingRunner(WithVerbose):
             batch_size=self.batch_size, verbose=self.verbose
         )
 
+    def setup_model(self, image_data):
+        model = self.neural_network_type(
+            input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes
+        )
+        model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
+
+        self._print_status('Model compiled')
+        self.io.load_weights(model, self._fit_type(), self._num_items)
+        return model
+
     def _prepare_items(self):
         items = self.io.load_items()
         self._num_items = len(items)
@@ -171,20 +194,16 @@ class TrainingRunner(WithVerbose):
         )
         return items, valid_tags
 
-    def setup_model(self, image_data):
-        model = variable_inception(
-            input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes
-        )
-        model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
-
-        self._print_status('Model compiled')
-        self.io.load_weights(model, self._fit_type(), self._num_items)
-        return model
-
     def _fit_type(self):
         type = 'likes' if self.likes_only else 'full'
         return self.category.lower() + '_' + type if self.category else type
 
+    @staticmethod
+    def _decode_network_name(network_type):
+        try:
+            return TrainingRunner.NETWORK_TYPES[network_type]
+        except KeyError:
+            raise ValueError('Invalid Neural Network name "{}"'.format(network_type))
 
 if __name__ == '__main__':
     runner = TrainingRunner(args=parse_command_line())
