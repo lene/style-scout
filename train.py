@@ -56,8 +56,14 @@ def parse_command_line():
     parser.add_argument('--likes-only', action='store_true', help="Only train against likes")
     parser.add_argument('--category', help='Only train against items of this category')
     parser.add_argument('--batch-size', type=int, default=32, help='Batch size used in fitting the model')
-    parser.add_argument('--optimizer', default='adam', help='Optimizer used to fit the model')
-    parser.add_argument('--type', default='inception', help='Type of neural network used')
+    parser.add_argument(
+        '--optimizer', default='adam', help='Optimizer used to fit the model',
+        choices=['adam', 'sgd', 'rmsprop', 'adagrad', 'adadelta', 'adamax', 'nadam']
+    )
+    parser.add_argument(
+        '--type', default='inception', help='Type of neural network used',
+        choices=list(TrainingRunner.NETWORK_TYPES.keys())
+    )
 
     return parser.parse_args()
 
@@ -109,7 +115,7 @@ class TrainingRunner(WithVerbose):
             verbose=self.verbose
         )
         self.loss_function = 'mean_squared_error'
-        self.optimizer = 'sgd'
+        self.optimizer = args.optimizer
         self.neural_network_type = self._decode_network_name(args.type)
 
     def run(self):

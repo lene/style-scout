@@ -6,8 +6,7 @@ from pprint import pprint
 from acquisition.ebay_downloader_io import EbayDownloaderIO
 from data_sets.contains_images import ContainsImages
 from utils.with_verbose import WithVerbose
-from variable_inception import variable_inception
-
+from train import TrainingRunner
 
 SAVE_FOLDER = 'data'
 DEFAULT_SIZE = 139
@@ -45,6 +44,10 @@ def parse_command_line():
         '--predict-item-url', action='append',
         help='URL of eBay item which is evaluated'
     )
+    parser.add_argument(
+        '--type', default='inception', help='Type of neural network used',
+        choices=list(TrainingRunner.NETWORK_TYPES.keys())
+    )
 
     return parser.parse_args()
 
@@ -63,10 +66,11 @@ class Predictor(WithVerbose, ContainsImages):
         self.verbose = args.verbose
         self.size = (args.image_size, args.image_size)
         self.demo = args.demo
+        self.neural_network_type = TrainingRunner._decode_network_name(args.type)
         self.model = self.setup_model()
 
     def setup_model(self, loss_function='mean_squared_error', optimizer='sgd'):
-        model = variable_inception(
+        model = self.neural_network_type(
             input_shape=(*self.size, 3), classes=2  # image_data.num_classes
         )
         model.compile(loss=loss_function, optimizer=optimizer, metrics=['accuracy'])
