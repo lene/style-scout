@@ -3,7 +3,7 @@ from pprint import pprint
 from random import randrange
 from PIL import Image
 import numpy
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
 from data_sets.ebay_data_generator import EbayDataGenerator
@@ -129,8 +129,12 @@ class TrainingRunner(WithVerbose):
                 image_data.train_generator(),
                 steps_per_epoch=image_data.train_length(), epochs=self.num_epochs,
                 callbacks=[
+                    # save weights after every iteration
                     ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5', verbose=self.verbose),
-                    ReduceLROnPlateau(monitor='loss', factor=0.5, patience=2, verbose=self.verbose)
+                    # if loss does not change for 2 iterations, change learning rate
+                    ReduceLROnPlateau(monitor='loss', factor=0.5, patience=2, verbose=self.verbose),
+                    # if loss does not change for 4 iterations, finish training
+                    EarlyStopping(monitor='loss', min_delta=0, patience=4, verbose=self.verbose)
                 ]
             )
             self.io.save_weights(model, self._fit_type(), self._num_items)
