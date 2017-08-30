@@ -64,6 +64,10 @@ def parse_command_line():
         '--type', default='inception', help='Type of neural network used',
         choices=list(TrainingRunner.NETWORK_TYPES.keys())
     )
+    parser.add_argument(
+        '--layers', default=[1024], help='Additional fully connected layers before the output layer',
+        type=int, nargs='+',
+    )
 
     return parser.parse_args()
 
@@ -117,6 +121,7 @@ class TrainingRunner(WithVerbose):
         self.loss_function = 'mean_squared_error'
         self.optimizer = args.optimizer
         self.neural_network_type = self._decode_network_name(args.type)
+        self.fully_connected_layers = args.layers
 
     def run(self):
 
@@ -172,7 +177,8 @@ class TrainingRunner(WithVerbose):
 
     def setup_model(self, image_data):
         model = self.neural_network_type(
-            input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes
+            input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes,
+            connected_layers=self.fully_connected_layers
         )
         model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
 

@@ -59,6 +59,8 @@ python train.py [-h] [--verbose] [--save-folder SAVE_FOLDER]
                 [--num-epochs NUM_EPOCHS] [--image-size IMAGE_SIZE]
                 [--demo DEMO] [--test] [--likes-only] [--category CATEGORY]
                 [--batch-size BATCH_SIZE] [--optimizer OPTIMIZER]
+                [--type {inception,xception,vgg16,vgg19,resnet50}]
+                [--layers LAYERS [LAYERS ...]]
 ```
 Typical usages:
 ```bash
@@ -77,6 +79,12 @@ python train.py -v --item-file ebay_items.pickle --num-epochs 10 --image-size 40
 Trains a classifier on all items of all categories, predicting not only the liked status but also
 all recorded tags (in the hope of finding cross-correlations). Images are scaled to 400x400, a 
 smaller batch size of 8  and the ADAM optimizer is used. 
+
+```bash
+python train.py -v --item-file ebay_items.pickle --likes-only --type resnet50 --layers 200 100
+```
+Trains a classifier using the ResNet50 neural network architecture with two additional fully
+connected layers of size 200 and 100 
 
 ## Finally, predict whether you like or dislike an unknown item
 
