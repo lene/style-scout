@@ -36,6 +36,5 @@ def normalize(ndarray):
     """
     assert isinstance(ndarray, numpy.ndarray)
     if ndarray.dtype == numpy.uint8:
-        return numpy.multiply(ndarray.astype(numpy.float32), 1.0/255.0)
+        return numpy.multiply(ndarray.astype(numpy.float32), 1.0 / 255.0)
     return ndarray
-

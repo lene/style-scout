@@ -35,7 +35,8 @@ class Category:
         self.name_path = data.get('CategoryNamePath', '').split(':')
         self.is_leaf = data['LeafCategory'] == 'true'
         self._by_id[self.id] = self
-        # self.parent = self.by_id(data.get('CategoryParentID')) if int(data.get('CategoryParentID', 0)) else None
+        # self.parent = self.by_id(data.get('CategoryParentID')) if int(data.get('CategoryParentID', 0))
+        #     else None
 
     @property
     def necessary_tags(self):

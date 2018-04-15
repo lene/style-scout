@@ -76,7 +76,7 @@ class ItemTest(TestBase):
 
     def test_download_images_jpg(self):
         test_pic = join(sep, *__file__.split('/')[:-1], 'data', 'test.jpg')
-        self.api.get_item = partial(create_item_dict, picture_url=['file://'+test_pic])
+        self.api.get_item = partial(create_item_dict, picture_url=['file://' + test_pic])
         Item.download_root = self.DOWNLOAD_ROOT
         item = Item(self.api, self.category, 1)
 
@@ -90,4 +90,3 @@ class ItemTest(TestBase):
         item = Item(self.api, self.category, 1)
 
         item.download_images()  # should just ignore the error
-

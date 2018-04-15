@@ -7,7 +7,6 @@ from os.path import isfile, join
 from acquisition.item import Item
 from acquisition.items import Items
 from category import Category
-from data_sets import EbayDataSets
 from utils.with_verbose import WithVerbose
 from ebaysdk.exception import ConnectionError
 
@@ -63,7 +62,7 @@ class EbayDownloaderIO(WithVerbose):
 
     def import_likes(self, api, items):
         """
-        Loads liked Item objects from the configured likes file and adds them to items, ensuring 
+        Loads liked Item objects from the configured likes file and adds them to items, ensuring
         each Item object is present only once.
         :param api: API object from which Item objects are read
         :param items: Item objects already present
@@ -121,7 +120,7 @@ class EbayDownloaderIO(WithVerbose):
     def _number_to_string(num_items):
         if not num_items:
             return ''
-        if 1000*(num_items//1000) == num_items:
+        if 1000 * (num_items // 1000) == num_items:
             return str(num_items)[:-3] + 'k'
         return str(num_items)
 
@@ -160,4 +159,3 @@ def _filename(what, extension, *args):
 def _check_constructor_arguments_valid(image_size, items_file, images_file, weights_file, likes_file):
     if images_file or weights_file:
         assert isinstance(image_size, int)
-

@@ -24,7 +24,7 @@ class EbayDataSetsTest(TestBase):
         data_sets = EbayDataSets(
             items=items, valid_labels=[], size=(SIZE, SIZE)
         )
-        self.assertEqual(SIZE*SIZE*3, data_sets.num_features)
+        self.assertEqual(SIZE * SIZE * 3, data_sets.num_features)
         self.assertEqual(0, data_sets.num_classes)
 
     def test_labels(self):
@@ -116,4 +116,3 @@ class EbayDataSetsTest(TestBase):
         item4.tags = ['7', '8']
         valid_labels = ['1', '2', '3', '4', '5', '6', '7', '8']
         return [item1, item2, item3, item4], valid_labels
-

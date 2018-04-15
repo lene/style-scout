@@ -93,5 +93,6 @@ TBD
 # Running tests
 
 ```bash
-$ nosetests tests 
+$ nosetests tests
+$ flake8 .
 ```

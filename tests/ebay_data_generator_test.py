@@ -54,8 +54,8 @@ class EbayDataGeneratorTest(TestBase):
         items = self._generate_items(num_items)
         for i, item in enumerate(items):
             item.tags = [str(i + 1)]
-        return items, [str(i+1) for i in range(num_items)]
+        return items, [str(i + 1) for i in range(num_items)]
 
     def _generate_items(self, num_items):
-        raw_items = [Item(self.api, self.category, i+1) for i in range(num_items)]
+        raw_items = [Item(self.api, self.category, i + 1) for i in range(num_items)]
         return Items(raw_items)

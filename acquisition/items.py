@@ -47,7 +47,7 @@ class Items(WithVerbose):
 
     def remove_duplicates(self):
         """
-        Remove all duplicate occurrences of an Item in this item set. 
+        Remove all duplicate occurrences of an Item in this item set.
         :return: None
         """
         # Since Item is not hashable we need to do this manually
@@ -75,7 +75,7 @@ class Items(WithVerbose):
             self._print_status(
                 'Downloading images ({}/{}) ETA: {}'.format(
                     i + 1, len(self.items),
-                    timedelta(seconds=int(elapsed_time * (len(self) - i) / (i+1)))
+                    timedelta(seconds=int(elapsed_time * (len(self) - i) / (i + 1)))
                 ), end='\r'
             )
             item.download_images()
@@ -87,10 +87,10 @@ class Items(WithVerbose):
 
     def get_valid_tags(self, min_count):
         """
-        Returns the tags in this item set which occur at least min_count times, along with the 
+        Returns the tags in this item set which occur at least min_count times, along with the
         number of times each tag occurs.
         :param min_count: minimum number of occurrences for a tag to be included
-        :return: a dict of the form {tag: number_it_occurs} 
+        :return: a dict of the form {tag: number_it_occurs}
         """
         return {
             t: n for t, n in self.count_all_tags().items()
@@ -101,7 +101,7 @@ class Items(WithVerbose):
     def count_all_tags(self):
         """
         Returns the tags in this item set along with the number of times each tag occurs.
-        :return: a dict of the form {tag: number_it_occurs} 
+        :return: a dict of the form {tag: number_it_occurs}
         """
         counted_tags = defaultdict(int)
         for item in self.items:

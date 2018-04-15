@@ -6,13 +6,13 @@ from acquisition.items import Items
 
 class LabeledItems:
     """
-    Common properties for data used as input for neural network. These include items and labels for these 
-    items. 
+    Common properties for data used as input for neural network. These include items and labels for these
+    items.
     """
 
     def __init__(self, items, valid_labels):
         """
-        :param items: List of Item objects or an Items object 
+        :param items: List of Item objects or an Items object
         :param valid_labels: Set of labels the network will be trained against
         """
         _check_constructor_arguments(items, valid_labels)

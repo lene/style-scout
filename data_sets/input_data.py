@@ -164,5 +164,3 @@ def _check_describes_image_geometry(rows, cols, depth):
     assert rows > 0
     assert cols > 0
     assert 0 < depth < 3
-
-

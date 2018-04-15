@@ -45,7 +45,7 @@ class ImagesLabelsDataSetTest(unittest.TestCase):
 
     def test_next_batch_runs_repeatedly(self):
         data_set = _create_empty_data_set()
-        batch_size = NUM_TRAINING_SAMPLES//2
+        batch_size = NUM_TRAINING_SAMPLES // 2
         _, _ = data_set.next_batch(batch_size)
         _, _ = data_set.next_batch(batch_size)
 
@@ -74,7 +74,7 @@ def create_empty_image_data():
 def create_random_image_data(min_val, max_val):
     from random import randrange
     return image_data_from_list(
-        [randrange(min_val, max_val+1) for _ in range(NUM_TRAINING_SAMPLES * IMAGE_WIDTH * IMAGE_HEIGHT)]
+        [randrange(min_val, max_val + 1) for _ in range(NUM_TRAINING_SAMPLES * IMAGE_WIDTH * IMAGE_HEIGHT)]
     )
 
 

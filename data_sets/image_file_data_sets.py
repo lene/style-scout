@@ -64,7 +64,11 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
 
         train_images, train_labels, test_images, test_labels = self.split_images(all_images, all_labels, 0.8)
 
-        self.validation_size = int(len(all_images)*(self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share))
+        self.validation_size = int(
+            len(all_images) * (
+                self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share
+            )
+        )
         validation_images = train_images[:self.validation_size]
         validation_labels = train_labels[:self.validation_size]
         train_images = train_images[self.validation_size:]
@@ -94,7 +98,7 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
         i = 0
         for root, dirs, files in all_dirs:
             label = root.split('/')[-1]
-            self._print_status(label, "%.2f%%" % (i/len(all_dirs)*100))
+            self._print_status(label, "%.2f%%" % (i / len(all_dirs) * 100))
             i += 1
             for j, file in enumerate(files):
                 self._print_status(j, '/', len(files), end='\r')
@@ -115,7 +119,7 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
         # avoid shuffling images and labels in place
         images_ = images.copy()
         labels_ = labels.copy()
-        test_size = int(len(images)*(1-train_to_test_ratio))
+        test_size = int(len(images) * (1 - train_to_test_ratio))
         combined = list(zip(images, labels))
         shuffle(combined)
         images_[:], labels_[:] = zip(*combined)
@@ -144,4 +148,3 @@ def nth_index_and_value(l, n):
     v = sorted(l)[-n]
     i = list(l).index(v)
     return i, v
-

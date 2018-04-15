@@ -28,7 +28,7 @@ class ContainsImages:
         :param y_size: height of the images
         """
         self.size = (x_size, y_size)
-        self.num_features = x_size*y_size*self.DEPTH
+        self.num_features = x_size * y_size * self.DEPTH
 
     def downscale(self, image, method=add_border):
         w, h = image.size
@@ -41,4 +41,3 @@ class ContainsImages:
         plt.imshow(rgb_values, cmap='gray' if cls.DEPTH == 1 else None)
         plt.title(label)
         plt.show()
-

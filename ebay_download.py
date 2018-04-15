@@ -13,7 +13,8 @@ DEFAULT_SIZE = 139
 
 def parse_command_line():
     parser = ArgumentParser(
-        description="Download information about eBay items as training data for style rcognition neural network"
+        description="Download information about eBay items as training data for style recognition neural "
+                    "network"
     )
     parser.add_argument(
         '--verbose', '-v', action='store_true', help="Print info about extracted tags"
@@ -34,17 +35,17 @@ def parse_command_line():
     )
     parser.add_argument(
         '--item-file', default=None, help="Pickle file from which to load downloaded items"
-    )    
+    )
     parser.add_argument(
         '--ebay-auth-file', default='ebay_auth.json',
         help="JSON file containing the eBay authorization IDs"
-    )    
+    )
     parser.add_argument(
         '--likes-file', help="JSON file containing the liked item IDs"
     )
     parser.add_argument(
         '--ebay-site_id', type=int, default=77, help="eBay site ID (77 for Germany)"
-    )    
+    )
     parser.add_argument(
         '--min-valid-tag', default=MIN_TAG_NUM, type=int,
         help="Minimum number of times a tag has to occur to be considered valid"
@@ -64,7 +65,8 @@ def parse_command_line():
 
 def print_tags(tags, num_most_popular=50):
     for k in sorted(tags.keys()):
-        if 'style:' in k or 'heel height:' in k or 'length:' in k or 'pattern:' in k or True: #  completely disabled for now
+        if 'style:' in k or 'heel height:' in k or 'length:' in k or 'pattern:' in k \
+                or True:  # completely disabled for now
             continue
         print(k, tags[k])
     print()

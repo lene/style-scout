@@ -98,5 +98,5 @@ class ItemsTest(TestBase):
         self.assertEqual(item2, filtered[0])
 
     def _generate_items(self, num_items):
-        raw_items = [Item(self.api, self.category, i+1) for i in range(num_items)]
+        raw_items = [Item(self.api, self.category, i + 1) for i in range(num_items)]
         return Items(raw_items)

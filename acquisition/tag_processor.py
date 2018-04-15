@@ -47,7 +47,8 @@ class TagProcessor:
                 tag_value = 'schwarz-beige'
             elif 'töne' in tag_value:
                 tag_value = 'schwarz'
-        elif 'weiss' in tag_value or 'weißtöne' in tag_value or 'weiã' in tag_value or 'wollweiß' in tag_value:
+        elif 'weiss' in tag_value or 'weißtöne' in tag_value or 'weiã' in tag_value \
+                or 'wollweiß' in tag_value:
             return 'weiß'
         elif 'braun' in tag_value:
             return 'braun'
@@ -135,13 +136,15 @@ class TagProcessor:
             return 'party'
         elif tag_value[:8] == 'hochzeit':
             return 'spezieller anlass'
-        elif tag_value == 'immer' or tag_value == 'alles' or tag_value == 'freizeit, besondere anlässe, party, arbeit':
+        elif tag_value == 'immer' or tag_value == 'alles' \
+                or tag_value == 'freizeit, besondere anlässe, party, arbeit':
             return None
         return tag_value
 
     @staticmethod
     def process_pattern_tag(tag_value):
-        if tag_value == 'ohne' or tag_value == 'einfarbig' or tag_value == 'kein muster' or tag_value[:3] == 'uni':
+        if tag_value == 'ohne' or tag_value == 'einfarbig' or tag_value == 'kein muster' \
+                or tag_value[:3] == 'uni':
             return 'ohne muster'
         elif tag_value[:6] == 'siehe ' or tag_value == 'mit muster':
             return None

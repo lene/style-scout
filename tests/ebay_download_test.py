@@ -11,4 +11,3 @@ class EbayDownloadTest(TestBase):
     def setUp(self):
         super().setUp()
         self.category.necessary_tags = ['style']
-

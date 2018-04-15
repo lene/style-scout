@@ -69,18 +69,22 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
 
         if extract:
             all_images, all_labels = self._extract_images()
-            required_ram = all_images.size*(4+1)+all_labels.nbytes
+            required_ram = all_images.size * (4 + 1) + all_labels.nbytes
             self._print_status(
-                'RAM needed for images and labels: {0:.2f}GB'.format(required_ram/1024/1024/1024)
+                'RAM needed for images and labels: {0:.2f}GB'.format(required_ram / 1024 / 1024 / 1024)
             )
 
             all_labels = self._dense_to_one_hot(all_labels)
 
             train_images, train_labels, test_images, test_labels = self.split_images(
-                all_images, all_labels, 1-test_share
+                all_images, all_labels, 1 - test_share
             )
 
-            self.validation_size = int(len(all_images) * (self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share))
+            self.validation_size = int(
+                len(all_images) * (
+                    self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share
+                )
+            )
             validation_images = train_images[:self.validation_size]
             validation_labels = train_labels[:self.validation_size]
             train_images = train_images[self.validation_size:]
@@ -100,7 +104,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         import os.path
         images, labels = [], []
         for i, item in enumerate(self.items):
-            self._print_status('Extracting images: {}/{}'.format(i+1, len(self.items)), end='\r')
+            self._print_status('Extracting images: {}/{}'.format(i + 1, len(self.items)), end='\r')
             item.download_images()
             for image_file in item.picture_files:
                 try:

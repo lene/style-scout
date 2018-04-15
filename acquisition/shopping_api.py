@@ -63,4 +63,3 @@ class ShoppingAPI:
 
         response = self._api.execute('GetSingleItem', query)
         return response.dict()['Item']
-

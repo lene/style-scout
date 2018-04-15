@@ -87,7 +87,9 @@ def print_prediction(images, label, image_data, model):
         [
             (label, prob)
             for label, prob in image_data.labels_sorted_by_probability(
-                model.predict(images.reshape(1, *image_data.size, image_data.DEPTH), batch_size=1, verbose=1)[0]
+                model.predict(
+                    images.reshape(1, *image_data.size, image_data.DEPTH), batch_size=1, verbose=1
+                )[0]
             ).items()
             if prob > 0.01
         ]

@@ -59,7 +59,8 @@ class Item:
         :return: None
         """
         makedirs(self.download_root, exist_ok=True)
-        if len(self.picture_files) == len(self.picture_urls) and all(is_image_file(f) for f in self.picture_files):
+        if len(self.picture_files) == len(self.picture_urls) \
+                and all(is_image_file(f) for f in self.picture_files):
             return
 
         loop = asyncio.get_event_loop()
@@ -67,7 +68,7 @@ class Item:
             loop.run_until_complete(self._download_images(max_threads=self.MAX_DOWNLOAD_THREADS))
         except ContentTooShortError as e:
             print('\n{}, retrying...'.format(e))
-            loop.run_until_complete(self._download_images(max_threads=self.MAX_DOWNLOAD_THREADS//4))
+            loop.run_until_complete(self._download_images(max_threads=self.MAX_DOWNLOAD_THREADS // 4))
         except (URLError, RemoteDisconnected):
             pass
 
@@ -158,9 +159,10 @@ class Item:
     def _get_specifics(item_specifics):
         if not item_specifics:
             return {}
-        if isinstance(item_specifics['NameValueList'], dict):  # because some people just cannot stick to schemata
+        if isinstance(item_specifics['NameValueList'], dict):  # some people just cannot stick to schemata
             return {
-                item_specifics['NameValueList']['Name'].lower(): item_specifics['NameValueList']['Value'].lower()
+                item_specifics['NameValueList']['Name'].lower():
+                    item_specifics['NameValueList']['Value'].lower()
             }
 
         specifics = defaultdict(list)
@@ -210,4 +212,3 @@ def is_image_file(filename):
         return True
     except OSError:
         return False
-
