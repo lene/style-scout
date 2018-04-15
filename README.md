@@ -12,7 +12,7 @@ Using neural networks to detect clothes of a style you like
 ## First, get yourself some data set
 
 ```bash
-python ebay_download.py [-h] [--verbose] [--items-per-page ITEMS_PER_PAGE]
+$ python ebay_download.py [-h] [--verbose] [--items-per-page ITEMS_PER_PAGE]
                         [--page-from PAGE_FROM] [--page-to PAGE_TO]
                         [--save-folder SAVE_FOLDER] [--item-file ITEM_FILE]
                         [--ebay-auth-file EBAY_AUTH_FILE]
@@ -24,7 +24,7 @@ python ebay_download.py [-h] [--verbose] [--items-per-page ITEMS_PER_PAGE]
 ```
 Typical usage:
 ```bash
-python ebay_download.py -v --items-per-page 100 --page-from 1 --page-to 100 --save-folder data \
+$ python ebay_download.py -v --items-per-page 100 --page-from 1 --page-to 100 --save-folder data \
     --item-file ebay_items.pickle --download-images --complete-tags-only
 ```
 This tries to download 10000 items in every category that is configured (see `category.py` for the
@@ -36,11 +36,11 @@ out (therefore, realistically  there will be significantly fewer items than 1000
 
 For example, you can use `like_items.py` to interactively mark items as liked.
 ```bash
-python like_items.py [-h] [--save-folder SAVE_FOLDER] [--start START]
+$ python like_items.py [-h] [--save-folder SAVE_FOLDER] [--start START]
                      [--item-file ITEM_FILE] [--liked-only] [--size SIZE]
 ```
 ```bash
-python like_items.py --item-file ebay_items.pickle --start 100 --size 300
+$ python like_items.py --item-file ebay_items.pickle --start 100 --size 300
 
 ```
 This shows you the first four images of all items in the data set, skipping the first 99 items.
@@ -53,7 +53,7 @@ with the command line option `--likes-file`.
 ## Third, train classifiers on your data set
 
 ```bash
-python train.py [-h] [--verbose] [--save-folder SAVE_FOLDER]
+$ python train.py [-h] [--verbose] [--save-folder SAVE_FOLDER]
                 [--item-file ITEM_FILE] [--min-valid-tag MIN_VALID_TAG]
                 [--images-file IMAGES_FILE] [--weights-file WEIGHTS_FILE]
                 [--num-epochs NUM_EPOCHS] [--image-size IMAGE_SIZE]
@@ -64,7 +64,7 @@ python train.py [-h] [--verbose] [--save-folder SAVE_FOLDER]
 ```
 Typical usages:
 ```bash
-python train.py -v --item-file ebay_items.pickle --category Sandalen --likes-only --num-epochs 10 \
+$ python train.py -v --item-file ebay_items.pickle --category Sandalen --likes-only --num-epochs 10 \
     --weights-file weights_sandalen.hdf5 
 ```
 This trains a classifier on the given data set, for 10 iterations, using only items of the category
@@ -73,7 +73,7 @@ default size of 299x299 pixels. The resulting weights of the neural network are 
 `weights_sandalen.hdf5`.
 
 ```bash
-python train.py -v --item-file ebay_items.pickle --num-epochs 10 --image-size 400 --batch-size 8 \ 
+$ python train.py -v --item-file ebay_items.pickle --num-epochs 10 --image-size 400 --batch-size 8 \ 
   --optimizer adam --weights-file weights_400.hdf5 
 ```
 Trains a classifier on all items of all categories, predicting not only the liked status but also
@@ -81,7 +81,7 @@ all recorded tags (in the hope of finding cross-correlations). Images are scaled
 smaller batch size of 8  and the ADAM optimizer is used. 
 
 ```bash
-python train.py -v --item-file ebay_items.pickle --likes-only --type resnet50 --layers 200 100
+$ python train.py -v --item-file ebay_items.pickle --likes-only --type resnet50 --layers 200 100
 ```
 Trains a classifier using the ResNet50 neural network architecture with two additional fully
 connected layers of size 200 and 100 
@@ -89,3 +89,9 @@ connected layers of size 200 and 100
 ## Finally, predict whether you like or dislike an unknown item
 
 TBD
+
+# Running tests
+
+```bash
+$ nosetests tests 
+```

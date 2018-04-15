@@ -5,4 +5,5 @@ keras
 matplotlib
 nose
 pillow
+recordclass
 tensorflow
