@@ -146,7 +146,7 @@ class TrainingRunner(WithVerbose):
 
         if self.test:
             loss_and_metrics = model.evaluate_generator(
-                image_data.test_generator(), steps=image_data.test_length(), max_q_size=2
+                image_data.test_generator(), steps=image_data.test_length(), max_queue_size=2
             )
             print()
             print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
@@ -220,6 +220,7 @@ class TrainingRunner(WithVerbose):
             return TrainingRunner.NETWORK_TYPES[network_type]
         except KeyError:
             raise ValueError('Invalid Neural Network name "{}"'.format(network_type))
+
 
 if __name__ == '__main__':
     runner = TrainingRunner(args=parse_command_line())
