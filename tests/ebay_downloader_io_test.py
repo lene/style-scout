@@ -1,7 +1,8 @@
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
-from os.path import join
+from os.path import isfile, join
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from tests.test_base import TestBase
 from acquisition.ebay_downloader_io import EbayDownloaderIO
@@ -94,3 +95,16 @@ class EbayDownloaderIOTest(TestBase):
     def test_weights_filename_contains_num_items_image_size_and_epoch_number(self):
         self.skipTest('Functionality not yet implemented')
 
+    def test_explicitly_specified_folder_overrides_base_dir(self):
+        with TemporaryDirectory() as tempdir:
+            weights_file = join(tempdir, 'test.hdf5')
+            items_file = join(tempdir, 'images.pickle')
+            io = EbayDownloaderIO(
+                self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE,
+                weights_file=weights_file, items_file=items_file
+            )
+            self.assertNotIn(self.DOWNLOAD_ROOT, io.weights_file('full', 1000))
+            self.assertIn(tempdir, io.weights_file('full', 1000))
+            self.assertNotIn(self.DOWNLOAD_ROOT, io.items_file)
+            self.assertIn(tempdir, io.items_file)
+            print(io.items_file, io.weights_file('full', 100))

@@ -23,10 +23,14 @@ class EbayDownloaderIO(WithVerbose):
         makedirs(base_dir, exist_ok=True)
         self.base_dir = base_dir
         self.image_size = image_size
-        self.items_file = join(self.base_dir, items_file or _filename('items', 'pickle', None))
-        self.images_file = join(self.base_dir, images_file or _filename('images', 'npz', image_size))
+        self.items_file = self.get_filename(items_file, 'items', 'pickle', None)
         self.weights_file_base = self._weights_file_base(weights_file)
         self.likes_file = self._likes_filename(likes_file)
+
+    def get_filename(self, filename, what, extension, *args):
+        if filename and '/' in filename:
+            return filename
+        return join(self.base_dir, filename or _filename(what, extension, *args))
 
     def load_items(self):
         """
@@ -80,20 +84,6 @@ class EbayDownloaderIO(WithVerbose):
                 _add_liked_items(api, items, category, item_ids)
 
         return items
-
-    def get_images(self, items, valid_tags, image_size, test_share=0.2):
-        """
-        Loads or creates image data set with all images belonging to the given items and the labels
-        determined by the passed valid_tags
-        :param items: Items object for which the images and labels are returned
-        :param valid_tags: List of tags which may be present in the labels of the returned data set 
-        :param image_size: size to which the images are resized
-        :param test_share: portion of the data set which is used as test data
-        :return: data set for the requested parameters
-        """
-        return EbayDataSets.get_data(
-            self.images_file, items, valid_tags, image_size, test_share=test_share, verbose=self.verbose
-        )
 
     def load_weights(self, model, fit_type='', num_items=0):
         """

@@ -37,3 +37,9 @@ class TrainingRunnerTest(TestBase):
             args = Args.default_args()
             args.type = 'BWAHAHAH FAIL!'
             TrainingRunner(args)
+
+    def test_different_optimizers(self):
+        self.skipTest("Test not yet implemented")
+
+    def test_different_fully_connected_layers(self):
+        self.skipTest("Test not yet implemented")
