@@ -45,7 +45,7 @@ class EbayDownloaderIO(WithVerbose):
                 return Items(items, self.verbose)
         return Items([], self.verbose)
 
-    def save_items(self, items):
+    def save_items(self, items, protocol=pickle.HIGHEST_PROTOCOL):
         """
         Store given Items object to pickle file
         :param items: Items to store
@@ -58,7 +58,7 @@ class EbayDownloaderIO(WithVerbose):
                 remove(self.items_file + '.bak')
             rename(self.items_file, self.items_file + '.bak')
         with open(self.items_file, 'wb') as file:
-            pickle.dump(items, file)
+            pickle.dump(items, file, protocol=protocol)
 
     def import_likes(self, api, items):
         """

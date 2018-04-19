@@ -4,6 +4,8 @@ from os import makedirs
 from shutil import rmtree
 from unittest.mock import Mock
 
+from acquisition.item import Item
+from acquisition.items import Items
 from acquisition.shopping_api import ShoppingAPI
 from category import Category
 
@@ -24,6 +26,10 @@ class TestBase(unittest.TestCase):
     def tearDown(self):
         if isdir(self.DOWNLOAD_ROOT):
             rmtree(self.DOWNLOAD_ROOT)
+
+    def generate_items(self, num_items):
+        raw_items = [Item(self.api, self.category, i + 1) for i in range(num_items)]
+        return Items(raw_items)
 
 
 def create_item_dict(item_id, specifics=None, picture_url=None):
