@@ -1,6 +1,7 @@
 from collections import defaultdict
-from time import time
 from datetime import timedelta
+from random import sample, seed, shuffle
+from time import time
 
 from utils.with_verbose import WithVerbose
 
@@ -143,9 +144,7 @@ class Items(WithVerbose):
             item.set_tags(set(valid_tags.keys()))
 
     def equal_number_of_liked_and_unliked(self, random_seed: int=None) -> 'Items':
-        from random import sample, seed, shuffle
-        if random_seed is not None:
-            seed(random_seed)
+        seed(random_seed)
         liked = list(filter(lambda item: '<3' in item.tags, self.items))
         unliked = sample(list(filter(lambda item: '<3' not in item.tags, self.items)), len(liked))
         all_items = liked + unliked

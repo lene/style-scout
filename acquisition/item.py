@@ -49,6 +49,10 @@ class Item:
         self.tags.discard('<3')
 
     @property
+    def is_liked(self) -> bool:
+        return '<3' in self.tags
+
+    @property
     def valid(self):
         return self._valid
 

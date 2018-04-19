@@ -97,6 +97,13 @@ class ItemsTest(TestBase):
         self.assertEqual(1, len(filtered))
         self.assertEqual(item2, filtered[0])
 
+    def test_split_liked_and_unliked_items_evenly(self):
+        items = self._generate_items(10)
+        items[0].like()
+        self.assertEqual(2, len(items.equal_number_of_liked_and_unliked()))
+        liked = [i for i in items if i.is_liked]
+        self.assertEqual(1, len(liked))
+
     def _generate_items(self, num_items):
         raw_items = [Item(self.api, self.category, i + 1) for i in range(num_items)]
         return Items(raw_items)
