@@ -117,12 +117,6 @@ class EbayDownloaderIOTest(TestBase):
         io.import_likes(self.api, items)
         self.assertEqual(2, num_liked_items(items))
 
-    def test_get_images_from_existing_file(self):
-        self.skipTest('Test not yet implemented')
-
-    def test_get_images_without_file(self):
-        self.skipTest('Test not yet implemented')
-
     def test_load_weights_from_saved_weights_equal_original_weights(self):
         self.skipTest('Test not yet implemented')
 

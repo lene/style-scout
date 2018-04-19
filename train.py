@@ -117,7 +117,7 @@ class TrainingRunner(WithVerbose):
         self.num_epochs = args.num_epochs
         self.test = args.test
         self.io = EbayDownloaderIO(
-            args.save_folder, args.image_size, args.item_file, args.images_file, args.weights_file,
+            args.save_folder, args.image_size, args.item_file, args.weights_file,
             verbose=self.verbose
         )
         self.loss_function = 'mean_squared_error'

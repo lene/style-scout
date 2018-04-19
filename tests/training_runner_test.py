@@ -9,7 +9,7 @@ class Args(
     recordclass(
         'Args', [
             'verbose', 'image_size', 'min_valid_tag', 'likes_only', 'category', 'batch_size', 'demo',
-            'num_epochs', 'test', 'save_folder', 'item_file', 'images_file', 'weights_file', 'type',
+            'num_epochs', 'test', 'save_folder', 'item_file', 'weights_file', 'type',
             'optimizer', 'layers'
         ]
     )
@@ -19,7 +19,7 @@ class Args(
         return Args(
             verbose=False, image_size=139, min_valid_tag=0, likes_only=False, category='', batch_size=1,
             demo=False, num_epochs=0, test=False, save_folder=TestBase.DOWNLOAD_ROOT,
-            item_file='', images_file='', weights_file='',
+            item_file='', weights_file='',
             type='inception', optimizer='adam', layers=1
         )
 

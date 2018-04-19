@@ -14,10 +14,10 @@ from ebaysdk.exception import ConnectionError
 class EbayDownloaderIO(WithVerbose):
 
     def __init__(
-            self, base_dir, image_size=None, items_file=None, images_file=None, weights_file=None,
-            likes_file=None, verbose=False
+            self, base_dir, image_size=None, items_file=None, weights_file=None, likes_file=None,
+            verbose=False
     ):
-        _check_constructor_arguments_valid(image_size, items_file, images_file, weights_file, likes_file)
+        _check_constructor_arguments_valid(image_size, items_file, weights_file, likes_file)
         WithVerbose.__init__(self, verbose)
         makedirs(base_dir, exist_ok=True)
         self.base_dir = base_dir
@@ -153,9 +153,11 @@ def _add_liked_items(api, items, category, liked_item_ids):
 
 
 def _filename(what, extension, *args):
-    return "_".join(str(arg) for arg in (what,) + args if arg) + ".{}".format(extension)
+    return "_".join(str(arg) for arg in (what,) + args if arg) + f".{extension}"
 
 
-def _check_constructor_arguments_valid(image_size, items_file, images_file, weights_file, likes_file):
-    if images_file or weights_file:
+def _check_constructor_arguments_valid(
+        image_size: int, items_file: str, weights_file: str, likes_file: str
+):
+    if weights_file:
         assert isinstance(image_size, int)
