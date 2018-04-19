@@ -141,3 +141,13 @@ class Items(WithVerbose):
     def update_tags(self, valid_tags):
         for item in self.items:
             item.set_tags(set(valid_tags.keys()))
+
+    def equal_number_of_liked_and_unliked(self, random_seed: int=None) -> 'Items':
+        from random import sample, seed, shuffle
+        if random_seed is not None:
+            seed(random_seed)
+        liked = list(filter(lambda item: '<3' in item.tags, self.items))
+        unliked = sample(list(filter(lambda item: '<3' not in item.tags, self.items)), len(liked))
+        all_items = liked + unliked
+        shuffle(all_items)
+        return Items(all_items)

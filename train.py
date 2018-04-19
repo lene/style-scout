@@ -178,13 +178,17 @@ class TrainingRunner(WithVerbose):
         )
 
     def setup_model(self, image_data):
+        # TODO: fishy. remove image_data param entirely?
+        if image_data is None:
+            image_data = self.get_image_data()
         model = self.neural_network_type(
             input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes,
             connected_layers=self.fully_connected_layers
         )
         model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
 
-        self._print_status('Model compiled')
+        num_layers = len(model.layers)
+        self._print_status(f'Model compiled - {self.neural_network_type}, {num_layers} layers')
         self.io.load_weights(model, self._fit_type(), self._num_items)
         return model
 
