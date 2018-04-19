@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from operator import itemgetter
+from typing import Dict
 
 from acquisition.items import Items
 
@@ -10,7 +11,7 @@ class LabeledItems:
     items.
     """
 
-    def __init__(self, items, valid_labels):
+    def __init__(self, items: Items, valid_labels: Dict[str, int]) -> None:
         """
         :param items: List of Item objects or an Items object
         :param valid_labels: Set of labels the network will be trained against
@@ -33,7 +34,7 @@ class LabeledItems:
             for index, probability in enumerate(predictions) if probability > 0
         }
 
-    def labels_sorted_by_probability(self, predictions):
+    def labels_sorted_by_probability(self, predictions) -> Dict[str, float]:
         """
         Converts predictions encoded as one-hot into human readable labels and sorts them by probability
         :param predictions: List of probabilities for each possible label

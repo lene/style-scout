@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.xception import Xception
 from keras.applications.vgg16 import VGG16
@@ -7,7 +9,9 @@ from keras.layers import GlobalAveragePooling2D, Dense
 from keras.models import Model
 
 
-def model(network_type, input_shape, classes, connected_layers):
+def model(
+        network_type: Model, input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]
+) -> Model:
     base_model = network_type(include_top=False, weights=None, input_shape=input_shape, classes=classes)
 
     x = base_model.output
@@ -22,21 +26,21 @@ def model(network_type, input_shape, classes, connected_layers):
     return Model(inputs=base_model.input, outputs=predictions)
 
 
-def inception(input_shape, classes, connected_layers=(1024,)):
+def inception(input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)) -> Model:
     return model(InceptionV3, input_shape, classes, connected_layers)
 
 
-def xception(input_shape, classes, connected_layers=(1024,)):
+def xception(input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)) -> Model:
     return model(Xception, input_shape, classes, connected_layers)
 
 
-def vgg16(input_shape, classes, connected_layers=(1024,)):
+def vgg16(input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)) -> Model:
     return model(VGG16, input_shape, classes, connected_layers)
 
 
-def vgg19(input_shape, classes, connected_layers=(1024,)):
+def vgg19(input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)) -> Model:
     return model(VGG19, input_shape, classes, connected_layers)
 
 
-def resnet50(input_shape, classes, connected_layers=(1024,)):
+def resnet50(input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)) -> Model:
     return model(ResNet50, input_shape, classes, connected_layers)

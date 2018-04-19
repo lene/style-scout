@@ -1,11 +1,13 @@
+from typing import Sized
+
 import numpy
 
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
 
-class DataSetBase:
+class DataSetBase(Sized):
 
-    def __init__(self, input, labels):
+    def __init__(self, input: numpy.ndarray, labels: numpy.ndarray) -> None:
         _check_constructor_arguments_valid(input, labels)
         self._num_examples = input.shape[0]
         self._input = input

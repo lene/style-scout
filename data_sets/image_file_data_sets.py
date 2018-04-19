@@ -25,7 +25,7 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
     DEFAULT_VALIDATION_SHARE = 0.2
 
     @classmethod
-    def get_data(cls, data_file=None, image_directory=None, image_size=IMAGENET_SIZE):
+    def get_data(cls, data_file=None, image_directory=None, image_size=IMAGENET_SIZE) -> DataSets:
         if data_file is not None and isfile(data_file):
             print('Loading ' + data_file)
             with gzopen(data_file, 'rb') as file:
@@ -80,6 +80,10 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
             ImagesLabelsDataSet(test_images, test_labels, self.DEPTH)
         )
         self._print_status('Image data loaded')
+
+    @property
+    def num_classes(self) -> int:
+        return self.train.num_classes
 
     def get_label(self, number):
         try:

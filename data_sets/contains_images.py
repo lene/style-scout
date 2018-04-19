@@ -22,7 +22,7 @@ class ContainsImages:
 
     DEPTH = 3
 
-    def __init__(self, x_size, y_size):
+    def __init__(self, x_size: int, y_size: int) -> None:
         """
         :param x_size: width of the images
         :param y_size: height of the images
@@ -30,13 +30,13 @@ class ContainsImages:
         self.size = (x_size, y_size)
         self.num_features = x_size * y_size * self.DEPTH
 
-    def downscale(self, image, method=add_border):
+    def downscale(self, image, method=add_border) -> numpy.array:
         w, h = image.size
         image = method(image, w, h)
         return numpy.asarray(image.resize(self.size, Image.BICUBIC))
 
     @classmethod
-    def show_image(cls, rgb_values, label=''):
+    def show_image(cls, rgb_values, label='') -> None:
         import matplotlib.pyplot as plt
         plt.imshow(rgb_values, cmap='gray' if cls.DEPTH == 1 else None)
         plt.title(label)

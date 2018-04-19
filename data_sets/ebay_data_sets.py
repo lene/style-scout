@@ -1,9 +1,11 @@
 from os.path import isfile
+from typing import List, Tuple, Dict
 
 import numpy
 from PIL import Image
 
-from data_sets import ImageFileDataSets
+from acquisition.items import Items
+from data_sets.image_file_data_sets import ImageFileDataSets
 from data_sets.contains_images import ContainsImages, add_border
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
@@ -14,7 +16,10 @@ from utils.with_verbose import WithVerbose
 class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
 
     @classmethod
-    def get_data(cls, data_file, items, valid_labels, image_size, test_share=0.2, verbose=False):
+    def get_data(
+            cls, data_file: str, items: Items, valid_labels: Dict[str, int], image_size: int,
+            test_share: float=0.2, verbose: bool=False
+    ) -> ImageFileDataSets:
         """
         Read an EbayDataSet from the given file name, if present; else create a new one and save it
         to that file name. In the end, both the data set and the savefile exist.
@@ -26,11 +31,11 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         :param verbose: If set, print status/progress information
         :return: EbayDataSet read from the file or created from the passed parameters
         """
-        data_file = cls._npz_file_name(data_file)
+        data_file = EbayDataSets._npz_file_name(data_file)
         if data_file is not None and isfile(data_file):
-            data = cls._create_from_file(data_file, image_size, items, valid_labels)
+            data = EbayDataSets._create_from_file(data_file, image_size, items, valid_labels)
         else:
-            data = cls(
+            data = EbayDataSets(
                 items, valid_labels, (image_size, image_size), 0, extract=True, test_share=test_share,
                 verbose=verbose
             )
@@ -38,11 +43,13 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         return data
 
     def __init__(
-            self, items, valid_labels, size, validation_share=None, test_share=0.2, extract=True,
-            train_images=None, train_labels=None, test_images=None, test_labels=None,
-            validation_images=None, validation_labels=None,
-            verbose=False
-    ):
+            self, items: Items, valid_labels: Dict[str, int], size: Tuple[int, int],
+            validation_share: float=None, test_share: float=0.2, extract: bool=True,
+            train_images: numpy.ndarray=None, train_labels: numpy.ndarray=None,
+            test_images: numpy.ndarray=None, test_labels: numpy.ndarray=None,
+            validation_images: numpy.ndarray=None, validation_labels: numpy.ndarray=None,
+            verbose: bool=False
+    ) -> None:
         """
         Construct the data set from images belonging to items passed in
         :param items: Items object corresponding to the data set
@@ -99,7 +106,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
             ImagesLabelsDataSet(test_images, test_labels, self.DEPTH)
         )
 
-    def _extract_images(self):
+    def _extract_images(self) -> numpy.ndarray:
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
         import os.path
         images, labels = [], []
@@ -117,7 +124,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
 
         return numpy.asarray(images), numpy.asarray(labels)
 
-    def _dense_to_one_hot(self, labels):
+    def _dense_to_one_hot(self, labels: List[str]) -> numpy.ndarray:
         labels_one_hot = numpy.zeros((len(labels), self.num_classes))
         for i, tags in enumerate(labels):
             for tag in tags:
@@ -125,13 +132,15 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         return labels_one_hot
 
     @classmethod
-    def _npz_file_name(cls, data_file):
+    def _npz_file_name(cls, data_file: str) -> str:
         if len(data_file) < 5 or data_file[-4:] != '.npz':
             data_file += '.npz'
         return data_file
 
     @classmethod
-    def _create_from_file(cls, data_file, image_size, items, valid_labels, verbose=False):
+    def _create_from_file(
+            cls, data_file: str, image_size: int, items: Items, valid_labels: Dict[str, int], verbose: bool=False
+    ) -> 'EbayDataSets':
         if verbose:
             print('Loading ' + data_file)
         npz = numpy.load(data_file)
@@ -143,7 +152,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         )
 
     @classmethod
-    def _save_to_file(cls, data, data_file, verbose=False):
+    def _save_to_file(cls, data: 'EbayDataSets', data_file: str, verbose: bool=False) -> None:
         if verbose:
             print('Storing ' + data_file)
         numpy.savez_compressed(
@@ -155,9 +164,11 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
 
 
 def _check_constructor_arguments_valid(
-        extract, size, depth, train_images, train_labels, test_images, test_labels,
-        validation_images, validation_labels
-):
+        extract: bool, size: Tuple[int, int], depth: int,
+        train_images: numpy.ndarray, train_labels: numpy.ndarray,
+        test_images: numpy.ndarray, test_labels: numpy.ndarray,
+        validation_images: numpy.ndarray, validation_labels: numpy.ndarray
+) -> None:
     assert isinstance(size, tuple)
     assert len(size) == 2
     assert isinstance(size[0], int)

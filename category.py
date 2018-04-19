@@ -1,3 +1,6 @@
+from typing import Dict, List, Tuple
+
+
 DEFAULT_CATEGORIES = {
     1: ('Kleidung',),
     2: ('Damenmode', 'Damenschuhe'),
@@ -8,7 +11,7 @@ DEFAULT_CATEGORIES = {
         'Stiefel & Stiefeletten'
     ),
     4: ('Bodys', 'Nachtwäsche')
-}
+}  # Dict[int, Tuple[str, ...]]
 
 
 class Category:
@@ -26,9 +29,9 @@ class Category:
         'Bodys': ['color', ],
         'Nachtwäsche': ['color', 'style', 'length', ]
     }
-    _by_id = {}
+    _by_id = {}  # Dict[str, Category]
 
-    def __init__(self, data):
+    def __init__(self, data: Dict) -> None:
         self.id = data['CategoryID']
         self.id_path = data.get('CategoryIDPath', '').split(':')
         self.name = data['CategoryName']
@@ -39,15 +42,18 @@ class Category:
         #     else None
 
     @property
-    def necessary_tags(self):
+    def necessary_tags(self) -> List[str]:
         return self.NECESSARY_TAGS.get(self.name, [])
 
     @classmethod
-    def by_id(cls, id):
+    def by_id(cls, id: int) -> 'Category':
         return cls._by_id[str(id)]
 
     @classmethod
-    def search_categories(cls, api, search_term_filter=DEFAULT_CATEGORIES, root_category=-1):
+    def search_categories(
+            cls, api: 'ShoppingAPI', search_term_filter: Dict[int, Tuple[str, ...]]=DEFAULT_CATEGORIES,
+            root_category: int=-1
+    ) -> List['Category']:
         category_ids = [root_category]
         leaf_categories = []
         for level in range(1, 5):

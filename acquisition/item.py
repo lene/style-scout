@@ -2,6 +2,7 @@ import re
 from os.path import join, isfile
 from collections import defaultdict
 from os import remove, makedirs
+from typing import Set
 from urllib.request import urlretrieve
 from urllib.error import URLError, ContentTooShortError
 from http.client import RemoteDisconnected
@@ -9,6 +10,7 @@ import concurrent.futures
 import asyncio
 
 from acquisition.tag_processor import TagProcessor
+from category import Category
 
 
 class Item:
@@ -23,7 +25,7 @@ class Item:
     }
     MAX_DOWNLOAD_THREADS = 18  # limit imposed by the eBay API (actually we don't use the API, but BSTS)
 
-    def __init__(self, api, category, item_id):
+    def __init__(self, api: 'ShoppingAPI', category: Category, item_id: int) -> None:
         try:
             item = api.get_item(item_id)
             self.id = item['ItemID']
@@ -52,7 +54,7 @@ class Item:
     def valid(self):
         return self._valid
 
-    def download_images(self):
+    def download_images(self) -> None:
         """
         Download the images associated with this Item to self.download_root.
         :param verbose: If set, print a progress message
@@ -84,7 +86,7 @@ class Item:
         """
         self.tags = all_available_tags & self.get_possible_tags()
 
-    def get_possible_tags(self, add_undefined=False):
+    def get_possible_tags(self, add_undefined: bool=False) -> Set[str]:
         """
         Get all tags that have a value on this Item. Possible tags are returned as a set where each
         tag has the form "tag_type:value".

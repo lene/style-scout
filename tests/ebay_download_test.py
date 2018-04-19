@@ -8,6 +8,6 @@ from tests.test_base import TestBase
 
 class EbayDownloadTest(TestBase):
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self.category.necessary_tags = ['style']

@@ -1,3 +1,5 @@
+from typing import Tuple, Sized
+
 import numpy
 
 from data_sets.data_set_base import DataSetBase
@@ -5,9 +7,11 @@ from data_sets.data_set_base import DataSetBase
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
 
-class ImagesLabelsDataSet(DataSetBase):
+class ImagesLabelsDataSet(DataSetBase, Sized):
 
-    def __init__(self, images, labels, depth=1, reshape=None):
+    def __init__(
+            self, images: numpy.ndarray, labels: numpy.ndarray, depth: int=1, reshape: Tuple=None
+    ) -> None:
         """Construct a DataSet.
 
         Args:

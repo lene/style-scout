@@ -1,15 +1,20 @@
 from collections import defaultdict
-from time import time
 from datetime import timedelta
+from time import time
+from typing import List, Union, Dict, Sized, Iterable, Set
 
+from acquisition.item import Item
+from category import Category
 from utils.with_verbose import WithVerbose
 
 
-class Items(WithVerbose):
+class Items(WithVerbose, Sized, Iterable):
     """
     A set of Item objects along with some utility functions.
     """
-    def __init__(self, raw_items, verbose=False, is_download_complete=False):
+    def __init__(
+            self, raw_items: Union['Items', List[Item]], verbose: bool=False, is_download_complete: bool=False
+    ) -> None:
         WithVerbose.__init__(self, verbose)
         self.items = raw_items
         self.is_download_complete = is_download_complete
@@ -34,10 +39,10 @@ class Items(WithVerbose):
         """Adds a list of Item objects or an Items object to this item set."""
         self.items.extend(items if isinstance(items, list) else items.items)
 
-    def categories(self):
+    def categories(self) -> Set[Category]:
         return {i.category for i in self.items}
 
-    def filter(self, category=None):
+    def filter(self, category: Category=None) -> 'Items':
         if not category:
             raise ValueError()
         return Items(
@@ -65,7 +70,7 @@ class Items(WithVerbose):
         self._print_status(len(self), '->', len(new_items), 'items')
         self.items = new_items
 
-    def download_images(self):
+    def download_images(self) -> None:
         if self.is_download_complete:
             return
         start_time = time()
@@ -85,7 +90,7 @@ class Items(WithVerbose):
             '{} items downloaded in {}'.format(len(self), timedelta(seconds=int(elapsed_time))) + ' ' * 12
         )
 
-    def get_valid_tags(self, min_count):
+    def get_valid_tags(self, min_count: int) -> Dict[str, int]:
         """
         Returns the tags in this item set which occur at least min_count times, along with the
         number of times each tag occurs.
@@ -138,6 +143,6 @@ class Items(WithVerbose):
         self._print_status(old_length, '->', len(items))
         return Items(items, self.verbose)
 
-    def update_tags(self, valid_tags):
+    def update_tags(self, valid_tags: Dict[str, int]) -> None:
         for item in self.items:
             item.set_tags(set(valid_tags.keys()))

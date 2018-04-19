@@ -1,31 +1,33 @@
 from os.path import join
 from random import shuffle
+from typing import Tuple, Set, Generator, List, Dict, Sized
 
 import numpy
 from PIL import Image
 
 from acquisition.items import Items
-from data_sets import add_border
-from data_sets.contains_images import ContainsImages
+from data_sets.contains_images import add_border, ContainsImages
 from data_sets.labeled_items import LabeledItems
 from utils.with_verbose import WithVerbose
 
+Batch = List[Tuple[Set[str], str]]
+Batches = List[Batch]
 
-class BatchGenerator:
 
-    def __init__(self, chunks, batch_size):
+class BatchGenerator(Sized):
+
+    def __init__(self, chunks: Batch, batch_size: int) -> None:
         self.chunks = chunks
         self.batch_size = batch_size
-        self.batches = None
-        self.generate_batches()
+        self.batches = self.generate_batches()
 
-    def generate_batches(self):
+    def generate_batches(self) -> Batches:
         shuffle(self.chunks)
-        self.batches = [
+        return [
             self.chunks[i:i + self.batch_size] for i in range(0, len(self.chunks), self.batch_size)
         ]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.batches)
 
 
@@ -37,7 +39,10 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
 
     CACHE_FILE_PREFIX = 'style_scout'
 
-    def __init__(self, items, valid_labels, size, test_share=0.2, batch_size=32, verbose=False):
+    def __init__(
+            self, items: Items, valid_labels: Dict[str, int], size: Tuple[int, int], test_share: float=0.2,
+            batch_size: int=32, verbose: bool=False
+    ) -> None:
         """
         Construct the generator from images and labels belonging to items passed in
         :param items: Items object corresponding to the data set
@@ -56,19 +61,19 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
         self.num_items = len(items)
         self._setup_batches(test_share)
 
-    def _setup_batches(self, test_share):
+    def _setup_batches(self, test_share: float) -> None:
         self.items.download_images()
         chunks = [(item.tags, picture_file) for item in self.items for picture_file in item.picture_files]
         self.train = BatchGenerator(chunks[:int(len(chunks) * (1 - test_share))], self.batch_size)
         self.test = BatchGenerator(chunks[int(len(chunks) * (1 - test_share)):], self.batch_size)
 
-    def train_length(self):
+    def train_length(self) -> int:
         return len(self.train)
 
-    def test_length(self):
+    def test_length(self) -> int:
         return len(self.test)
 
-    def train_generator(self):
+    def train_generator(self) -> Generator:
         """
         Generator function returning all images and their labels used as training set
         """
@@ -80,7 +85,7 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
                 )
             self.train.generate_batches()
 
-    def test_generator(self):
+    def test_generator(self) -> Generator:
         """
         Generator function returning all images and their labels in the test set
         """
@@ -88,7 +93,7 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
             for i in range(self.test_length()):
                 yield self.images_for_batch(self.test.batches, i), self.labels_for_batch(self.test.batches, i)
 
-    def images_for_batch(self, batches, batch_index):
+    def images_for_batch(self, batches: Batches, batch_index: int) -> numpy.ndarray:
         """
         :param batch_index: index of the batch (0 <= batch_index <= len(self)
         :return: image data for batch number batch_index
@@ -98,23 +103,26 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
             for data_point in batches[batch_index]
         ])
 
-    def labels_for_batch(self, batches, batch_index):
+    def labels_for_batch(self, batches: Batches, batch_index: int) -> numpy.ndarray:
         """
         :param batch_index: index of the batch (0 <= batch_index <= len(self)
         :return: labels for batch number batch_index
         """
         return numpy.asarray(
-            [self._dense_to_one_hot(data_point[0]) for data_point in batches[batch_index]]
+            [
+                self._dense_to_one_hot(data_point[0])
+                for data_point in batches[batch_index]
+            ]
         )
 
-    def _dense_to_one_hot(self, label):
+    def _dense_to_one_hot(self, label: Set[str]) -> numpy.ndarray:
         labels_one_hot = numpy.zeros(self.num_classes)
         for tag in label:
             labels_one_hot[self.labels_to_numbers[tag]] = 1
         return labels_one_hot
 
 
-def _check_constructor_arguments_valid(items, size, depth):
+def _check_constructor_arguments_valid(items: Items, size: Tuple[int, int], depth: int) -> None:
     assert isinstance(items, Items), 'items argument needs to be an Items object'
     assert isinstance(size, tuple), 'size argument needs to be a tuple of the form (width, height)'
     assert len(size) == 2, 'size argument needs to be a tuple of the form (width, height)'

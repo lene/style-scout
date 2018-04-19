@@ -14,22 +14,22 @@ class EbayDownloaderIOTest(TestBase):
     WEIGHTS_FILE_BASE = 'weights'
     IMAGE_SIZE = 16
 
-    def test_init_with_all_none(self):
+    def test_init_with_all_none(self) -> None:
         EbayDownloaderIO(self.DOWNLOAD_ROOT)
 
-    def test_init_with_items_file(self):
+    def test_init_with_items_file(self) -> None:
         io = EbayDownloaderIO(self.DOWNLOAD_ROOT, items_file=self.ITEMS_FILE)
         self.assertEqual(io.items_file, join(self.DOWNLOAD_ROOT, self.ITEMS_FILE))
 
-    def test_init_with_items_file_and_image_size(self):
+    def test_init_with_items_file_and_image_size(self) -> None:
         io = EbayDownloaderIO(self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, items_file=self.ITEMS_FILE)
         self.assertEqual(io.items_file, join(self.DOWNLOAD_ROOT, self.ITEMS_FILE))
 
-    def test_init_with_weights_file_also_needs_image_size(self):
+    def test_init_with_weights_file_also_needs_image_size(self) -> None:
         with self.assertRaises(AssertionError):
             EbayDownloaderIO(self.DOWNLOAD_ROOT, weights_file=self.WEIGHTS_FILE_BASE)
 
-    def test_init_with_weights_file_and_image_size(self):
+    def test_init_with_weights_file_and_image_size(self) -> None:
         io = EbayDownloaderIO(
             self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, weights_file=self.WEIGHTS_FILE_BASE
         )
@@ -39,7 +39,7 @@ class EbayDownloaderIOTest(TestBase):
             io.weights_file()
         )
 
-    def test_init_with_additional_info(self):
+    def test_init_with_additional_info(self) -> None:
         io = EbayDownloaderIO(
             self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, weights_file=self.WEIGHTS_FILE_BASE
         )
@@ -48,7 +48,7 @@ class EbayDownloaderIOTest(TestBase):
             io.weights_file('full', 10)
         )
 
-    def test_thousands_are_replaced_with_k(self):
+    def test_thousands_are_replaced_with_k(self) -> None:
         io = EbayDownloaderIO(
             self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, weights_file=self.WEIGHTS_FILE_BASE
         )
@@ -61,41 +61,41 @@ class EbayDownloaderIOTest(TestBase):
             io.weights_file('full', 1001)
         )
 
-    def test_existing_weight_file_name_is_left_intact(self):
+    def test_existing_weight_file_name_is_left_intact(self) -> None:
         Path(self.DOWNLOAD_ROOT, 'test.hdf5').touch(exist_ok=True)
         io = EbayDownloaderIO(
             self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE, weights_file='test.hdf5'
         )
         self.assertEqual(join(self.DOWNLOAD_ROOT, 'test.hdf5'), io.weights_file('full', 1000))
 
-    def test_load_items_from_existing_file(self):
+    def test_load_items_from_existing_file(self) -> None:
         self.skipTest('Test not yet implemented')
 
-    def test_load_items_without_file(self):
+    def test_load_items_without_file(self) -> None:
         self.skipTest('Test not yet implemented')
 
-    def test_save_items(self):
+    def test_save_items(self) -> None:
         self.skipTest('Test not yet implemented')
 
-    def test_import_likes(self):
+    def test_import_likes(self) -> None:
         self.skipTest('Test not yet implemented')
 
-    def test_get_images_from_existing_file(self):
+    def test_get_images_from_existing_file(self) -> None:
         self.skipTest('Test not yet implemented')
 
-    def test_get_images_without_file(self):
+    def test_get_images_without_file(self) -> None:
         self.skipTest('Test not yet implemented')
 
-    def test_load_weights_from_saved_weights_equal_original_weights(self):
+    def test_load_weights_from_saved_weights_equal_original_weights(self) -> None:
         self.skipTest('Test not yet implemented')
 
-    def test_images_filename_contains_num_items_and_image_size(self):
+    def test_images_filename_contains_num_items_and_image_size(self) -> None:
         self.skipTest('Functionality not yet implemented')
 
-    def test_weights_filename_contains_num_items_image_size_and_epoch_number(self):
+    def test_weights_filename_contains_num_items_image_size_and_epoch_number(self) -> None:
         self.skipTest('Functionality not yet implemented')
 
-    def test_explicitly_specified_folder_overrides_base_dir(self):
+    def test_explicitly_specified_folder_overrides_base_dir(self) -> None:
         with TemporaryDirectory() as tempdir:
             weights_file = join(tempdir, 'test.hdf5')
             items_file = join(tempdir, 'images.pickle')

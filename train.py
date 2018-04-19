@@ -1,11 +1,15 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from pprint import pprint
 from random import randrange
+from typing import Callable, Tuple, List, Dict, Optional
+
 from PIL import Image
 import numpy
+from keras import Model
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
+from acquisition.items import Items
 from data_sets.ebay_data_generator import EbayDataGenerator
 from utils.with_verbose import WithVerbose
 from network_types import inception, xception, vgg16, vgg19, resnet50
@@ -16,7 +20,7 @@ SAVE_FOLDER = 'data'
 DEFAULT_SIZE = 139
 
 
-def parse_command_line():
+def parse_command_line() -> Namespace:
     parser = ArgumentParser(
         description="Train neural networks recognizing style from liked eBay items"
     )
@@ -72,13 +76,13 @@ def parse_command_line():
     return parser.parse_args()
 
 
-def print_predictions(image_data, model):
+def print_predictions(image_data: EbayDataGenerator, model: Model) -> None:
     images, labels = next(image_data.test_generator())
     i = randrange(len(images))
     print_prediction(images[i:i + 1], labels[i], image_data, model)
 
 
-def print_prediction(images, label, image_data, model):
+def print_prediction(images: numpy.ndarray, label: str, image_data: EbayDataGenerator, model: Model) -> None:
     print('actual values:')
     pprint(image_data.labels_sorted_by_probability(label))
     image_data.show_image(images)
@@ -106,7 +110,7 @@ class TrainingRunner(WithVerbose):
         'resnet50': resnet50
     }
 
-    def __init__(self, args):
+    def __init__(self, args: Namespace) -> None:
         WithVerbose.__init__(self, args.verbose)
         self.image_size = args.image_size
         self.min_valid_tag = args.min_valid_tag
@@ -125,7 +129,7 @@ class TrainingRunner(WithVerbose):
         self.neural_network_type = self._decode_network_name(args.type)
         self.fully_connected_layers = args.layers
 
-    def run(self):
+    def run(self) -> None:
 
         image_data = self.get_image_data()
 
@@ -170,14 +174,14 @@ class TrainingRunner(WithVerbose):
                     ]
                 )
 
-    def get_image_data(self):
+    def get_image_data(self) -> EbayDataGenerator:
         items, valid_tags = self._prepare_items()
         return EbayDataGenerator(
             items, valid_tags, (self.image_size, self.image_size),
             batch_size=self.batch_size, verbose=self.verbose
         )
 
-    def setup_model(self, image_data):
+    def setup_model(self, image_data: EbayDataGenerator) -> Model:
         model = self.neural_network_type(
             input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes,
             connected_layers=self.fully_connected_layers
@@ -188,14 +192,14 @@ class TrainingRunner(WithVerbose):
         self.io.load_weights(model, self._fit_type(), self._num_items)
         return model
 
-    def _prepare_items(self):
+    def _prepare_items(self) -> Tuple[Items, Dict[str, int]]:
         items = self.io.load_items()
         self._num_items = len(items)
         if self.likes_only:
             for item in items:
                 if '<3' not in item.tags:
                     item.tags.add(':-(')
-            valid_tags = {'<3': None, ':-(': None}
+            valid_tags = {'<3': 0, ':-(': 0}
         else:
             valid_tags = items.get_valid_tags(self.min_valid_tag)
         if self.category:
@@ -203,21 +207,22 @@ class TrainingRunner(WithVerbose):
             if len(items) == 0:
                 raise ValueError('No items of category {}: {}'.format(self.category, items.categories()))
         items.update_tags(valid_tags)
+        category_string = '{}: '.format(self.category) if self.category else ''
         self._print_status(
             '{}{} items, {} liked'.format(
-                '{}: '.format(self.category) if self.category else '',
+                category_string,
                 len(items),
                 len([i for i in items if '<3' in i.tags])
             )
         )
         return items, valid_tags
 
-    def _fit_type(self):
+    def _fit_type(self) -> str:
         type = 'likes' if self.likes_only else 'full'
         return self.category.lower() + '_' + type if self.category else type
 
     @staticmethod
-    def _decode_network_name(network_type):
+    def _decode_network_name(network_type: str) -> Callable:
         try:
             return TrainingRunner.NETWORK_TYPES[network_type]
         except KeyError:

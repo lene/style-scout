@@ -14,14 +14,14 @@ class TestBase(unittest.TestCase):
     MOCK_TITLE = 'Mock title'
     MOCK_DESCRIPTION = 'Mock description <strong>with HTML</strong>'
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.api = Mock(spec=ShoppingAPI)
         self.api.get_item = create_item_dict  # Mock(return_value=self.item_data)
         self.category = Mock(spec=Category)
         self.category.name_path = ['0', '1']
         makedirs(self.DOWNLOAD_ROOT, exist_ok=False)
 
-    def tearDown(self):
+    def tearDown(self) -> None:
         if isdir(self.DOWNLOAD_ROOT):
             rmtree(self.DOWNLOAD_ROOT)
 

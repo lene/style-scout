@@ -3,9 +3,13 @@ import json
 import pickle
 from os import makedirs, rename, remove
 from os.path import isfile, join
+from typing import Tuple
+
+from keras import Model
 
 from acquisition.item import Item
 from acquisition.items import Items
+from acquisition.shopping_api import ShoppingAPI
 from category import Category
 from utils.with_verbose import WithVerbose
 from ebaysdk.exception import ConnectionError
@@ -14,9 +18,9 @@ from ebaysdk.exception import ConnectionError
 class EbayDownloaderIO(WithVerbose):
 
     def __init__(
-            self, base_dir, image_size=None, items_file=None, images_file=None, weights_file=None,
-            likes_file=None, verbose=False
-    ):
+            self, base_dir: str, image_size: int=None, items_file: str=None,
+            images_file: str=None, weights_file: str=None, likes_file: str=None, verbose: bool=False
+    ) -> None:
         _check_constructor_arguments_valid(image_size, items_file, images_file, weights_file, likes_file)
         WithVerbose.__init__(self, verbose)
         makedirs(base_dir, exist_ok=True)
@@ -31,7 +35,7 @@ class EbayDownloaderIO(WithVerbose):
             return filename
         return join(self.base_dir, filename or _filename(what, extension, *args))
 
-    def load_items(self):
+    def load_items(self) -> Items:
         """
         Load items already downloaded from pickle file, if present
         :return: Items object containing previously downloaded Item objects
@@ -60,7 +64,7 @@ class EbayDownloaderIO(WithVerbose):
         with open(self.items_file, 'wb') as file:
             pickle.dump(items, file)
 
-    def import_likes(self, api, items):
+    def import_likes(self, api: ShoppingAPI, items: Items) -> Items:
         """
         Loads liked Item objects from the configured likes file and adds them to items, ensuring
         each Item object is present only once.
@@ -84,7 +88,7 @@ class EbayDownloaderIO(WithVerbose):
 
         return items
 
-    def load_weights(self, model, fit_type='', num_items=0):
+    def load_weights(self, model: Model, fit_type: str='', num_items: int=0) -> None:
         """
         Load the precomputed weights for the given neural network
         :param model: Keras model for the neural network
@@ -97,7 +101,7 @@ class EbayDownloaderIO(WithVerbose):
             self._print_status('Loading', weights_file)
             model.load_weights(weights_file)
 
-    def save_weights(self, model, fit_type='', num_items=0):
+    def save_weights(self, model: Model, fit_type: str='', num_items: int=0) -> None:
         """
         Save the computed weights for the given neural network
         :param model: Keras model for the neural network
@@ -109,7 +113,7 @@ class EbayDownloaderIO(WithVerbose):
         self._print_status('Saving', weights_file)
         model.save_weights(weights_file)
 
-    def weights_file(self, fit_type='', num_items=0):
+    def weights_file(self, fit_type: str='', num_items: int=0) -> str:
         if self.weights_file_base and isfile(self.weights_file_base):
             return self.weights_file_base
         return _filename(

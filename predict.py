@@ -1,5 +1,8 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
+from typing import List
+
 import numpy
+from keras import Model
 from PIL import Image
 from pprint import pprint
 
@@ -12,7 +15,7 @@ SAVE_FOLDER = 'data'
 DEFAULT_SIZE = 139
 
 
-def parse_command_line():
+def parse_command_line() -> Namespace:
     parser = ArgumentParser(
         description="Train neural networks recognizing style from liked eBay items"
     )
@@ -52,13 +55,13 @@ def parse_command_line():
     return parser.parse_args()
 
 
-def get_items(item_urls):
+def get_items(item_urls: List[str]) -> None:
     pass
 
 
 class Predictor(WithVerbose, ContainsImages):
 
-    def __init__(self, args):
+    def __init__(self, args: Namespace) -> None:
         self.io = EbayDownloaderIO(
             args.save_folder, args.image_size, weights_file=args.weights_file, images_file=args.images_file,
             verbose=args.verbose
@@ -69,7 +72,7 @@ class Predictor(WithVerbose, ContainsImages):
         self.neural_network_type = TrainingRunner._decode_network_name(args.type)
         self.model = self.setup_model()
 
-    def setup_model(self, loss_function='mean_squared_error', optimizer='sgd'):
+    def setup_model(self, loss_function: str='mean_squared_error', optimizer: str='sgd') -> Model:
         model = self.neural_network_type(
             input_shape=(*self.size, 3), classes=2  # image_data.num_classes
         )
@@ -79,7 +82,7 @@ class Predictor(WithVerbose, ContainsImages):
         self.io.load_weights(model)
         return model
 
-    def predict(self, image_files):
+    def predict(self, image_files: List[str]) -> None:
         images = numpy.asarray([self.downscale(Image.open(file).convert('RGB')) for file in image_files])
         for image in images:
             self.show_image(image)
