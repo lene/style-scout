@@ -13,7 +13,7 @@ class ItemsTest(TestBase):
         self.assertEquals(raw_items[1], items[1])
 
     def test_getitem_index_error(self):
-        items = self._generate_items(2)
+        items = self.generate_items(2)
         with self.assertRaises(IndexError):
             items[2]
 
@@ -35,18 +35,18 @@ class ItemsTest(TestBase):
 
     def test_extend_items(self):
         items = Items([])
-        items.extend(self._generate_items(1))
+        items.extend(self.generate_items(1))
         self.assertEquals(1, len(items))
         self.assertEquals(1, items[0].id)
 
     def test_set_liked(self):
-        items = self._generate_items(2)
+        items = self.generate_items(2)
         items.set_liked(1)
         self.assertEqual({'<3'}, items[0].tags)
         self.assertEqual(set(), items[1].tags)
 
     def test_set_liked_raises_if_not_found(self):
-        items = self._generate_items(2)
+        items = self.generate_items(2)
         with self.assertRaises(ValueError):
             items.set_liked(3)
 
@@ -64,12 +64,12 @@ class ItemsTest(TestBase):
         self.assertCountEqual(raw_items, items)
 
     def test_get_valid_tags_returns_category(self):
-        items = self._generate_items(3)
+        items = self.generate_items(3)
         tags = items.get_valid_tags(2)
         self.assertEqual({self.category.name_path[1]: len(items)}, tags)
 
     def test_get_valid_tags_returns_tags_with_enough_count(self):
-        items = self._generate_items(3)
+        items = self.generate_items(3)
 
         for i in items[:2]:
             items.set_liked(i.id)
@@ -78,7 +78,7 @@ class ItemsTest(TestBase):
         self.assertIn('<3', tags.keys())
 
     def test_get_valid_tags_filters_tags_with_not_enough_count(self):
-        items = self._generate_items(3)
+        items = self.generate_items(3)
 
         for i in items[:2]:
             items.set_liked(i.id)
@@ -97,6 +97,9 @@ class ItemsTest(TestBase):
         self.assertEqual(1, len(filtered))
         self.assertEqual(item2, filtered[0])
 
-    def _generate_items(self, num_items):
-        raw_items = [Item(self.api, self.category, i + 1) for i in range(num_items)]
-        return Items(raw_items)
+    def test_split_liked_and_unliked_items_evenly(self):
+        items = self.generate_items(10)
+        items[0].like()
+        self.assertEqual(2, len(items.equal_number_of_liked_and_unliked()))
+        liked = [i for i in items if i.is_liked]
+        self.assertEqual(1, len(liked))

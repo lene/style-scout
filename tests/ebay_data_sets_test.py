@@ -100,8 +100,6 @@ class EbayDataSetsTest(TestBase):
             items=items, valid_labels=valid_labels, image_size=SIZE,
             test_share=0, verbose=True
         )
-        print('eventually:')
-        print(other_data_sets.train.labels)
         self.assertEqual(4, len(other_data_sets.train.labels))
         self.assertTrue([1., 1., 0., 0., 0., 0., 0., 0.] in other_data_sets.train.labels.tolist())
         self.assertTrue([0., 0., 1., 1., 0., 0., 0., 0.] in other_data_sets.train.labels.tolist())

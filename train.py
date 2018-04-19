@@ -121,7 +121,7 @@ class TrainingRunner(WithVerbose):
         self.num_epochs = args.num_epochs
         self.test = args.test
         self.io = EbayDownloaderIO(
-            args.save_folder, args.image_size, args.item_file, args.images_file, args.weights_file,
+            args.save_folder, args.image_size, args.item_file, args.weights_file,
             verbose=self.verbose
         )
         self.loss_function = 'mean_squared_error'
@@ -182,13 +182,18 @@ class TrainingRunner(WithVerbose):
         )
 
     def setup_model(self, image_data: EbayDataGenerator) -> Model:
+        # TODO: fishy. remove image_data param entirely?
+        if image_data is None:
+            image_data = self.get_image_data()
+
         model = self.neural_network_type(
             input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes,
             connected_layers=self.fully_connected_layers
         )
         model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
 
-        self._print_status('Model compiled')
+        num_layers = len(model.layers)
+        self._print_status(f'Model compiled - {self.neural_network_type}, {num_layers} layers')
         self.io.load_weights(model, self._fit_type(), self._num_items)
         return model
 

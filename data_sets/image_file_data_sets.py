@@ -81,10 +81,6 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
         )
         self._print_status('Image data loaded')
 
-    @property
-    def num_classes(self) -> int:
-        return self.train.num_classes
-
     def get_label(self, number):
         try:
             return self.numbers_to_labels[number]

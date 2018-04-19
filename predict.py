@@ -63,8 +63,7 @@ class Predictor(WithVerbose, ContainsImages):
 
     def __init__(self, args: Namespace) -> None:
         self.io = EbayDownloaderIO(
-            args.save_folder, args.image_size, weights_file=args.weights_file, images_file=args.images_file,
-            verbose=args.verbose
+            args.save_folder, args.image_size, weights_file=args.weights_file, verbose=args.verbose
         )
         self.verbose = args.verbose
         self.size = (args.image_size, args.image_size)

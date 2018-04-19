@@ -1,6 +1,9 @@
+from acquisition.items import Items
+from category import Category
+
 __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 
-from os.path import isfile, join
+from os.path import dirname, isfile, join
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
@@ -69,31 +72,50 @@ class EbayDownloaderIOTest(TestBase):
         self.assertEqual(join(self.DOWNLOAD_ROOT, 'test.hdf5'), io.weights_file('full', 1000))
 
     def test_load_items_from_existing_file(self) -> None:
-        self.skipTest('Test not yet implemented')
+        io = EbayDownloaderIO(
+            self.DOWNLOAD_ROOT, items_file=join(dirname(__file__), 'data', 'items.pickle')
+        )
+        items = io.load_items()
+        self.assertEqual(2, len(items))
+        self.assertEqual(1, num_liked_items(items))
 
     def test_load_items_without_file(self) -> None:
-        self.skipTest('Test not yet implemented')
+        io = EbayDownloaderIO(self.DOWNLOAD_ROOT)
+        items = io.load_items()
+        self.assertEqual(0, len(items))
 
     def test_save_items(self) -> None:
-        self.skipTest('Test not yet implemented')
+        items_file = join(self.DOWNLOAD_ROOT, 'test_items.pickle')
+        io = EbayDownloaderIO(
+            self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE,
+            items_file=items_file
+        )
+        items = self.generate_items(10)
+        io.save_items(items, protocol=1)
+        self.assertTrue(isfile(items_file))
+
+    def test_save_items_creates_backup(self) -> None:
+        items_file = join(self.DOWNLOAD_ROOT, 'test_items.pickle')
+        io = EbayDownloaderIO(
+            self.DOWNLOAD_ROOT, image_size=self.IMAGE_SIZE,
+            items_file=items_file
+        )
+        items = self.generate_items(10)
+        io.save_items(items, protocol=1)
+        io.save_items(items, protocol=1)
+        self.assertTrue(isfile(items_file + '.bak'))
 
     def test_import_likes(self) -> None:
-        self.skipTest('Test not yet implemented')
-
-    def test_get_images_from_existing_file(self) -> None:
-        self.skipTest('Test not yet implemented')
-
-    def test_get_images_without_file(self) -> None:
-        self.skipTest('Test not yet implemented')
-
-    def test_load_weights_from_saved_weights_equal_original_weights(self) -> None:
-        self.skipTest('Test not yet implemented')
-
-    def test_images_filename_contains_num_items_and_image_size(self) -> None:
-        self.skipTest('Functionality not yet implemented')
-
-    def test_weights_filename_contains_num_items_image_size_and_epoch_number(self) -> None:
-        self.skipTest('Functionality not yet implemented')
+        io = EbayDownloaderIO(
+            self.DOWNLOAD_ROOT, items_file=join(dirname(__file__), 'data', 'items.pickle'),
+            likes_file=join(dirname(__file__), 'data', 'likes.json')
+        )
+        items = io.load_items()
+        self.assertEqual(2, len(items))
+        self.assertEqual(1, num_liked_items(items))
+        build_category_structure()
+        io.import_likes(self.api, items)
+        self.assertEqual(2, num_liked_items(items))
 
     def test_explicitly_specified_folder_overrides_base_dir(self) -> None:
         with TemporaryDirectory() as tempdir:
@@ -107,4 +129,17 @@ class EbayDownloaderIOTest(TestBase):
             self.assertIn(tempdir, io.weights_file('full', 1000))
             self.assertNotIn(self.DOWNLOAD_ROOT, io.items_file)
             self.assertIn(tempdir, io.items_file)
-            print(io.items_file, io.weights_file('full', 100))
+
+
+def num_liked_items(items: Items) -> int:
+    return len([i for i in items if i.is_liked])
+
+
+def build_category_structure() -> None:
+    Category(
+        {
+            'CategoryID': '62107',
+            'CategoryName': 'Sandals',
+            'LeafCategory': 'true'
+        }
+    )
