@@ -1,8 +1,10 @@
 import json
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from operator import itemgetter
+from typing import List, Dict
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
+from acquisition.items import Items
 from acquisition.shopping_api import ShoppingAPI
 from category import Category
 
@@ -11,7 +13,7 @@ SAVE_FOLDER = 'data'
 DEFAULT_SIZE = 139
 
 
-def parse_command_line():
+def parse_command_line() -> Namespace:
     parser = ArgumentParser(
         description="Download information about eBay items as training data for style recognition neural "
                     "network"
@@ -63,7 +65,7 @@ def parse_command_line():
     return parser.parse_args()
 
 
-def print_tags(tags, num_most_popular=50):
+def print_tags(tags: Dict[str, int], num_most_popular: int=50) -> None:
     for k in sorted(tags.keys()):
         if 'style:' in k or 'heel height:' in k or 'length:' in k or 'pattern:' in k \
                 or True:  # completely disabled for now
@@ -76,7 +78,7 @@ def print_tags(tags, num_most_popular=50):
     print(len(tags), 'distinct tags')
 
 
-def update_items(items, categories, page, per_page):
+def update_items(items: Items, categories: List[Category], page: int, per_page: bool) -> None:
     if per_page:
         for category in categories:
             items.extend(api.get_category_items(category, limit=per_page, page=page))
@@ -85,7 +87,7 @@ def update_items(items, categories, page, per_page):
     items.remove_duplicates()
 
 
-def download_item_page(items, categories, io):
+def download_item_page(items: Items, categories: List[Category], io: EbayDownloaderIO) -> Dict[str, int]:
     if args.verbose:
         print('\nPage {}, {} distinct items'.format(page, len(items)))
     try:
@@ -99,7 +101,7 @@ def download_item_page(items, categories, io):
         return valid_tags
 
 
-def delete_images_not_in_items(items, image_base_dir):
+def delete_images_not_in_items(items: Items, image_base_dir: str) -> None:
     from os import listdir, remove
     from os.path import isfile, join
     items.download_images()

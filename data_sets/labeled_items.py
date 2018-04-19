@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from operator import itemgetter
-from typing import Dict
+from typing import Dict, Set, List
+
+import numpy
 
 from acquisition.items import Items
 
@@ -23,7 +25,7 @@ class LabeledItems:
         self.labels_to_numbers = {label: i for i, label in enumerate(self.valid_labels)}
         self.numbers_to_labels = {v: k for k, v in self.labels_to_numbers.items()}
 
-    def labels(self, predictions):
+    def labels(self, predictions: List[float]) -> Dict[str, float]:
         """
         Converts predictions encoded as one-hot into human readable labels
         :param predictions: List of probabilities for each possible label
@@ -34,7 +36,7 @@ class LabeledItems:
             for index, probability in enumerate(predictions) if probability > 0
         }
 
-    def labels_sorted_by_probability(self, predictions) -> Dict[str, float]:
+    def labels_sorted_by_probability(self, predictions: List[float]) -> Dict[str, float]:
         """
         Converts predictions encoded as one-hot into human readable labels and sorts them by probability
         :param predictions: List of probabilities for each possible label
@@ -46,9 +48,9 @@ class LabeledItems:
         )
         return OrderedDict(pairs)
 
-    def _dense_to_one_hot(self, labels):
+    def _dense_to_one_hot(self, labels: Set[str]) -> numpy.ndarray:
         raise NotImplementedError()
 
 
-def _check_constructor_arguments(items, valid_labels):
-    assert isinstance(items, Items) or isinstance(items, list)
+def _check_constructor_arguments(items: Items, valid_labels: Dict[str, int]) -> None:
+    assert isinstance(items, Items)

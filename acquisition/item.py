@@ -42,11 +42,11 @@ class Item:
             self.picture_files = []
             self.tags = set()
 
-    def like(self):
+    def like(self) -> None:
         """Set this Item to liked."""
         self.tags.add('<3')
 
-    def unlike(self):
+    def unlike(self) -> None:
         """Set this Item to liked."""
         self.tags.discard('<3')
 
@@ -55,7 +55,7 @@ class Item:
         return '<3' in self.tags
 
     @property
-    def valid(self):
+    def valid(self) -> bool:
         return self._valid
 
     def download_images(self) -> None:

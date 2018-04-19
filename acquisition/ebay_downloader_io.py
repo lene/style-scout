@@ -2,6 +2,7 @@ import json
 import pickle
 from os import makedirs, rename, remove
 from os.path import isfile, join
+from typing import List, Optional, Any
 
 from keras import Model
 
@@ -28,7 +29,7 @@ class EbayDownloaderIO(WithVerbose):
         self.weights_file_base = self._weights_file_base(weights_file)
         self.likes_file = self._likes_filename(likes_file)
 
-    def get_filename(self, filename, what, extension, *args):
+    def get_filename(self, filename: Optional[str], what: str, extension: str, *args: Any) -> str:
         if filename and '/' in filename:
             return filename
         return join(self.base_dir, filename or _filename(what, extension, *args))
@@ -47,7 +48,7 @@ class EbayDownloaderIO(WithVerbose):
                 return Items(items, self.verbose)
         return Items([], self.verbose)
 
-    def save_items(self, items, protocol=pickle.HIGHEST_PROTOCOL):
+    def save_items(self, items: Items, protocol: int=pickle.HIGHEST_PROTOCOL) -> None:
         """
         Store given Items object to pickle file
         :param items: Items to store
@@ -119,28 +120,28 @@ class EbayDownloaderIO(WithVerbose):
         )
 
     @staticmethod
-    def _number_to_string(num_items):
+    def _number_to_string(num_items: int) -> str:
         if not num_items:
             return ''
         if 1000 * (num_items // 1000) == num_items:
             return str(num_items)[:-3] + 'k'
         return str(num_items)
 
-    def _weights_file_base(self, weights_file):
+    def _weights_file_base(self, weights_file: Optional[str]) -> str:
         if weights_file and isfile(join(self.base_dir, weights_file)):
             return join(self.base_dir, weights_file)
         if weights_file is None:
             weights_file = 'weights'
         return join(self.base_dir, weights_file.replace('.hdf5', ''))
 
-    def _likes_filename(self, likes_file):
+    def _likes_filename(self, likes_file: Optional[str]) -> Optional[str]:
         return None if not likes_file \
             else likes_file if isfile(likes_file) \
             else join(self.base_dir, likes_file) if isfile(join(self.base_dir, likes_file)) \
             else None
 
 
-def _add_liked_items(api, items, category, liked_item_ids):
+def _add_liked_items(api: ShoppingAPI, items: Items, category: Category, liked_item_ids: List[int]) -> None:
     present_item_ids = set(i.id for i in items)
     for liked in liked_item_ids:
         if liked in present_item_ids:
@@ -154,12 +155,13 @@ def _add_liked_items(api, items, category, liked_item_ids):
                 print(e)
 
 
-def _filename(what, extension, *args):
-    return "_".join(str(arg) for arg in (what,) + args if arg) + f".{extension}"
+def _filename(what: str, extension: str, *args: Any) -> str:
+    return "_".join(str(arg) for arg in (what,) + args if arg) + ".{}".format(extension)
 
 
 def _check_constructor_arguments_valid(
-        image_size: int, items_file: str, weights_file: str, likes_file: str
-):
+        image_size: Optional[int], items_file: Optional[str], weights_file: Optional[str],
+        likes_file: Optional[str]
+) -> None:
     if weights_file:
         assert isinstance(image_size, int)

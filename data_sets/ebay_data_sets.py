@@ -1,5 +1,5 @@
 from os.path import isfile
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Set
 
 import numpy
 from PIL import Image
@@ -106,7 +106,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
             ImagesLabelsDataSet(test_images, test_labels, self.DEPTH)
         )
 
-    def _extract_images(self) -> numpy.ndarray:
+    def _extract_images(self, *args: str) -> Tuple[numpy.ndarray, numpy.ndarray]:
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
         import os.path
         images, labels = [], []
@@ -124,7 +124,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
 
         return numpy.asarray(images), numpy.asarray(labels)
 
-    def _dense_to_one_hot(self, labels: List[str]) -> numpy.ndarray:
+    def _dense_to_one_hot(self, labels: Set[str]) -> numpy.ndarray:
         labels_one_hot = numpy.zeros((len(labels), self.num_classes))
         for i, tags in enumerate(labels):
             for tag in tags:

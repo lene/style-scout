@@ -45,7 +45,6 @@ class EbayDataSetsTest(TestBase):
         data_sets = EbayDataSets.get_data(
             join(self.DOWNLOAD_ROOT, 'test'), items=items, valid_labels=valid_labels, image_size=SIZE
         )
-        self.assertEqual(2, data_sets.num_classes)
         self.assertDictEqual({'1': 0, '2': 1}, data_sets.labels_to_numbers)
         self.assertDictEqual({0: '1', 1: '2'}, data_sets.numbers_to_labels)
         self.assertEqual(2, len(data_sets.train))

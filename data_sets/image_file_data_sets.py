@@ -3,6 +3,7 @@ from os.path import isfile
 from subprocess import call
 from pickle import dump, load
 from gzip import open as gzopen
+from typing import Tuple
 
 from PIL import Image
 import numpy
@@ -23,24 +24,6 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
     """Data sets (training, validation and test data) containing RGB image files."""
 
     DEFAULT_VALIDATION_SHARE = 0.2
-
-    @classmethod
-    def get_data(cls, data_file=None, image_directory=None, image_size=IMAGENET_SIZE) -> DataSets:
-        if data_file is not None and isfile(data_file):
-            print('Loading ' + data_file)
-            with gzopen(data_file, 'rb') as file:
-                return load(file)
-        else:
-            data = ImageFileDataSets(image_directory, image_size, image_size, 0, True)
-            try:
-                with gzopen(data_file, 'wb') as file:
-                    dump(data, file)
-            except OverflowError:  # annoying python bug when using gzopen with data > 4GB
-                uncompressed_file = '.'.join(data_file.split('.')[:-1])
-                with open(uncompressed_file, 'wb') as file:
-                    dump(data, file)
-                call(('gzip', uncompressed_file))
-            return data
 
     def __init__(self, base_dir, x_size, y_size, validation_share=None, one_hot=False, verbose=False):
         """Construct the data set from images stored in subdirs under base_dir
@@ -89,7 +72,7 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
 
     ############################################################################
 
-    def _extract_images(self, base_dir):
+    def _extract_images(self, base_dir: str) -> Tuple[numpy.ndarray, numpy.ndarray]:
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
         import os.path
         self._print_status('Extracting', base_dir)
@@ -112,7 +95,7 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
 
         return numpy.asarray(images), numpy.asarray(labels)
 
-    def split_images(self, images, labels, train_to_test_ratio):
+    def split_images(self, images, labels, train_to_test_ratio) -> Tuple:
         from random import shuffle
         assert len(images) == len(labels)
         assert 0 <= train_to_test_ratio <= 1
