@@ -117,15 +117,6 @@ class EbayDownloaderIOTest(TestBase):
         io.import_likes(self.api, items)
         self.assertEqual(2, num_liked_items(items))
 
-    def test_load_weights_from_saved_weights_equal_original_weights(self):
-        self.skipTest('Test not yet implemented')
-
-    def test_images_filename_contains_num_items_and_image_size(self):
-        self.skipTest('Functionality not yet implemented')
-
-    def test_weights_filename_contains_num_items_image_size_and_epoch_number(self):
-        self.skipTest('Functionality not yet implemented')
-
     def test_explicitly_specified_folder_overrides_base_dir(self):
         with TemporaryDirectory() as tempdir:
             weights_file = join(tempdir, 'test.hdf5')
@@ -138,7 +129,6 @@ class EbayDownloaderIOTest(TestBase):
             self.assertIn(tempdir, io.weights_file('full', 1000))
             self.assertNotIn(self.DOWNLOAD_ROOT, io.items_file)
             self.assertIn(tempdir, io.items_file)
-            print(io.items_file, io.weights_file('full', 100))
 
 
 def num_liked_items(items: Items) -> int:

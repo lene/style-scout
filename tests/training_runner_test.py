@@ -38,19 +38,6 @@ class TrainingRunnerTest(TestBase):
             args.type = 'BWAHAHAH FAIL!'
             TrainingRunner(args)
 
-    def test_different_optimizers(self):
-        self.skipTest("Test not yet implemented")
-
-    def test_different_fully_connected_layers(self):
-        self.skipTest("Test not yet implemented")
-        for nn_type in ('inception', 'xception', 'vgg16', 'vgg19', 'resnet50'):
-            args = Args.default_args()
-            args.type = nn_type
-            layers = TrainingRunner(args).instantiate_model(None).layers
-            args.layers = [1024, 1024]
-            # this instantiates a full session. better solution needed.
-            self.assertEqual(len(TrainingRunner(args).instantiate_model(None).layers), len(layers) + 1)
-
 
 def _create_empty_data_set(reshape=None):
     # TODO remove duplicate, move to TestBase
