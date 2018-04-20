@@ -6,7 +6,7 @@ from typing import Callable, Tuple, List, Dict, Optional
 from PIL import Image
 import numpy
 from keras import Model
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, TensorBoard
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
 from acquisition.items import Items
@@ -128,6 +128,7 @@ class TrainingRunner(WithVerbose):
         self.optimizer = args.optimizer
         self.neural_network_type = self._decode_network_name(args.type)
         self.fully_connected_layers = args.layers
+        self.log_dir = './logs'  # TODO: CLI arg
 
     def run(self) -> None:
 
@@ -145,7 +146,12 @@ class TrainingRunner(WithVerbose):
                     # if loss does not change for 2 iterations, change learning rate
                     ReduceLROnPlateau(monitor='loss', factor=0.5, patience=2, verbose=self.verbose),
                     # if loss does not change for 4 iterations, finish training
-                    EarlyStopping(monitor='loss', min_delta=0, patience=4, verbose=self.verbose)
+                    EarlyStopping(monitor='loss', min_delta=0, patience=4, verbose=self.verbose),
+                    # write log for visualization in TensorBoard
+                    TensorBoard(
+                        log_dir=self.log_dir, batch_size=self.batch_size, histogram_freq=1,
+                        write_graph=True, write_grads=True, write_images=True
+                    )
                 ]
             )
             self.io.save_weights(model, self._fit_type(), self._num_items)
