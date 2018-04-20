@@ -139,7 +139,8 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
 
     @classmethod
     def _create_from_file(
-            cls, data_file: str, image_size: int, items: Items, valid_labels: Dict[str, int], verbose: bool=False
+            cls, data_file: str, image_size: int, items: Items, valid_labels: Dict[str, int],
+            verbose: bool=False
     ) -> 'EbayDataSets':
         if verbose:
             print('Loading ' + data_file)

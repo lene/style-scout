@@ -11,7 +11,7 @@ DEFAULT_CATEGORIES = {
         'Stiefel & Stiefeletten'
     ),
     4: ('Bodys', 'Nachtwäsche')
-}  # Dict[int, Tuple[str, ...]]
+}  # type: Dict[int, Tuple[str, ...]]
 
 
 class Category:
@@ -29,7 +29,7 @@ class Category:
         'Bodys': ['color', ],
         'Nachtwäsche': ['color', 'style', 'length', ]
     }
-    _by_id = {}  # Dict[str, Category]
+    _by_id = {}  # type: Dict[str, Category]
 
     def __init__(self, data: Dict) -> None:
         self.id = data['CategoryID']
@@ -55,9 +55,9 @@ class Category:
             root_category: int=-1
     ) -> List['Category']:
         category_ids = [root_category]
-        leaf_categories = []
+        leaf_categories = []  # type: List[Category]
         for level in range(1, 5):
-            next_level_cat_ids = []
+            next_level_cat_ids = []  # type: List[int]
             for id in category_ids:
                 categories = [
                     category for category in api.categories(id)

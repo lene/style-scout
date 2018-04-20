@@ -1,10 +1,12 @@
+from typing import Any
+
 from appJar import gui
 from pickle import load, dump
-from argparse import ArgumentParser, RawTextHelpFormatter
+from argparse import ArgumentParser, RawTextHelpFormatter, Namespace
 from os.path import join, isfile
 from PIL import Image
-from pprint import pprint
 
+from acquisition.items import Items
 from data_sets.contains_images import add_border
 from category import Category
 
@@ -13,7 +15,7 @@ STATE_FILE = 'data/like_items.state'
 SAVE_FOLDER = 'data'
 
 
-def parse_command_line():
+def parse_command_line() -> Namespace:
     parser = ArgumentParser(
         description="""Simple GUI to like/dislike eBay items.
 Use 'l' key to like an item, 'd' to dislike it, 'n' to skip it (leaving the like status
@@ -35,9 +37,9 @@ untouched), 'b' to view the previous item and 's' or 'q' to stop the program."""
 
 class LikeItemsUI:
 
-    def __init__(self, app, items, start, size, liked_only=False):
+    def __init__(self, app: gui, items: Items, start: int, size: int, liked_only: bool=False) -> None:
         self.item_no = 0 if liked_only else start
-        self.items = [i for i in items if '<3' in i.tags] if liked_only else items
+        self.items = Items([i for i in items if '<3' in i.tags]) if liked_only else items
         self.app = app
         self.image_size = (size, size)
         self.liked = len([i for i in self.items[:start] if '<3' in i.tags])
@@ -48,7 +50,7 @@ class LikeItemsUI:
 
         self.update_content()
 
-    def _setup_key_bindings(self):
+    def _setup_key_bindings(self) -> None:
         self.app.bindKey('l', self.like)
         self.app.bindKey('d', self.dislike)
         self.app.bindKey('s', self.stop)
@@ -56,7 +58,7 @@ class LikeItemsUI:
         self.app.bindKey('b', self.back)
         self.app.bindKey('n', self.next)
 
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.app.addLabel('title', 'Like or dislike eBay items here')
         self.app.startLabelFrame("Pictures", 0, 0)
         for image_no in range(4):
@@ -71,13 +73,13 @@ class LikeItemsUI:
         self.app.setListBoxRows('tags', 8)
         self.app.addButtons(["Like", "Dislike", 'Stop'], self.press, 3, 0, 2)  # Row 3,Column 0,Span 2
 
-    def downscale(self, image):
+    def downscale(self, image: Image) -> Image:
         w, h = image.size
         image = add_border(image, w, h)
         return image.resize(self.image_size, Image.BICUBIC)
 
-    def press(self, btn):
-        if btn == "Stop":
+    def press(self, btn: str) -> None:
+        if btn == 'Stop':
             self.print_summary()
             self.app.stop()
         elif btn == 'Like':
@@ -87,30 +89,30 @@ class LikeItemsUI:
             self.items[self.item_no].unlike()
             self.next_item()
 
-    def stop(self, _):
+    def stop(self, _: Any) -> None:
         self.press('Stop')
 
-    def like(self, _):
+    def like(self, _: Any) -> None:
         self.liked += 1
         self.press('Like')
 
-    def dislike(self, _):
+    def dislike(self, _: Any) -> None:
         self.press('Dislike')
 
-    def back(self, _):
+    def back(self, _: Any) -> None:
         self.item_no -= 1
         self.update_content()
 
-    def next(self, _):
+    def next(self, _: Any) -> None:
         self.next_item()
 
-    def next_item(self):
+    def next_item(self) -> None:
         self.item_no += 1
         if self.item_no >= len(self.items):
             self.stop(None)
         self.update_content()
 
-    def update_content(self):
+    def update_content(self) -> None:
         item = self.items[self.item_no]
         self.app.setLabel('item_no', '{}/{} ({} Liked)'.format(self.item_no, len(self.items), self.liked))
         self.app.updateListItems('tags', sorted(self.items[self.item_no].tags))
@@ -122,7 +124,7 @@ class LikeItemsUI:
             image.save('/tmp/i{}.gif'.format(image_no))
             app.reloadImage('image_{}'.format(image_no), '/tmp/i{}.gif'.format(image_no))
 
-    def print_summary(self):
+    def print_summary(self) -> None:
         all_items = self.items[:self.item_no]
         all_liked = [i for i in all_items if '<3' in i.tags]
         by_category = {}

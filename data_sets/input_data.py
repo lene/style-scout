@@ -16,13 +16,14 @@
 """Functions for reading image data from files or URLs."""
 
 import os
+from typing import Callable, List, Any, Iterable
 
 import numpy
 
 import urllib.request
 
 
-def maybe_download(filename, base_url, work_directory):
+def maybe_download(filename: str, base_url: str, work_directory: str) -> str:
     """Download a file from a URL if it is not already present in the work directory.
 
     :param filename: Name of the file online and in work directory.
@@ -40,7 +41,7 @@ def maybe_download(filename, base_url, work_directory):
     return file_path
 
 
-def read_one_image_from_file(filename, rows, cols, depth=1):
+def read_one_image_from_file(filename: str, rows: int, cols: int, depth: int=1) -> numpy.ndarray:
     """Reads one image from a file.
 
     :param filename: The file containing the image data.
@@ -54,7 +55,7 @@ def read_one_image_from_file(filename, rows, cols, depth=1):
         return _one_image_from_bytestream(bytestream, rows, cols, depth)
 
 
-def read_one_image_from_url(url, rows, cols, depth=1):
+def read_one_image_from_url(url: str, rows: int, cols: int, depth: int=1) -> numpy.ndarray:
     """Reads one image from a URL.
 
     :param url: The URL containing the image data.
@@ -68,7 +69,9 @@ def read_one_image_from_url(url, rows, cols, depth=1):
         return _one_image_from_bytestream(bytestream, rows, cols, depth)
 
 
-def read_images_from_file(filename, rows, cols, num_images, depth=1):
+def read_images_from_file(
+        filename: str, rows: int, cols: int, num_images: int, depth: int=1
+) -> numpy.ndarray:
     """Reads multiple images from a single file.
 
     :param filename: The file containing the image data.
@@ -83,7 +86,7 @@ def read_images_from_file(filename, rows, cols, num_images, depth=1):
         return images_from_bytestream(bytestream, rows, cols, num_images, depth)
 
 
-def read_images_from_url(url, rows, cols, num_images, depth=1):
+def read_images_from_url(url: str, rows: int, cols: int, num_images: int, depth: int=1) -> numpy.ndarray:
     """Reads multiple images from a single URL.
 
     :param url: The URL containing the image data.
@@ -98,7 +101,7 @@ def read_images_from_url(url, rows, cols, num_images, depth=1):
         return images_from_bytestream(bytestream, rows, cols, num_images, depth)
 
 
-def read_images_from_files(rows, cols, depth, *filenames):
+def read_images_from_files(rows: int, cols: int, depth: int, *filenames: str) -> numpy.ndarray:
     """Reads multiple images from a list of files.
 
     :param filenames: The files containing the image data.
@@ -111,7 +114,7 @@ def read_images_from_files(rows, cols, depth, *filenames):
     return _concatenate_images_from_input_function(read_one_image_from_file, rows, cols, depth, filenames)
 
 
-def read_images_from_urls(rows, cols, depth, *urls):
+def read_images_from_urls(rows: int, cols: int, depth: int, *urls: str) -> numpy.ndarray:
     """Reads multiple images from a list of URLs.
 
     :param urls: The URLs containing the image data.
@@ -124,7 +127,9 @@ def read_images_from_urls(rows, cols, depth, *urls):
     return _concatenate_images_from_input_function(read_one_image_from_url, rows, cols, depth, urls)
 
 
-def images_from_bytestream(bytestream, rows, cols, num_images, depth=1):
+def images_from_bytestream(
+        bytestream: Any, rows: int, cols: int, num_images: int, depth: int=1
+) -> numpy.ndarray:
     """Reads a number of images from a byte stream.
 
     :param bytestream: The byte stream containing the image data.
@@ -140,7 +145,7 @@ def images_from_bytestream(bytestream, rows, cols, num_images, depth=1):
     return data.reshape(num_images, rows, cols, depth)
 
 
-def _one_image_from_bytestream(bytestream, rows, cols, depth=1):
+def _one_image_from_bytestream(bytestream: Any, rows: int, cols: int, depth: int=1) -> numpy.ndarray:
     """Reads one image from a byte stream.
 
     :param bytestream: The byte stream containing the image data.
@@ -153,14 +158,17 @@ def _one_image_from_bytestream(bytestream, rows, cols, depth=1):
     return images_from_bytestream(bytestream, rows, cols, depth)
 
 
-def _concatenate_images_from_input_function(input_function, rows, cols, depth, input_resources):
+def _concatenate_images_from_input_function(
+        input_function: Callable[[Any, int, int, int], numpy.ndarray],
+        rows: int, cols: int, depth: int, input_resources: Iterable
+) -> numpy.ndarray:
     image_data = numpy.concatenate(
         [input_function(input_resource, rows, cols, depth) for input_resource in input_resources]
     )
     return image_data
 
 
-def _check_describes_image_geometry(rows, cols, depth):
+def _check_describes_image_geometry(rows: int, cols: int, depth: int) -> None:
     assert rows > 0
     assert cols > 0
     assert 0 < depth < 3

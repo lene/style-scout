@@ -1,4 +1,5 @@
 import re
+from typing import Dict, Optional, Union, List
 
 
 class TagProcessor:
@@ -7,26 +8,26 @@ class TagProcessor:
     what the neural network requires/expects.
     """
 
-    def __init__(self, tag_list):
+    def __init__(self, tag_list: Dict[str, str]) -> None:
         self.tag_list = tag_list
 
-    def process_tag(self, tag_label, tag_value):
+    def process_tag(self, tag_label: str, tag_value: str) -> Optional[Union[str, List[str]]]:
         if tag_label == 'color':
-            tag_value = self.process_color_tag(tag_value)
+            return self.process_color_tag(tag_value)
         elif tag_label == 'length':
-            tag_value = self.process_length_tag(tag_value)
+            return self.process_length_tag(tag_value)
         elif tag_label == 'style':
-            tag_value = self.process_style_tag(tag_value)
+            return self.process_style_tag(tag_value)
         elif tag_label == 'occasion':
-            tag_value = self.process_occasion_tag(tag_value)
+            return self.process_occasion_tag(tag_value)
         elif tag_label == 'pattern':
-            tag_value = self.process_pattern_tag(tag_value)
+            return self.process_pattern_tag(tag_value)
         elif tag_label == 'heel height':
-            tag_value = self.process_heel_height_tag(tag_value)
+            return self.process_heel_height_tag(tag_value)
         return tag_value
 
     @staticmethod
-    def process_color_tag(tag_value):
+    def process_color_tag(tag_value: str) -> str:
         if 'hell' == tag_value[:4]:
             tag_value = tag_value[4:]
         elif 'dunkel' == tag_value[:6]:
@@ -80,11 +81,11 @@ class TagProcessor:
         return tag_value
 
     @staticmethod
-    def process_length_tag(tag_value):
+    def process_length_tag(tag_value: str) -> str:
         return tag_value
 
     @staticmethod
-    def process_style_tag(tag_value):
+    def process_style_tag(tag_value: str) -> Optional[str]:
         tag_value = tag_value.replace('//', '/')
         if tag_value[:9] == 'nachthemd':
             tag_value = 'nachthemden & -shirts'
@@ -123,7 +124,7 @@ class TagProcessor:
         return tag_value
 
     @staticmethod
-    def process_occasion_tag(tag_value):
+    def process_occasion_tag(tag_value: str) -> Optional[Union[str, List[str]]]:
         if tag_value == 'formal' or tag_value == 'büro':
             return 'business'
         elif 'business' in tag_value and 'freizeit' in tag_value:
@@ -142,7 +143,7 @@ class TagProcessor:
         return tag_value
 
     @staticmethod
-    def process_pattern_tag(tag_value):
+    def process_pattern_tag(tag_value: str) -> Optional[str]:
         if tag_value == 'ohne' or tag_value == 'einfarbig' or tag_value == 'kein muster' \
                 or tag_value[:3] == 'uni':
             return 'ohne muster'
@@ -157,7 +158,7 @@ class TagProcessor:
         return tag_value
 
     @staticmethod
-    def process_heel_height_tag(tag_value):
+    def process_heel_height_tag(tag_value: str) -> str:
         if 'ca.' == tag_value[:3]:
             tag_value = tag_value[3:].strip()
         height = None

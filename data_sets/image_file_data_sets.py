@@ -3,7 +3,7 @@ from os.path import isfile
 from subprocess import call
 from pickle import dump, load
 from gzip import open as gzopen
-from typing import Tuple
+from typing import Tuple, Dict, List, Any
 
 from PIL import Image
 import numpy
@@ -25,7 +25,10 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
 
     DEFAULT_VALIDATION_SHARE = 0.2
 
-    def __init__(self, base_dir, x_size, y_size, validation_share=None, one_hot=False, verbose=False):
+    def __init__(
+            self, base_dir: str, x_size: int, y_size: int, validation_share: float=None,
+            one_hot: bool=False, verbose: bool=False
+    ) -> None:
         """Construct the data set from images stored in subdirs under base_dir
         :param base_dir: Where to store the MNIST data files.
         :param x_size:
@@ -64,7 +67,7 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
         )
         self._print_status('Image data loaded')
 
-    def get_label(self, number):
+    def get_label(self, number: int) -> str:
         try:
             return self.numbers_to_labels[number]
         except KeyError:
@@ -95,7 +98,9 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
 
         return numpy.asarray(images), numpy.asarray(labels)
 
-    def split_images(self, images, labels, train_to_test_ratio) -> Tuple:
+    def split_images(
+            self, images: numpy.ndarray, labels: numpy.ndarray, train_to_test_ratio: float
+    ) -> Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray]:
         from random import shuffle
         assert len(images) == len(labels)
         assert 0 <= train_to_test_ratio <= 1
@@ -108,13 +113,13 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
         images_[:], labels_[:] = zip(*combined)
         return images_[test_size:], labels_[test_size:], images_[:test_size], labels_[:test_size]
 
-    def prediction_info(self, prediction, place):
+    def prediction_info(self, prediction: List[float], place: int) -> Tuple[int, str, Any]:
         index, value = nth_index_and_value(prediction, place)
         label = self.get_label(index)
         return index, label, value
 
 
-def _dense_to_one_hot(labels_dense):
+def _dense_to_one_hot(labels_dense: numpy.ndarray) -> Tuple[numpy.ndarray, Dict[str, int]]:
     """Convert class labels from scalars to one-hot vectors."""
     num_classes = len(set(labels_dense))
     num_labels = labels_dense.shape[0]
@@ -127,7 +132,7 @@ def _dense_to_one_hot(labels_dense):
     return labels_one_hot, labels_to_numbers
 
 
-def nth_index_and_value(l, n):
+def nth_index_and_value(l: List, n: int) -> Tuple[int, Any]:
     v = sorted(l)[-n]
     i = list(l).index(v)
     return i, v

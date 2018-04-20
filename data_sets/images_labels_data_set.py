@@ -10,7 +10,7 @@ __author__ = 'Lene Preuss <lene.preuss@gmail.com>'
 class ImagesLabelsDataSet(DataSetBase, Sized):
 
     def __init__(
-            self, images: numpy.ndarray, labels: numpy.ndarray, depth: int=1, reshape: Tuple=None
+            self, images: numpy.ndarray, labels: numpy.ndarray, depth: int=1, reshape: bool=False
     ) -> None:
         """Construct a DataSet.
 
@@ -23,16 +23,15 @@ class ImagesLabelsDataSet(DataSetBase, Sized):
 
         # Convert shape from [num examples, rows, columns, depth] to [num examples, rows*columns]
         if reshape:
-            # TODO use reshape as the shape to reshape into
             images = images.reshape(images.shape[0], depth * images.shape[1] * images.shape[2])
         images = normalize(images)
         self._input = images
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._input.shape[0]
 
 
-def normalize(ndarray):
+def normalize(ndarray: numpy.ndarray) -> numpy.ndarray:
     """Transform a ndarray that contains uint8 values to floats between 0. and 1.
 
     :param ndarray:

@@ -2,13 +2,14 @@ import re
 from os.path import join, isfile
 from collections import defaultdict
 from os import remove, makedirs
-from typing import Set
+from typing import Set, Dict, List
 from urllib.request import urlretrieve
 from urllib.error import URLError, ContentTooShortError
 from http.client import RemoteDisconnected
 import concurrent.futures
 import asyncio
 
+# from acquisition.shopping_api import ShoppingAPI
 from acquisition.tag_processor import TagProcessor
 from category import Category
 
@@ -39,8 +40,8 @@ class Item:
             self._valid = False
         finally:
             self.category = category
-            self.picture_files = []
-            self.tags = set()
+            self.picture_files = []  # type: List[str]
+            self.tags = set()  # type: Set[str]
 
     def like(self) -> None:
         """Set this Item to liked."""
@@ -82,7 +83,7 @@ class Item:
             self.url_to_file(url) for url in self.picture_urls if is_image_file(self.url_to_file(url))
         ]
 
-    def set_tags(self, all_available_tags):
+    def set_tags(self, all_available_tags: Set[str]) -> None:
         """
         Out of all available tags, set those that have a value on this Item.
         :param all_available_tags: all tags that may be set
@@ -104,7 +105,7 @@ class Item:
 
         return tags
 
-    def process_tag(self, tag_label, tag_value):
+    def process_tag(self, tag_label: str, tag_value: str) -> str:
         """
         Convert the tag value given in proprietary format into the value required for training the
         neural network.
@@ -116,11 +117,11 @@ class Item:
         return processor.process_tag(tag_label, tag_value)
 
     @classmethod
-    def url_to_file(cls, url):
+    def url_to_file(cls, url: str) -> str:
         return join(cls.download_root, '_'.join(url.split('/')[-4:]))
 
     @classmethod
-    def _show_image(cls, filename, show):
+    def _show_image(cls, filename: str, show: bool) -> None:
         from PIL import Image
         if show:
             try:
@@ -134,7 +135,7 @@ class Item:
                 except FileNotFoundError:
                     pass
 
-    async def _download_images(self, max_threads):
+    async def _download_images(self, max_threads: int) -> None:
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_threads) as executor:
             loop = asyncio.get_event_loop()
             futures = [
@@ -143,7 +144,7 @@ class Item:
             ]
             await asyncio.gather(*futures)
 
-    def __str__(self):
+    def __str__(self) -> str:
             return """Id: {}
     Title: {} {}
     Specifics: {}
@@ -155,14 +156,14 @@ class Item:
             )
 
     @staticmethod
-    def _clean_description(description):
+    def _clean_description(description: str) -> str:
         description = re.sub('<[^<]+?>', '', description)
         description = description.replace('&nbsp;', ' ')
         description = description.replace('\n', ' ')
         return description
 
     @staticmethod
-    def _get_specifics(item_specifics):
+    def _get_specifics(item_specifics: Dict) -> Dict:
         if not item_specifics:
             return {}
         if isinstance(item_specifics['NameValueList'], dict):  # some people just cannot stick to schemata
@@ -171,7 +172,7 @@ class Item:
                     item_specifics['NameValueList']['Value'].lower()
             }
 
-        specifics = defaultdict(list)
+        specifics = defaultdict(list)  # type: Dict[str, List]
         try:
             for pair in item_specifics.get('NameValueList', []):
                 if isinstance(pair['Value'], list):
@@ -183,7 +184,7 @@ class Item:
             print(item_specifics)
             raise
 
-    def _tags_for_tag_type(self, property, add_undefined):
+    def _tags_for_tag_type(self, property: str, add_undefined: bool) -> Set[str]:
         tag_label = self.TAG_LIST[property]
         if property in self.item_specifics:
             return self._tags_for_property(property, tag_label)
@@ -191,8 +192,8 @@ class Item:
                 return {'{}:UNDEFINED'.format(tag_label)}
         return set()
 
-    def _tags_for_property(self, property, tag_label):
-        tags = set()
+    def _tags_for_property(self, property: str, tag_label: str) -> Set[str]:
+        tags = set()  # type: Set[str]
         if not isinstance(self.item_specifics[property], list):
             self.item_specifics[property] = [self.item_specifics[property]]
         tag_values = [s.lower() for s in self.item_specifics[property]]
@@ -209,7 +210,7 @@ class EbayItem(Item):
     pass
 
 
-def is_image_file(filename):
+def is_image_file(filename: str) -> bool:
     from PIL import Image
     if not isfile(filename):
         return False

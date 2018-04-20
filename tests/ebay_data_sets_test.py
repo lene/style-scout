@@ -108,12 +108,12 @@ class EbayDataSetsTest(TestBase):
     def _create_enough_items(self) -> Tuple[Items, Dict[str, int]]:
         # set up enough items and labels to have a decent probability of not succeeding by chance
         item1 = Item(self.api, self.category, 1)
-        item1.tags = ['1', '2']
+        item1.tags = {'1', '2'}
         item2 = Item(self.api, self.category, 2)
-        item2.tags = ['3', '4']
+        item2.tags = {'3', '4'}
         item3 = Item(self.api, self.category, 3)
-        item3.tags = ['5', '6']
+        item3.tags = {'5', '6'}
         item4 = Item(self.api, self.category, 4)
-        item4.tags = ['7', '8']
+        item4.tags = {'7', '8'}
         valid_labels = {'1': 1, '2': 1, '3': 1, '4': 1, '5': 1, '6': 1, '7': 1, '8': 1}
         return Items([item1, item2, item3, item4]), valid_labels
