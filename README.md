@@ -95,4 +95,5 @@ TBD
 ```bash
 $ nosetests tests
 $ flake8 .
+$ mypy .
 ```

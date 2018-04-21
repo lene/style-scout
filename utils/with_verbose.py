@@ -3,6 +3,10 @@ class WithVerbose:
     def __init__(self, verbose):
         self.verbose = verbose
 
-    def _print_status(self, *args, **kwargs):
-        if self.verbose:
+    @classmethod
+    def print_status(cls, verbose, *args, **kwargs) -> None:  # type: ignore
+        if verbose:
             print(*args, **kwargs)
+
+    def _print_status(self, *args, **kwargs) -> None:  # type: ignore
+        self.print_status(self.verbose, *args, **kwargs)

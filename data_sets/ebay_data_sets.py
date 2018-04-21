@@ -1,4 +1,5 @@
 from os.path import isfile
+from typing import Tuple
 
 import numpy
 from PIL import Image
@@ -30,27 +31,56 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         if data_file is not None and isfile(data_file):
             data = cls._create_from_file(data_file, image_size, items, valid_labels)
         else:
-            data = cls(
-                items, valid_labels, (image_size, image_size), 0, extract=True, test_share=test_share,
+            data = EbayDataSets.extract_and_init(
+                items, valid_labels, (image_size, image_size), 0, test_share=test_share,
                 verbose=verbose
             )
             cls._save_to_file(data, data_file)
         return data
 
+    @classmethod
+    def extract_and_init(
+            cls, items: Items, valid_labels: Dict[str, int], size: Tuple[int, int],
+            validation_share: float=None, test_share: float=0.2, verbose: bool=False
+    ) -> 'EbayDataSets':
+        all_images, all_labels = cls._extract_images(items, size, verbose)
+        required_ram = all_images.size * (4 + 1) + all_labels.nbytes
+        WithVerbose.print_status(
+            verbose,
+            'RAM needed for images and labels: {0:.2f}GB'.format(required_ram / 1024 / 1024 / 1024)
+        )
+
+        all_labels = cls._dense_to_one_hot(all_labels)
+
+        train_images, train_labels, test_images, test_labels = self.split_images(
+            all_images, all_labels, 1 - test_share
+        )
+
+        validation_size = int(
+            len(all_images) * (cls.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share)
+        )
+        validation_images = train_images[:validation_size]
+        validation_labels = train_labels[:validation_size]
+        train_images = train_images[validation_size:]
+        train_labels = train_labels[validation_size:]
+        return cls(
+            items, valid_labels, size,
+            train_images, train_labels, test_images, test_labels, validation_images, validation_labels,
+            verbose
+        )
+
     def __init__(
-            self, items, valid_labels, size, validation_share=None, test_share=0.2, extract=True,
-            train_images=None, train_labels=None, test_images=None, test_labels=None,
-            validation_images=None, validation_labels=None,
-            verbose=False
-    ):
+            self, items: Items, valid_labels: Dict[str, int], size: Tuple[int, int],
+            train_images: numpy.ndarray, train_labels: numpy.ndarray,
+            test_images: numpy.ndarray, test_labels: numpy.ndarray,
+            validation_images: numpy.ndarray, validation_labels: numpy.ndarray,
+            verbose: bool
+    ) -> None:
         """
         Construct the data set from images belonging to items passed in
         :param items: Items object corresponding to the data set
         :param valid_labels: Labels corresponding to the labels of the data set
         :param size: tuple(width, height): Size the images are scaled to
-        :param test_share: fraction of the data used as test data
-        :param validation_share: fraction of the data used as validation data
-        :param extract: If False, initialize the object directly from the following data
         :param train_images: Image data to be used as features for the training set
         :param train_labels: Labels to be used as labels for the training set
         :param test_images: Image data to be used as features for the test set
@@ -60,37 +90,14 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         :param verbose: If set, print status/progress information
         """
         _check_constructor_arguments_valid(
-            extract, size, self.DEPTH,
+            size, self.DEPTH,
             train_images, train_labels, test_images, test_labels, validation_images, validation_labels
         )
         LabeledItems.__init__(self, items, valid_labels)
         ContainsImages.__init__(self, *size)
         WithVerbose.__init__(self, verbose)
 
-        if extract:
-            all_images, all_labels = self._extract_images()
-            required_ram = all_images.size * (4 + 1) + all_labels.nbytes
-            self._print_status(
-                'RAM needed for images and labels: {0:.2f}GB'.format(required_ram / 1024 / 1024 / 1024)
-            )
-
-            all_labels = self._dense_to_one_hot(all_labels)
-
-            train_images, train_labels, test_images, test_labels = self.split_images(
-                all_images, all_labels, 1 - test_share
-            )
-
-            self.validation_size = int(
-                len(all_images) * (
-                    self.DEFAULT_VALIDATION_SHARE if validation_share is None else validation_share
-                )
-            )
-            validation_images = train_images[:self.validation_size]
-            validation_labels = train_labels[:self.validation_size]
-            train_images = train_images[self.validation_size:]
-            train_labels = train_labels[self.validation_size:]
-        else:
-            self.validation_size = len(validation_images)
+        self.validation_size = len(validation_images)
 
         DataSets.__init__(
             self,
@@ -99,21 +106,27 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
             ImagesLabelsDataSet(test_images, test_labels, self.DEPTH)
         )
 
-    def _extract_images(self):
+    @classmethod
+    def _extract_images(
+            cls, items: Items, size: Tuple[int, int], verbose: bool, *args: str
+    ) -> Tuple[numpy.ndarray, numpy.ndarray]:
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
         import os.path
         images, labels = [], []
-        for i, item in enumerate(self.items):
-            self._print_status('Extracting images: {}/{}'.format(i + 1, len(self.items)), end='\r')
+        for i, item in enumerate(items):
+            WithVerbose.print_status(
+                verbose, 'Extracting images: {}/{}'.format(i + 1, len(items)), end='\r'
+            )
             item.download_images()
             for image_file in item.picture_files:
                 try:
                     image = Image.open(os.path.join(image_file)).convert('RGB')
                 except OSError:
                     continue
-                images.append(numpy.asarray(self.downscale(image, method=add_border)))
+                images.append(numpy.asarray(ContainsImages.scale_image(image, size, method=add_border)))
                 labels.append(tuple(item.tags))
-        self._print_status()
+
+        WithVerbose.print_status(verbose)
 
         return numpy.asarray(images), numpy.asarray(labels)
 
@@ -136,7 +149,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
             print('Loading ' + data_file)
         npz = numpy.load(data_file)
         return cls(
-            items, valid_labels, (image_size, image_size), 0, extract=False,
+            items, valid_labels, (image_size, image_size),
             train_images=npz['train_images'], train_labels=npz['train_labels'],
             test_images=npz['test_images'], test_labels=npz['test_labels'],
             validation_images=npz['validation_images'], validation_labels=npz['validation_labels']
@@ -155,40 +168,31 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
 
 
 def _check_constructor_arguments_valid(
-        extract, size, depth, train_images, train_labels, test_images, test_labels,
-        validation_images, validation_labels
-):
+        size: Tuple[int, int], depth: int,
+        train_images: numpy.ndarray, train_labels: numpy.ndarray,
+        test_images: numpy.ndarray, test_labels: numpy.ndarray,
+        validation_images: numpy.ndarray, validation_labels: numpy.ndarray
+) -> None:
     assert isinstance(size, tuple)
     assert len(size) == 2
     assert isinstance(size[0], int)
     assert isinstance(size[1], int)
 
-    if extract:
-        assert train_images is None
-        assert train_labels is None
-        assert test_images is None
-        assert test_labels is None
-        assert validation_images is None
-        assert validation_labels is None
-    else:
-        # assert train_images.shape[1] == size[0]*size[1]*self.DEPTH, str(train_images.shape)
-        assert len(train_images.shape) == 4
-        assert train_images.shape[1] == size[0], str(train_images.shape)
-        assert train_images.shape[2] == size[1], str(train_images.shape)
-        assert train_images.shape[3] == depth, str(train_images.shape)
-        # assert test_images.shape[1] == size[0]*size[1]*self.DEPTH, str(test_images.shape)
-        assert len(test_images.shape) == 4
-        assert test_images.shape[1] == size[0], str(test_images.shape)
-        assert test_images.shape[2] == size[1], str(test_images.shape)
-        assert test_images.shape[3] == depth, str(test_images.shape)
-        # assert validation_images.shape[1] == size[0]*size[1]*self.DEPTH, str(validation_images.shape)
-        assert len(validation_images.shape) == 4
-        assert validation_images.shape[1] == size[0], str(validation_images.shape)
-        assert validation_images.shape[2] == size[1], str(validation_images.shape)
-        assert validation_images.shape[3] == depth, str(validation_images.shape)
-        assert len(train_labels.shape) == 2
-        # print(train_labels.shape)
-        assert len(test_labels.shape) == 2
-        # print(test_labels.shape)
-        assert len(validation_labels.shape) == 2
-        # print(validation_labels.shape)
+    # assert train_images.shape[1] == size[0]*size[1]*self.DEPTH, str(train_images.shape)
+    assert len(train_images.shape) == 4
+    assert train_images.shape[1] == size[0], str(train_images.shape)
+    assert train_images.shape[2] == size[1], str(train_images.shape)
+    assert train_images.shape[3] == depth, str(train_images.shape)
+    # assert test_images.shape[1] == size[0]*size[1]*self.DEPTH, str(test_images.shape)
+    assert len(test_images.shape) == 4
+    assert test_images.shape[1] == size[0], str(test_images.shape)
+    assert test_images.shape[2] == size[1], str(test_images.shape)
+    assert test_images.shape[3] == depth, str(test_images.shape)
+    # assert validation_images.shape[1] == size[0]*size[1]*self.DEPTH, str(validation_images.shape)
+    assert len(validation_images.shape) == 4
+    assert validation_images.shape[1] == size[0], str(validation_images.shape)
+    assert validation_images.shape[2] == size[1], str(validation_images.shape)
+    assert validation_images.shape[3] == depth, str(validation_images.shape)
+    assert len(train_labels.shape) == 2
+    assert len(test_labels.shape) == 2
+    assert len(validation_labels.shape) == 2
