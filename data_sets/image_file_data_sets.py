@@ -42,7 +42,7 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
         self.one_hot = one_hot
         self.base_dir = base_dir
 
-        all_images, all_labels = self._extract_images(base_dir)
+        all_images, all_labels = self._extract_images(None, self.size, verbose, base_dir)
 
         self.num_labels = len(set(all_labels))
         if one_hot:
@@ -102,8 +102,9 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
 
         return numpy.asarray(images), numpy.asarray(labels)
 
+    @staticmethod
     def split_images(
-            self, images: numpy.ndarray, labels: numpy.ndarray, train_to_test_ratio: float
+            images: numpy.ndarray, labels: numpy.ndarray, train_to_test_ratio: float
     ) -> Tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray, numpy.ndarray]:
         from random import shuffle
         assert len(images) == len(labels)

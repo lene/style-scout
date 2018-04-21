@@ -54,9 +54,11 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
             'RAM needed for images and labels: {0:.2f}GB'.format(required_ram / 1024 / 1024 / 1024)
         )
 
-        all_labels = cls._dense_to_one_hot(all_labels)
+        all_labels = cls._static_dense_to_one_hot(
+            all_labels, len(valid_labels), {label: i for i, label in enumerate(valid_labels)}
+        )
 
-        train_images, train_labels, test_images, test_labels = self.split_images(
+        train_images, train_labels, test_images, test_labels = cls.split_images(
             all_images, all_labels, 1 - test_share
         )
 
@@ -67,7 +69,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         validation_labels = train_labels[:validation_size]
         train_images = train_images[validation_size:]
         train_labels = train_labels[validation_size:]
-        return cls(
+        return EbayDataSets(
             items, valid_labels, size,
             train_images, train_labels, test_images, test_labels, validation_images, validation_labels,
             verbose
@@ -135,10 +137,16 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         return numpy.asarray(images), numpy.asarray(labels)
 
     def _dense_to_one_hot(self, labels: Set[str]) -> numpy.ndarray:
-        labels_one_hot = numpy.zeros((len(labels), self.num_classes))
+        return self._static_dense_to_one_hot(labels, self.num_classes, self.labels_to_numbers)
+
+    @staticmethod
+    def _static_dense_to_one_hot(
+            labels: Set[str], num_classes: int, labels_to_numbers: Dict[str, int]
+    ) -> numpy.ndarray:
+        labels_one_hot = numpy.zeros((len(labels), num_classes))
         for i, tags in enumerate(labels):
             for tag in tags:
-                labels_one_hot[i][self.labels_to_numbers[tag]] = 1
+                labels_one_hot[i][labels_to_numbers[tag]] = 1
         return labels_one_hot
 
     @classmethod
@@ -152,11 +160,10 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
             cls, data_file: str, image_size: int, items: Items, valid_labels: Dict[str, int],
             verbose: bool=False
     ) -> 'EbayDataSets':
-        if verbose:
-            print('Loading ' + data_file)
+        WithVerbose.print_status(verbose, 'Loading ' + data_file)
         npz = numpy.load(data_file)
         return cls(
-            items, valid_labels, (image_size, image_size),
+            items, valid_labels, (image_size, image_size), verbose=verbose,
             train_images=npz['train_images'], train_labels=npz['train_labels'],
             test_images=npz['test_images'], test_labels=npz['test_labels'],
             validation_images=npz['validation_images'], validation_labels=npz['validation_labels']

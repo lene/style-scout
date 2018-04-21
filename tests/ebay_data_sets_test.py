@@ -23,7 +23,7 @@ class EbayDataSetsTest(TestBase):
 
     def test_basic_create(self) -> None:
         items = Items([Item(self.api, self.category, 1), Item(self.api, self.category, 2)])
-        data_sets = EbayDataSets(
+        data_sets = EbayDataSets.extract_and_init(
             items=items, valid_labels={}, size=(SIZE, SIZE)
         )
         self.assertEqual(SIZE * SIZE * 3, data_sets.num_features)
@@ -32,7 +32,7 @@ class EbayDataSetsTest(TestBase):
     def test_labels(self) -> None:
         items = Items([Item(self.api, self.category, 1), Item(self.api, self.category, 2)])
         valid_labels = {'1': 1, '2': 1}
-        data_sets = EbayDataSets(
+        data_sets = EbayDataSets.extract_and_init(
             items=items, valid_labels=valid_labels, size=(SIZE, SIZE)
         )
         self.assertEqual(2, data_sets.num_classes)
