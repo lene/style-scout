@@ -1,5 +1,5 @@
 import re
-from typing import Dict, Optional, Union, List
+from typing import Dict, Set
 
 
 class TagProcessor:
@@ -11,11 +11,11 @@ class TagProcessor:
     def __init__(self, tag_list: Dict[str, str]) -> None:
         self.tag_list = tag_list
 
-    def process_tag(self, tag_label: str, tag_value: str) -> Optional[Union[str, List[str]]]:
+    def process_tag(self, tag_label: str, tag_value: str) -> Set[str]:
         if tag_label == 'color':
-            return self.process_color_tag(tag_value)
+            return {self.process_color_tag(tag_value)}
         elif tag_label == 'length':
-            return self.process_length_tag(tag_value)
+            return {self.process_length_tag(tag_value)}
         elif tag_label == 'style':
             return self.process_style_tag(tag_value)
         elif tag_label == 'occasion':
@@ -23,8 +23,8 @@ class TagProcessor:
         elif tag_label == 'pattern':
             return self.process_pattern_tag(tag_value)
         elif tag_label == 'heel height':
-            return self.process_heel_height_tag(tag_value)
-        return tag_value
+            return {self.process_heel_height_tag(tag_value)}
+        return {tag_value}
 
     @staticmethod
     def process_color_tag(tag_value: str) -> str:
@@ -85,7 +85,7 @@ class TagProcessor:
         return tag_value
 
     @staticmethod
-    def process_style_tag(tag_value: str) -> Optional[str]:
+    def process_style_tag(tag_value: str) -> Set[str]:
         tag_value = tag_value.replace('//', '/')
         if tag_value[:9] == 'nachthemd':
             tag_value = 'nachthemden & -shirts'
@@ -112,50 +112,50 @@ class TagProcessor:
         elif tag_value == 'tunika':
             tag_value = 'tuniken'
         elif tag_value == 'shirt':
-            return 'shirts'
+            return {'shirts'}
         elif tag_value[:5] == 'jeans':
-            return 'jeans'
+            return {'jeans'}
         elif tag_value[:5] == 'stepp':
-            return 'stepp'
+            return {'stepp'}
         elif tag_value == 'kleid':
-            return None
+            return set()
         elif tag_value[:8] == 'sonstige':
-            return None
-        return tag_value
+            return set()
+        return {tag_value}
 
     @staticmethod
-    def process_occasion_tag(tag_value: str) -> Optional[Union[str, List[str]]]:
+    def process_occasion_tag(tag_value: str) -> Set[str]:
         if tag_value == 'formal' or tag_value == 'büro':
-            return 'business'
+            return {'business'}
         elif 'business' in tag_value and 'freizeit' in tag_value:
-            return ['business', 'freizeit']
+            return {'business', 'freizeit'}
         elif tag_value == 'abendlich':
-            return 'festlich'
+            return {'festlich'}
         elif tag_value == 'wandern/trekking':
-            return 'outdoor'
+            return {'outdoor'}
         elif tag_value == 'clubwear':
-            return 'party'
+            return {'party'}
         elif tag_value[:8] == 'hochzeit':
-            return 'spezieller anlass'
+            return {'spezieller anlass'}
         elif tag_value == 'immer' or tag_value == 'alles' \
                 or tag_value == 'freizeit, besondere anlässe, party, arbeit':
-            return None
-        return tag_value
+            return set()
+        return {tag_value}
 
     @staticmethod
-    def process_pattern_tag(tag_value: str) -> Optional[str]:
+    def process_pattern_tag(tag_value: str) -> Set[str]:
         if tag_value == 'ohne' or tag_value == 'einfarbig' or tag_value == 'kein muster' \
                 or tag_value[:3] == 'uni':
-            return 'ohne muster'
+            return {'ohne muster'}
         elif tag_value[:6] == 'siehe ' or tag_value == 'mit muster':
-            return None
+            return set()
         elif tag_value[:6] == 'blumen' or tag_value == 'floral':
-            return 'geblümt'
+            return {'geblümt'}
         elif tag_value[:8] == 'streifen':
-            return 'gestreift'
+            return {'gestreift'}
         elif tag_value == 'bedruckt':
-            return 'mit motiv'
-        return tag_value
+            return {'mit motiv'}
+        return {tag_value}
 
     @staticmethod
     def process_heel_height_tag(tag_value: str) -> str:

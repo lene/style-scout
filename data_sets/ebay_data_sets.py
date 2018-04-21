@@ -1,5 +1,5 @@
-from os.path import isfile
-from typing import List, Tuple, Dict, Set
+import os.path
+from typing import Tuple, Dict, Set
 
 import numpy
 from PIL import Image
@@ -32,7 +32,7 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
         :return: EbayDataSet read from the file or created from the passed parameters
         """
         data_file = EbayDataSets._npz_file_name(data_file)
-        if data_file is not None and isfile(data_file):
+        if data_file is not None and os.path.isfile(data_file):
             data = EbayDataSets._create_from_file(data_file, image_size, items, valid_labels)
         else:
             data = EbayDataSets.extract_and_init(
@@ -117,7 +117,6 @@ class EbayDataSets(ImageFileDataSets, LabeledItems, WithVerbose):
             cls, items: Items, size: Tuple[int, int], verbose: bool, *args: str
     ) -> Tuple[numpy.ndarray, numpy.ndarray]:
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
-        import os.path
         images, labels = [], []
         for i, item in enumerate(items):
             WithVerbose.print_status(

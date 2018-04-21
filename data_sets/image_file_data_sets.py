@@ -1,14 +1,9 @@
 from os import walk
-from os.path import isfile
-from subprocess import call
-from pickle import dump, load
-from gzip import open as gzopen
 from typing import Tuple, Dict, List, Any
 
 from PIL import Image
 import numpy
 
-from acquisition.items import Items
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
 from data_sets.contains_images import ContainsImages
@@ -42,7 +37,7 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
         self.one_hot = one_hot
         self.base_dir = base_dir
 
-        all_images, all_labels = self._extract_images(None, self.size, verbose, base_dir)
+        all_images, all_labels = self._read_images(self.size, verbose, base_dir)
 
         self.num_labels = len(set(all_labels))
         if one_hot:
@@ -77,8 +72,8 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
     ############################################################################
 
     @classmethod
-    def _extract_images(
-            cls, items: Items, size: Tuple[int, int], verbose: bool, base_dir: str
+    def _read_images(
+            cls, size: Tuple[int, int], verbose: bool, base_dir: str
     ) -> Tuple[numpy.ndarray, numpy.ndarray]:
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
         import os.path

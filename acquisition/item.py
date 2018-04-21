@@ -105,7 +105,7 @@ class Item:
 
         return tags
 
-    def process_tag(self, tag_label: str, tag_value: str) -> str:
+    def process_tag(self, tag_label: str, tag_value: str) -> Set[str]:
         """
         Convert the tag value given in proprietary format into the value required for training the
         neural network.
@@ -193,17 +193,13 @@ class Item:
         return set()
 
     def _tags_for_property(self, property: str, tag_label: str) -> Set[str]:
-        tags = set()  # type: Set[str]
         if not isinstance(self.item_specifics[property], list):
             self.item_specifics[property] = [self.item_specifics[property]]
-        tag_values = [s.lower() for s in self.item_specifics[property]]
-        for tag_value in tag_values:
-            tag_value = self.process_tag(tag_label, tag_value)
-            if tag_value:
-                if not isinstance(tag_value, list):
-                    tag_value = [tag_value]
-                tags |= set('{}:{}'.format(tag_label, v) for v in tag_value)
-        return tags
+        tag_values = {s.lower() for s in self.item_specifics[property]}
+        return {
+            '{}:{}'.format(tag_label, v)
+            for tag_value in tag_values for v in self.process_tag(tag_label, tag_value)
+        }
 
 
 class EbayItem(Item):
