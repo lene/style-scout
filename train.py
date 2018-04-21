@@ -149,8 +149,8 @@ class TrainingRunner(WithVerbose):
                     EarlyStopping(monitor='loss', min_delta=0, patience=4, verbose=self.verbose),
                     # write log for visualization in TensorBoard
                     TensorBoard(
-                        log_dir=self.log_dir, batch_size=self.batch_size, histogram_freq=1,
-                        write_graph=True, write_grads=True, write_images=True
+                        log_dir=self.log_dir, batch_size=self.batch_size, histogram_freq=0,
+                        write_graph=True, write_grads=False, write_images=True
                     )
                 ]
             )

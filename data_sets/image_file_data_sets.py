@@ -8,6 +8,7 @@ from typing import Tuple, Dict, List, Any
 from PIL import Image
 import numpy
 
+from acquisition.items import Items
 from data_sets.data_sets import DataSets
 from data_sets.images_labels_data_set import ImagesLabelsDataSet
 from data_sets.contains_images import ContainsImages
@@ -75,25 +76,28 @@ class ImageFileDataSets(DataSets, ContainsImages, WithVerbose):
 
     ############################################################################
 
-    def _extract_images(self, base_dir: str) -> Tuple[numpy.ndarray, numpy.ndarray]:
+    @classmethod
+    def _extract_images(
+            cls, items: Items, size: Tuple[int, int], verbose: bool, base_dir: str
+    ) -> Tuple[numpy.ndarray, numpy.ndarray]:
         """Extract the images into a 4D uint8 numpy array [index, y, x, depth]."""
         import os.path
-        self._print_status('Extracting', base_dir)
+        WithVerbose.print_status(verbose, 'Extracting', base_dir)
         images, labels = [], []
         all_dirs = list(walk(base_dir))
         i = 0
         for root, dirs, files in all_dirs:
             label = root.split('/')[-1]
-            self._print_status(label, "%.2f%%" % (i / len(all_dirs) * 100))
+            WithVerbose.print_status(verbose, label, "%.2f%%" % (i / len(all_dirs) * 100))
             i += 1
             for j, file in enumerate(files):
-                self._print_status(j, '/', len(files), end='\r')
+                WithVerbose.print_status(verbose, j, '/', len(files), end='\r')
                 try:
                     image = Image.open(os.path.join(root, file)).convert('RGB')
                 except OSError:
                     continue
 
-                images.append(numpy.asarray(self.downscale(image)))
+                images.append(numpy.asarray(ContainsImages.scale_image(image, size)))
                 labels.append(label)
 
         return numpy.asarray(images), numpy.asarray(labels)

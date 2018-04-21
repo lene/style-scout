@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Tuple
 
 from PIL import Image
 import numpy
@@ -35,9 +35,16 @@ class ContainsImages:
     def downscale(
             self, image: Image.Image, method: Callable[[Image.Image, int, int], Image.Image]=add_border
     ) -> numpy.array:
+        return self.scale_image(image, self.size, method)
+
+    @classmethod
+    def scale_image(
+            cls, image: Image.Image, size: Tuple[int, int],
+            method: Callable[[Image.Image, int, int], Image.Image]=add_border
+    ) -> numpy.array:
         w, h = image.size
         image = method(image, w, h)
-        return numpy.asarray(image.resize(self.size, Image.BICUBIC))
+        return numpy.asarray(image.resize(size, Image.BICUBIC))
 
     @classmethod
     def show_image(cls, rgb_values: numpy.ndarray, label: str='') -> None:
