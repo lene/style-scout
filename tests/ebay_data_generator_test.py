@@ -25,7 +25,7 @@ class EbayDataGeneratorTest(TestBase):
 
     def test_generator_returns_all_images_and_labels_in_data_set(self) -> None:
         items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
-        generator = EbayDataGenerator(Items(items), labels, (139, 139), test_share=0)
+        generator = EbayDataGenerator(items, labels, (139, 139), test_share=0)
         for i, (images, labels) in enumerate(generator.train_generator()):
             if i >= self.NUM_IMAGES:
                 break
@@ -37,7 +37,7 @@ class EbayDataGeneratorTest(TestBase):
 
     def test_generator_returns_batch_of_correct_size(self) -> None:
         items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
-        generator = EbayDataGenerator(Items(items), labels, (139, 139), batch_size=2)
+        generator = EbayDataGenerator(items, labels, (139, 139), batch_size=2)
 
         images, labels = next(generator.train_generator())
         self.assertEqual((2, 139, 139, 3), images.shape)
@@ -45,7 +45,7 @@ class EbayDataGeneratorTest(TestBase):
 
     def test_generator_repeats_after_returning_full_data_set(self) -> None:
         items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
-        generator = EbayDataGenerator(Items(items), labels, (139, 139), batch_size=2)
+        generator = EbayDataGenerator(items, labels, (139, 139), batch_size=2)
 
         images0, labels0 = next(generator.train_generator())
         _, _ = next(generator.train_generator())

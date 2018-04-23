@@ -202,10 +202,6 @@ class Item:
         }
 
 
-class EbayItem(Item):
-    pass
-
-
 def is_image_file(filename: str) -> bool:
     from PIL import Image
     if not isfile(filename):
@@ -215,3 +211,6 @@ def is_image_file(filename: str) -> bool:
         return True
     except OSError:
         return False
+
+
+from acquisition.ebay_item import EbayItem  # noqa: E402

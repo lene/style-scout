@@ -1,8 +1,11 @@
 appjar
+click
 ebaysdk
+flake8
 h5py
 keras
 matplotlib
+mypy
 nose
 pillow
 recordclass

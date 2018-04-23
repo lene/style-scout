@@ -3,7 +3,7 @@ from typing import Dict, List
 from ebaysdk.finding import Connection as Finding
 from ebaysdk.shopping import Connection as Shopping
 
-from acquisition.item import EbayItem
+from acquisition.ebay_item import EbayItem
 from acquisition.items import Items
 from acquisition.shopping_api import ShoppingApi
 from category import Category

@@ -14,7 +14,7 @@ class Items(WithVerbose, Sized, Iterable):
     A set of Item objects along with some utility functions.
     """
     def __init__(
-            self, raw_items: Union['Items', List[Item]], verbose: bool=False, is_download_complete: bool=False
+            self, raw_items: List[Item], verbose: bool=False, is_download_complete: bool=False
     ) -> None:
         WithVerbose.__init__(self, verbose)
         self.items = raw_items
