@@ -1,6 +1,5 @@
 from argparse import ArgumentParser, Namespace
 from pprint import pprint
-from random import randrange
 from typing import Callable, Tuple, List, Dict, Optional
 
 from PIL import Image
@@ -80,30 +79,6 @@ def parse_command_line() -> Namespace:
     return parser.parse_args()
 
 
-def print_predictions(image_data: EbayDataGenerator, model: Model) -> None:
-    images, labels = next(image_data.test_generator())
-    i = randrange(len(images))
-    print_prediction(images[i:i + 1], labels[i], image_data, model)
-
-
-def print_prediction(images: numpy.ndarray, label: str, image_data: EbayDataGenerator, model: Model) -> None:
-    print('actual values:')
-    pprint(image_data.labels_sorted_by_probability(label))
-    image_data.show_image(images)
-    print('predictions:')
-    pprint(
-        [
-            (label, prob)
-            for label, prob in image_data.labels_sorted_by_probability(
-                model.predict(
-                    images.reshape(1, *image_data.size, image_data.DEPTH), batch_size=1, verbose=1
-                )[0]
-            ).items()
-            if prob > 0.01
-        ]
-    )
-
-
 class TrainingRunner(WithVerbose):
 
     NETWORK_TYPES = {
@@ -130,7 +105,7 @@ class TrainingRunner(WithVerbose):
         )
         self.loss_function = 'mean_squared_error'
         self.optimizer = args.optimizer
-        self.neural_network_type = self._decode_network_name(args.type)
+        self.neural_network_type = self.decode_network_name(args.type)
         self.fully_connected_layers = args.layers
         self.log_dir = './logs'  # TODO: CLI arg
 
@@ -237,7 +212,7 @@ class TrainingRunner(WithVerbose):
         return self.category.lower() + '_' + type if self.category else type
 
     @staticmethod
-    def _decode_network_name(network_type: str) -> Callable:
+    def decode_network_name(network_type: str) -> Callable:
         try:
             return TrainingRunner.NETWORK_TYPES[network_type]
         except KeyError:

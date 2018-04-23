@@ -5,7 +5,7 @@ from typing import List, Dict
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
 from acquisition.items import Items
-from acquisition.shopping_api import ShoppingAPI
+from acquisition.ebay_shopping_api import EbayShoppingAPI
 from category import Category
 
 MIN_TAG_NUM = 10
@@ -120,7 +120,7 @@ if __name__ == '__main__':
     with open(args.ebay_auth_file) as file:
         auth = json.load(file)
 
-    api = ShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
+    api = EbayShoppingAPI(auth['production'], args.ebay_site_id, debug=False)
     categories = Category.search_categories(api)
 
     io = EbayDownloaderIO(

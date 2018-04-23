@@ -23,22 +23,22 @@ class Items(WithVerbose, Sized, Iterable):
     def __iter__(self) -> Iterator:
         return self.items.__iter__()
 
-    def __next__(self):
-        return next(self.items)
-
     def __len__(self) -> int:
         return len(self.items)
 
     @overload
-    def __getitem__(self, item: slice) -> 'Items':
+    def __getitem__(self, index: slice) -> 'Items':
         pass
 
-    @overload
-    def __getitem__(self, item: int) -> Item:
+    @overload  # noqa: F811
+    def __getitem__(self, index: int) -> Item:
         pass
 
-    def __getitem__(self, item):
-        return self.items[item]
+    def __getitem__(self, index: Union[slice, int]) -> Union['Items', Item]:  # noqa: F811
+        if isinstance(index, int):
+            return self.items[index]
+        else:
+            return Items(self.items[index])
 
     def append(self, item: Item) -> None:
         """Adds an Item to this item set."""

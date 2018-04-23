@@ -68,7 +68,7 @@ class Predictor(WithVerbose, ContainsImages):
         self.verbose = args.verbose
         self.size = (args.image_size, args.image_size)
         self.demo = args.demo
-        self.neural_network_type = TrainingRunner._decode_network_name(args.type)
+        self.neural_network_type = TrainingRunner.decode_network_name(args.type)
         self.model = self.setup_model()
 
     def setup_model(self, loss_function: str='mean_squared_error', optimizer: str='sgd') -> Model:

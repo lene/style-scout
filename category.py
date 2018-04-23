@@ -1,5 +1,7 @@
 from typing import Dict, List, Tuple
 
+from acquisition.shopping_api import ShoppingApi
+
 
 DEFAULT_CATEGORIES = {
     1: ('Kleidung',),
@@ -51,7 +53,7 @@ class Category:
 
     @classmethod
     def search_categories(
-            cls, api: 'ShoppingAPI', search_term_filter: Dict[int, Tuple[str, ...]]=DEFAULT_CATEGORIES,
+            cls, api: ShoppingApi, search_term_filter: Dict[int, Tuple[str, ...]]=DEFAULT_CATEGORIES,
             root_category: int=-1
     ) -> List['Category']:
         category_ids = [root_category]

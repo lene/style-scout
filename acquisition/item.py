@@ -9,7 +9,7 @@ from http.client import RemoteDisconnected
 import concurrent.futures
 import asyncio
 
-# from acquisition.shopping_api import ShoppingAPI
+from acquisition.shopping_api import ShoppingApi
 from acquisition.tag_processor import TagProcessor
 from category import Category
 
@@ -24,9 +24,9 @@ class Item:
         'muster': 'pattern', 'absatzhöhe': 'heel height',
         # 'material': 'material', 'obermaterial': 'material',
     }
-    MAX_DOWNLOAD_THREADS = 18  # limit imposed by the eBay API (actually we don't use the API, but BSTS)
+    MAX_DOWNLOAD_THREADS = 18  # limit imposed by the eBay API (we don't use the API here, but BSTS)
 
-    def __init__(self, api: 'ShoppingAPI', category: Category, item_id: int) -> None:
+    def __init__(self, api: ShoppingApi, category: Category, item_id: int) -> None:
         try:
             item = api.get_item(item_id)
             self.id = item['ItemID']

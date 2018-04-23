@@ -7,7 +7,7 @@ from unittest.mock import Mock
 
 from acquisition.item import Item
 from acquisition.items import Items
-from acquisition.shopping_api import ShoppingAPI
+from acquisition.ebay_shopping_api import EbayShoppingAPI
 from category import Category
 
 
@@ -18,7 +18,7 @@ class TestBase(unittest.TestCase):
     MOCK_DESCRIPTION = 'Mock description <strong>with HTML</strong>'
 
     def setUp(self) -> None:
-        self.api = Mock(spec=ShoppingAPI)
+        self.api = Mock(spec=EbayShoppingAPI)
         self.api.get_item = create_item_dict  # Mock(return_value=self.item_data)
         self.category = Mock(spec=Category)
         self.category.name_path = ['0', '1']

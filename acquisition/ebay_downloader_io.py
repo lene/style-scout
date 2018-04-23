@@ -8,7 +8,7 @@ from keras import Model
 
 from acquisition.item import Item
 from acquisition.items import Items
-from acquisition.shopping_api import ShoppingAPI
+from acquisition.ebay_shopping_api import EbayShoppingAPI
 from category import Category
 from utils.with_verbose import WithVerbose
 from ebaysdk.exception import ConnectionError
@@ -63,7 +63,7 @@ class EbayDownloaderIO(WithVerbose):
         with open(self.items_file, 'wb') as file:
             pickle.dump(items, file, protocol=protocol)
 
-    def import_likes(self, api: ShoppingAPI, items: Items) -> Items:
+    def import_likes(self, api: EbayShoppingAPI, items: Items) -> Items:
         """
         Loads liked Item objects from the configured likes file and adds them to items, ensuring
         each Item object is present only once.
@@ -116,7 +116,8 @@ class EbayDownloaderIO(WithVerbose):
         if self.weights_file_base and isfile(self.weights_file_base):
             return self.weights_file_base
         return _filename(
-            self.weights_file_base, 'hdf5', fit_type, self._number_to_string(num_items), self.image_size
+            self.weights_file_base, 'hdf5', fit_type,
+            self._number_to_string(num_items), self.image_size
         )
 
     @staticmethod
@@ -141,7 +142,9 @@ class EbayDownloaderIO(WithVerbose):
             else None
 
 
-def _add_liked_items(api: ShoppingAPI, items: Items, category: Category, liked_item_ids: List[int]) -> None:
+def _add_liked_items(
+        api: EbayShoppingAPI, items: Items, category: Category, liked_item_ids: List[int]
+) -> None:
     present_item_ids = set(i.id for i in items)
     for liked in liked_item_ids:
         if liked in present_item_ids:
