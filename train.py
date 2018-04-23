@@ -39,10 +39,12 @@ def parse_command_line() -> Namespace:
         help="Minimum number of times a tag has to occur to be considered valid"
     )
     parser.add_argument(
-        '--images-file', default=None, help='Pickle file from which to load precomputed image data set'
+        '--images-file', default=None,
+        help='Pickle file from which to load precomputed image data set'
     )
     parser.add_argument(
-        '--weights-file', '-w', default=None, help='HDF5 file from which to load precomputed set of weights'
+        '--weights-file', '-w', default=None,
+        help='HDF5 file from which to load precomputed set of weights'
     )
     parser.add_argument(
         '--num-epochs', '-n', type=int, default=1, help='How many times to iterate'
@@ -59,7 +61,9 @@ def parse_command_line() -> Namespace:
     )
     parser.add_argument('--likes-only', action='store_true', help="Only train against likes")
     parser.add_argument('--category', help='Only train against items of this category')
-    parser.add_argument('--batch-size', type=int, default=32, help='Batch size used in fitting the model')
+    parser.add_argument(
+        '--batch-size', type=int, default=32, help='Batch size used in fitting the model'
+    )
     parser.add_argument(
         '--optimizer', default='adam', help='Optimizer used to fit the model',
         choices=['adam', 'sgd', 'rmsprop', 'adagrad', 'adadelta', 'adamax', 'nadam']
@@ -69,8 +73,8 @@ def parse_command_line() -> Namespace:
         choices=list(TrainingRunner.NETWORK_TYPES.keys())
     )
     parser.add_argument(
-        '--layers', default=[1024], help='Additional fully connected layers before the output layer',
-        type=int, nargs='+',
+        '--layers', default=[1024], type=int, nargs='+',
+        help='Additional fully connected layers before the output layer'
     )
 
     return parser.parse_args()
