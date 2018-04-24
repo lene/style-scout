@@ -5,6 +5,9 @@ from keras.applications.xception import Xception
 from keras.applications.vgg16 import VGG16
 from keras.applications.vgg19 import VGG19
 from keras.applications.resnet50 import ResNet50
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
+from keras.applications.densenet import DenseNet121, DenseNet169, DenseNet201
+from keras.applications.nasnet import NASNet
 from keras.layers import GlobalAveragePooling2D, Dense
 from keras.models import Model
 
@@ -44,3 +47,33 @@ def vgg19(input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[in
 
 def resnet50(input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)) -> Model:
     return model(ResNet50, input_shape, classes, connected_layers)
+
+
+def inception_resnet_v2(
+        input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)
+) -> Model:
+    return model(InceptionResNetV2, input_shape, classes, connected_layers)
+
+
+def densenet121(
+        input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)
+) -> Model:
+    return model(DenseNet121, input_shape, classes, connected_layers)
+
+
+def densenet169(
+        input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)
+) -> Model:
+    return model(DenseNet169, input_shape, classes, connected_layers)
+
+
+def densenet201(
+        input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)
+) -> Model:
+    return model(DenseNet201, input_shape, classes, connected_layers)
+
+
+def nasnet(
+        input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)
+) -> Model:
+    return model(NASNet, input_shape, classes, connected_layers)

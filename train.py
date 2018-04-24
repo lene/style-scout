@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 from pprint import pprint
-from typing import Callable, Tuple, List, Dict, Optional
+from typing import Callable, Tuple, Dict
 
 from PIL import Image
 import numpy
@@ -11,7 +11,10 @@ from acquisition.ebay_downloader_io import EbayDownloaderIO
 from acquisition.items import Items
 from data_sets.ebay_data_generator import EbayDataGenerator
 from utils.with_verbose import WithVerbose
-from network_types import inception, xception, vgg16, vgg19, resnet50
+from network_types import (
+    inception, xception, vgg16, vgg19, resnet50, inception_resnet_v2,
+    densenet121, densenet169, densenet201, nasnet
+)
 from data_sets.contains_images import add_border
 
 MIN_TAG_NUM = 10
@@ -31,7 +34,7 @@ def parse_command_line() -> Namespace:
         help='Folder under which to store items, images and weights'
     )
     parser.add_argument(
-        '--item-file', default=None, help="Pickle file from which to load downloaded items"
+        '--item-file', '-i', default=None, help="Pickle file from which to load downloaded items"
     )
     parser.add_argument(
         '--min-valid-tag', default=MIN_TAG_NUM, type=int,
@@ -58,7 +61,7 @@ def parse_command_line() -> Namespace:
     parser.add_argument(
         '--test', '-t', action='store_true', help="Run evaluation on test data set"
     )
-    parser.add_argument('--likes-only', action='store_true', help="Only train against likes")
+    parser.add_argument('--likes-only', '-l', action='store_true', help="Only train against likes")
     parser.add_argument('--category', help='Only train against items of this category')
     parser.add_argument(
         '--batch-size', type=int, default=32, help='Batch size used in fitting the model'
@@ -86,7 +89,12 @@ class TrainingRunner(WithVerbose):
         'xception': xception,
         'vgg16': vgg16,
         'vgg19': vgg19,
-        'resnet50': resnet50
+        'resnet50': resnet50,
+        'inception_resnet': inception_resnet_v2,
+        'densenet121': densenet121,
+        'densenet169': densenet169,
+        'densenet201': densenet201,
+        'nasnet': nasnet,
     }
 
     def __init__(self, args: Namespace) -> None:
@@ -110,11 +118,14 @@ class TrainingRunner(WithVerbose):
         self.log_dir = './logs'  # TODO: CLI arg
 
     def run(self) -> None:
-
         image_data = self.get_image_data()
-
         model = self.setup_model(image_data)
 
+        self.run_training(image_data, model)
+        self.run_test(image_data, model)
+        self.run_demo(image_data, model)
+
+    def run_training(self, image_data, model):
         if self.num_epochs:
             model.fit_generator(
                 image_data.train_generator(),
@@ -135,13 +146,16 @@ class TrainingRunner(WithVerbose):
             )
             self.io.save_weights(model, self._fit_type(), self._num_items)
 
+    def run_test(self, image_data, model):
         if self.test:
             loss_and_metrics = model.evaluate_generator(
-                image_data.test_generator(), steps=image_data.test_length(), max_queue_size=2
+                image_data.test_generator(), steps=image_data.test_length(), max_queue_size=2,
+                verbose=self.verbose
             )
             print()
             print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
+    def run_demo(self, image_data, model):
         for item in [i for i in self._prepare_items()[0] if '<3' in i.tags][:self.demo]:
             images = numpy.asarray([
                 image_data.downscale(Image.open(file).convert('RGB'), method=add_border)
@@ -178,7 +192,7 @@ class TrainingRunner(WithVerbose):
         model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
 
         num_layers = len(model.layers)
-        self._print_status(f'Model compiled - {self.neural_network_type}, {num_layers} layers')
+        self._print_status(f'Model compiled - {self.neural_network_type.__name__}, {num_layers} layers')
         self.io.load_weights(model, self._fit_type(), self._num_items)
         return model
 

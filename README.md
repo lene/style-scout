@@ -93,7 +93,9 @@ TBD
 # Running tests
 
 ```bash
-$ nosetests tests
-$ flake8 .
-$ mypy .
+$ nosetests tests && \
+    mypy . && \
+    flake8 . &&
+    python train.py -n 1 -i tests/data/items_for_test.pickle -l -s 48 --type vgg16 -w /tmp/test.hdf5 && \
+    rm -f /tmp/test*.hdf5
 ```
