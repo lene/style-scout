@@ -116,20 +116,19 @@ class TrainingRunner(WithVerbose):
         self.neural_network_type = self.decode_network_name(args.type)
         self.fully_connected_layers = args.layers
         self.log_dir = './logs'  # TODO: CLI arg
+        self.image_data = self.get_image_data()
+        self.model = self.setup_model()
 
     def run(self) -> None:
-        image_data = self.get_image_data()
-        model = self.setup_model(image_data)
+        self.run_training()
+        self.run_test()
+        self.run_demo()
 
-        self.run_training(image_data, model)
-        self.run_test(image_data, model)
-        self.run_demo(image_data, model)
-
-    def run_training(self, image_data, model):
+    def run_training(self):
         if self.num_epochs:
-            model.fit_generator(
-                image_data.train_generator(),
-                steps_per_epoch=image_data.train_length(), epochs=self.num_epochs,
+            self.model.fit_generator(
+                self.image_data.train_generator(),
+                steps_per_epoch=self.image_data.train_length(), epochs=self.num_epochs,
                 callbacks=[
                     # save weights after every iteration
                     ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5', verbose=self.verbose),
@@ -144,31 +143,30 @@ class TrainingRunner(WithVerbose):
                     )
                 ]
             )
-            self.io.save_weights(model, self._fit_type(), self._num_items)
+            self.io.save_weights(self.model, self._fit_type(), self._num_items)
 
-    def run_test(self, image_data, model):
+    def run_test(self):
         if self.test:
-            loss_and_metrics = model.evaluate_generator(
-                image_data.test_generator(), steps=image_data.test_length(), max_queue_size=2,
-                verbose=self.verbose
+            loss_and_metrics = self.model.evaluate_generator(
+                self.image_data.test_generator(), steps=self.image_data.test_length(), max_queue_size=2
             )
             print()
             print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
-    def run_demo(self, image_data, model):
+    def run_demo(self):
         for item in [i for i in self._prepare_items()[0] if '<3' in i.tags][:self.demo]:
             images = numpy.asarray([
-                image_data.downscale(Image.open(file).convert('RGB'), method=add_border)
+                self.image_data.downscale(Image.open(file).convert('RGB'), method=add_border)
                 for file in item.picture_files
             ])
             for image in images:
-                image_data.show_image(image)
-            predictions = model.predict(images, batch_size=len(images), verbose=1)
+                self.image_data.show_image(image)
+            predictions = self.model.predict(images, batch_size=len(images), verbose=1)
             for prediction in predictions:
                 pprint(
                     [
                         (label, prob)
-                        for label, prob in image_data.labels_sorted_by_probability(prediction).items()
+                        for label, prob in self.image_data.labels_sorted_by_probability(prediction).items()
                         if prob > 0.01
                     ]
                 )
@@ -180,13 +178,9 @@ class TrainingRunner(WithVerbose):
             batch_size=self.batch_size, verbose=self.verbose
         )
 
-    def setup_model(self, image_data: EbayDataGenerator) -> Model:
-        # TODO: fishy. remove image_data param entirely?
-        if image_data is None:
-            image_data = self.get_image_data()
-
+    def setup_model(self) -> Model:
         model = self.neural_network_type(
-            input_shape=(*image_data.size, image_data.DEPTH), classes=image_data.num_classes,
+            input_shape=(*self.image_data.size, self.image_data.DEPTH), classes=self.image_data.num_classes,
             connected_layers=self.fully_connected_layers
         )
         model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])

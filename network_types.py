@@ -1,13 +1,9 @@
 from typing import Tuple
 
-from keras.applications.inception_v3 import InceptionV3
-from keras.applications.xception import Xception
-from keras.applications.vgg16 import VGG16
-from keras.applications.vgg19 import VGG19
-from keras.applications.resnet50 import ResNet50
-from keras.applications.inception_resnet_v2 import InceptionResNetV2
-from keras.applications.densenet import DenseNet121, DenseNet169, DenseNet201
-from keras.applications.nasnet import NASNet
+from keras.applications import (
+    InceptionV3, Xception, VGG16, VGG19, ResNet50, InceptionResNetV2, DenseNet121, DenseNet169, DenseNet201,
+    NASNetLarge
+)
 from keras.layers import GlobalAveragePooling2D, Dense
 from keras.models import Model
 
@@ -76,4 +72,4 @@ def densenet201(
 def nasnet(
         input_shape: Tuple[int, ...], classes: int, connected_layers: Tuple[int, ...]=(1024,)
 ) -> Model:
-    return model(NASNet, input_shape, classes, connected_layers)
+    return model(NASNetLarge, input_shape, classes, connected_layers)
