@@ -91,7 +91,10 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
         """
         while True:
             for i in range(self.test_length()):
-                yield self.images_for_batch(self.test.batches, i), self.labels_for_batch(self.test.batches, i)
+                yield (
+                    self.images_for_batch(self.test.batches, i),
+                    self.labels_for_batch(self.test.batches, i)
+                )
 
     def images_for_batch(self, batches: Batches, batch_index: int) -> numpy.ndarray:
         """
