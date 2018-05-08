@@ -97,6 +97,8 @@ def evaluate(size: int, layers: Tuple[int, ...], algo: str, args: Namespace):
             f'|{test_set_accuracy_1:.4f}|{test_set_accuracy_2:.4f}'
             f'|{test_set_accuracy_3:.4f}|{test_set_accuracy_5:.4f}|{test_set_accuracy_10:.4f}|\n'
         )
+    if isfile(weights_file):
+        remove(weights_file)
 
 
 args = parse_command_line()
