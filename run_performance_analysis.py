@@ -14,7 +14,9 @@ ALGOS = (
 )
 SIZES = (200, 300, 400)
 ITEM_FILE = 'data/items_liked_unliked_equal.pickle'
-LAYERS = ((1024,), (1024, 1024), (1024, 1024, 512, 256), (1024, 1024, 1024, 512, 256, 128, 64))
+LAYERS = (
+    (1024,), (1024, 1024), (1024, 1024, 512, 256), (1024, 1024, 1024, 512, 256, 128, 64)
+)  # type: Tuple[Tuple[int, ...], ...]
 OUTPUT_FILE = 'perf.md'
 
 
