@@ -1,6 +1,6 @@
+import random
 from os.path import join
-from random import shuffle
-from typing import Tuple, Set, Generator, List, Dict, Sized
+from typing import Tuple, Set, Generator, List, Dict, Sized, Optional
 
 import numpy
 from PIL import Image
@@ -22,7 +22,7 @@ class BatchGenerator(Sized):
         self.batches = self.generate_batches()
 
     def generate_batches(self) -> Batches:
-        shuffle(self.chunks)
+        random.shuffle(self.chunks)
         return [
             self.chunks[i:i + self.batch_size] for i in range(0, len(self.chunks), self.batch_size)
         ]
@@ -40,8 +40,8 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
     CACHE_FILE_PREFIX = 'style_scout'
 
     def __init__(
-            self, items: Items, valid_labels: Dict[str, int], size: Tuple[int, int], test_share: float=0.2,
-            batch_size: int=32, verbose: bool=False
+            self, items: Items, valid_labels: Dict[str, int], size: Tuple[int, int],
+            test_share: float=0.2, batch_size: int=32, random_seed: int=None, verbose: bool=False
     ) -> None:
         """
         Construct the generator from images and labels belonging to items passed in
@@ -59,11 +59,14 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
 
         self.batch_size = batch_size
         self.num_items = len(items)
-        self._setup_batches(test_share)
+        self._setup_batches(test_share, random_seed)
 
-    def _setup_batches(self, test_share: float) -> None:
+    def _setup_batches(self, test_share: float, random_seed: Optional[int]) -> None:
         self.items.download_images()
-        chunks = [(item.tags, picture_file) for item in self.items for picture_file in item.picture_files]
+        chunks = [
+            (item.tags, picture_file) for item in self.items for picture_file in item.picture_files
+        ]
+        random.seed(random_seed)
         self.train = BatchGenerator(chunks[:int(len(chunks) * (1 - test_share))], self.batch_size)
         self.test = BatchGenerator(chunks[int(len(chunks) * (1 - test_share)):], self.batch_size)
 
@@ -77,6 +80,8 @@ class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
         """
         Generator function returning all images and their labels used as training set
         """
+        if not self.train_length():
+            raise ValueError("Length of training set is 0")
         while True:
             for i in range(self.train_length()):
                 yield (

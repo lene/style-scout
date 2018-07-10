@@ -10,7 +10,7 @@ class Args(
         'Args', [
             'verbose', 'image_size', 'min_valid_tag', 'likes_only', 'category', 'batch_size', 'demo',
             'num_epochs', 'test', 'save_folder', 'item_file', 'weights_file', 'type',
-            'optimizer', 'layers'
+            'optimizer', 'layers', 'test_set_share', 'random_seed'
         ]
     )
 ):
@@ -20,17 +20,19 @@ class Args(
             verbose=False, image_size=139, min_valid_tag=0, likes_only=False, category='', batch_size=1,
             demo=False, num_epochs=0, test=False, save_folder=TestBase.DOWNLOAD_ROOT,
             item_file='', weights_file='',
-            type='inception', optimizer='adam', layers=1
+            type='inception', optimizer='adam', layers=(1,), test_set_share=0.2, random_seed=None
         )
 
 
 class TrainingRunnerTest(TestBase):
 
     def test_init_existing_network_types(self) -> None:
-        for nn_type in ('inception', 'xception', 'vgg16', 'vgg19', 'resnet50'):
+        for nn_type in ('inception', 'xception', 'vgg16', 'vgg19'):
             args = Args.default_args()
             args.type = nn_type
             TrainingRunner(args)
+        # network types that are not tested since they need bigger image sizes:
+        # 'resnet50', 'inception_resnet', 'densenet121', 'densenet169', 'densenet201', 'nasnet'
 
     def test_init_nonexisting_network_type(self) -> None:
         with self.assertRaises(ValueError):
