@@ -20,10 +20,9 @@ OPTIMIZERS = (
 )
 SIZES = (200, 300, 400)
 LAYERS = (
-    (1024,),
-    (1024, 1024),
-    (1024, 1024, 512, 256),
-    (1024, 1024, 1024, 512, 256, 128, 64)
+    (800,),
+    (1024, 256),
+    (1024, 1024, 512, 256)
 )
 
 ITEM_FILE = 'data/items_liked_unliked_equal.pickle'
@@ -33,12 +32,22 @@ OUTPUT_FILE = 'perf.md'
 def read_tuple(
         cast: Callable[[str], Any], delimiter: str=','
 ) -> Callable[[str], Tuple[Any, ...]]:
-    def do_read(input: str) -> Tuple[Any, ...]:
-        parts = input.split(delimiter, 1)
-        if len(parts) > 1:
-            return (cast(parts[0]),) + do_read(parts[1])
-        return cast(parts[0]),
+    def do_read(args: str) -> Tuple[Any, ...]:
+        parts = args.split(delimiter)
+        return tuple([cast(p) for p in parts])
     return do_read
+
+
+def tuple_string(args: Tuple) -> str:
+    return str(args).replace(' ', '').replace('(', '').replace(')', '').replace("'", '')
+
+
+def layers_string(layers: Tuple[Tuple[int, ...], ...]) -> str:
+    return str(layers).\
+        replace(' ', '').\
+        replace(',)', ')').\
+        replace('),(', '/').\
+        replace('(', '').replace(')', '')
 
 
 def parse_command_line() -> Namespace:
@@ -51,23 +60,23 @@ def parse_command_line() -> Namespace:
     parser.add_argument('--likes-only', action='store_true')
     parser.add_argument(
         '--epochs', type=read_tuple(int), default=EPOCHS,
-        help=f"List of number of evaluated epochs (default: {EPOCHS})"
+        help=f"List of number of evaluated epochs (default: {tuple_string(EPOCHS)})"
     )
     parser.add_argument(
         '--image-sizes', type=read_tuple(int), default=SIZES,
-        help=f"List of evaluated image sizes (default: {SIZES})"
+        help=f"List of evaluated image sizes (default: {tuple_string(SIZES)})"
     )
     parser.add_argument(
         '--algorithms', type=read_tuple(str), default=ALGOS,
-        help=f"List of evaluated algorithms (default: {ALGOS})"
+        help=f"List of evaluated algorithms (default: {tuple_string(ALGOS)})"
     )
     parser.add_argument(
         '--optimizers', type=read_tuple(str), default=OPTIMIZERS,
-        help=f"List of evaluated optimizers (default: {OPTIMIZERS})"
+        help=f"List of evaluated optimizers (default: {tuple_string(OPTIMIZERS)})"
     )
     parser.add_argument(
-        '--layers', type=read_tuple(read_tuple(int), delimiter='_'), default=LAYERS,
-        help=f"List of evaluated fully connected layers (default: {LAYERS})"
+        '--layers', type=read_tuple(read_tuple(int), delimiter='/'), default=LAYERS,
+        help=f"List of evaluated fully connected layers (default: {layers_string(LAYERS)})"
     )
     return parser.parse_args()
 
@@ -148,7 +157,7 @@ def evaluate(
 
 
 def main(args: Namespace) -> None:
-
+    print(args)
     with open(args.output_file, 'w') as f:
         f.writelines(header(args.epochs))
 
