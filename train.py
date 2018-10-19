@@ -160,7 +160,7 @@ class TrainingRunner(WithVerbose):
             self.model.fit_generator(
                 self.image_data.train_generator(),
                 steps_per_epoch=self.image_data.train_length(), epochs=self.num_epochs,
-                callbacks=self.callbacks()
+                callbacks=self.callbacks(), verbose=self.verbose
             )
             self.io.save_weights(self.model, self._fit_type(), self._num_items)
 
