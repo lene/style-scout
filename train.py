@@ -69,6 +69,9 @@ def parse_command_line() -> Namespace:
     parser.add_argument(
         '--test', '-t', action='store_true', help="Run evaluation on test data set"
     )
+    parser.add_argument(
+        '--tensorboard', action='store_true', help="Write data to be evaluated with Tensorboard"
+    )
     parser.add_argument('--likes-only', '-l', action='store_true', help="Only train against likes")
     parser.add_argument('--category', help='Only train against items of this category')
     parser.add_argument(
@@ -123,6 +126,7 @@ class TrainingRunner(WithVerbose):
         self.optimizer = args.optimizer
         self.neural_network_type = self.decode_network_name(args.type)
         self.fully_connected_layers = args.layers
+        self.tensorboard = args.tensorboard
         self.log_dir = './logs'  # TODO: CLI arg
         self.image_data = self._get_image_data(args.test_set_share, args. random_seed)
         self.model = self.setup_model()
@@ -132,24 +136,31 @@ class TrainingRunner(WithVerbose):
         self.run_test()
         self.run_demo()
 
-    def run_training(self):
+    def callbacks(self):
+        callbacks = [
+            # save weights after every iteration
+            ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5', verbose=self.verbose),
+            # if loss does not change for 2 iterations, change learning rate
+            ReduceLROnPlateau(monitor='loss', factor=0.5, patience=2, verbose=self.verbose),
+            # if loss does not change for 4 iterations, finish training
+            EarlyStopping(monitor='loss', min_delta=0, patience=4, verbose=self.verbose)
+        ]
+        if self.tensorboard:
+            callbacks.append(
+                # write log for visualization in TensorBoard
+                TensorBoard(
+                    log_dir=self.log_dir, batch_size=self.batch_size, histogram_freq=0,
+                    write_graph=True, write_grads=False, write_images=True
+                )
+            )
+        return callbacks
+
+    def run_training(self) -> None:
         if self.num_epochs:
             self.model.fit_generator(
                 self.image_data.train_generator(),
                 steps_per_epoch=self.image_data.train_length(), epochs=self.num_epochs,
-                callbacks=[
-                    # save weights after every iteration
-                    ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5', verbose=self.verbose),
-                    # if loss does not change for 2 iterations, change learning rate
-                    ReduceLROnPlateau(monitor='loss', factor=0.5, patience=2, verbose=self.verbose),
-                    # if loss does not change for 4 iterations, finish training
-                    EarlyStopping(monitor='loss', min_delta=0, patience=4, verbose=self.verbose),
-                    # write log for visualization in TensorBoard
-                    TensorBoard(
-                        log_dir=self.log_dir, batch_size=self.batch_size, histogram_freq=0,
-                        write_graph=True, write_grads=False, write_images=True
-                    )
-                ]
+                callbacks=self.callbacks()
             )
             self.io.save_weights(self.model, self._fit_type(), self._num_items)
 
