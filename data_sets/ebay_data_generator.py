@@ -33,8 +33,8 @@ class BatchGenerator(Sized):
 
 class EbayDataGenerator(LabeledItems, WithVerbose, ContainsImages):
     """
-    Returns the image data and labels for a data set in batches (of configurable size) instead of keeping them
-    all in memory at once.
+    Returns the image data and labels for a data set in batches (of configurable size) instead of
+    keeping them all in memory at once.
     """
 
     CACHE_FILE_PREFIX = 'style_scout'
