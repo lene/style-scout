@@ -1,11 +1,11 @@
 from argparse import ArgumentParser, Namespace
 from pprint import pprint
-from typing import Callable, Tuple, Dict
+from typing import Callable, Tuple, Dict, List
 
 from PIL import Image
 import numpy
 from keras import Model
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, TensorBoard
+from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, EarlyStopping, TensorBoard
 
 from acquisition.ebay_downloader_io import EbayDownloaderIO
 from acquisition.items import Items
@@ -136,24 +136,20 @@ class TrainingRunner(WithVerbose):
         self.run_test()
         self.run_demo()
 
-    def callbacks(self):
-        callbacks = [
+    def callbacks(self) -> List[Callback]:
+        return [
             # save weights after every iteration
             ModelCheckpoint(self.io.weights_file_base + '.{epoch:02d}.hdf5', verbose=self.verbose),
             # if loss does not change for 2 iterations, change learning rate
-            ReduceLROnPlateau(monitor='loss', factor=0.5, patience=2, verbose=self.verbose),
+            ReduceLROnPlateau(monitor='acc', factor=0.5, patience=2, verbose=self.verbose),
             # if loss does not change for 4 iterations, finish training
-            EarlyStopping(monitor='loss', min_delta=0, patience=4, verbose=self.verbose)
-        ]
-        if self.tensorboard:
-            callbacks.append(
-                # write log for visualization in TensorBoard
-                TensorBoard(
-                    log_dir=self.log_dir, batch_size=self.batch_size, histogram_freq=0,
-                    write_graph=True, write_grads=False, write_images=True
-                )
+            EarlyStopping(monitor='acc', min_delta=0, patience=4, verbose=self.verbose),
+            # write log for visualization in TensorBoard
+            TensorBoard(
+                log_dir=self.log_dir, batch_size=self.batch_size, histogram_freq=0,
+                write_graph=True, write_grads=False, write_images=True
             )
-        return callbacks
+        ]
 
     def run_training(self) -> None:
         if self.num_epochs:
