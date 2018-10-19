@@ -160,7 +160,7 @@ class TrainingRunner(WithVerbose):
             )
             self.io.save_weights(self.model, self._fit_type(), self._num_items)
 
-    def run_test(self):
+    def run_test(self) -> None:
         if self.test:
             loss_and_metrics = self.model.evaluate_generator(
                 self.image_data.test_generator(), steps=self.image_data.test_length(), max_queue_size=2
@@ -168,7 +168,7 @@ class TrainingRunner(WithVerbose):
             print()
             print('test set loss:', loss_and_metrics[0], 'test set accuracy:', loss_and_metrics[1])
 
-    def run_demo(self):
+    def run_demo(self) -> None:
         for item in [i for i in self._prepare_items()[0] if '<3' in i.tags][:self.demo]:
             images = numpy.asarray([
                 self.image_data.downscale(Image.open(file).convert('RGB'), method=add_border)
