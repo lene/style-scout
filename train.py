@@ -19,7 +19,8 @@ from data_sets.contains_images import add_border
 
 MIN_TAG_NUM = 10
 SAVE_FOLDER = 'data'
-DEFAULT_SIZE = 139
+DEFAULT_IMAGE_SIZE = 139
+DEFAULT_TEST_SET_SHARE = 0.2
 
 
 def parse_command_line() -> Namespace:
@@ -52,8 +53,15 @@ def parse_command_line() -> Namespace:
         '--num-epochs', '-n', type=int, default=1, help='How many times to iterate'
     )
     parser.add_argument(
-        '--image-size', '-s', type=int, default=DEFAULT_SIZE,
+        '--image-size', '-s', type=int, default=DEFAULT_IMAGE_SIZE,
         help='Size (both width and height) to which images are resized'
+    )
+    parser.add_argument(
+        '--test-set-share', type=float, default=DEFAULT_TEST_SET_SHARE,
+        help='Share of the data used as test set'
+    )
+    parser.add_argument(
+        '--random-seed', type=int, default=None, help='Random seed used in train-test split'
     )
     parser.add_argument(
         '--demo', type=int, default=0, help='Number of images to try to predict as demo'
@@ -116,7 +124,7 @@ class TrainingRunner(WithVerbose):
         self.neural_network_type = self.decode_network_name(args.type)
         self.fully_connected_layers = args.layers
         self.log_dir = './logs'  # TODO: CLI arg
-        self.image_data = self.get_image_data()
+        self.image_data = self._get_image_data(args.test_set_share, args. random_seed)
         self.model = self.setup_model()
 
     def run(self) -> None:
@@ -171,16 +179,18 @@ class TrainingRunner(WithVerbose):
                     ]
                 )
 
-    def get_image_data(self) -> EbayDataGenerator:
+    def _get_image_data(self, test_set_share: float, random_seed: int) -> EbayDataGenerator:
         items, valid_tags = self._prepare_items()
         return EbayDataGenerator(
             items, valid_tags, (self.image_size, self.image_size),
-            batch_size=self.batch_size, verbose=self.verbose
+            batch_size=self.batch_size, random_seed=random_seed, test_share=test_set_share,
+            verbose=self.verbose
         )
 
     def setup_model(self) -> Model:
         model = self.neural_network_type(
-            input_shape=(*self.image_data.size, self.image_data.DEPTH), classes=self.image_data.num_classes,
+            input_shape=(*self.image_data.size, self.image_data.DEPTH),
+            classes=self.image_data.num_classes,
             connected_layers=self.fully_connected_layers
         )
         model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])

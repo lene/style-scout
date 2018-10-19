@@ -4,9 +4,9 @@ class WithVerbose:
         self.verbose = verbose
 
     @classmethod
-    def print_status(cls, verbose, *args, **kwargs) -> None:  # type: ignore
+    def print_status(cls, verbose, *args, **kwargs) -> None:
         if verbose:
             print(*args, **kwargs)
 
-    def _print_status(self, *args, **kwargs) -> None:  # type: ignore
+    def _print_status(self, *args, **kwargs) -> None:
         self.print_status(self.verbose, *args, **kwargs)

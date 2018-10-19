@@ -54,6 +54,29 @@ class EbayDataGeneratorTest(TestBase):
             for j in range(len(labels0[i])):
                 self.assertEqual(labels0[i][j], labels1[i][j])
 
+    def test_random_seed(self) -> None:
+        self.skipTest("Not yet implemented")
+
+    def test_test_set_share_is_respected(self) -> None:
+        items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
+        generator = EbayDataGenerator(items, labels, (139, 139), test_share=0)
+        test_items = self._get_from_generator(self.NUM_IMAGES, generator)
+        self.assertEqual(4, len(set(test_items[0])))
+
+        generator = EbayDataGenerator(items, labels, (139, 139), test_share=0.5)
+        test_items = self._get_from_generator(self.NUM_IMAGES, generator)
+        self.assertEqual(2, len(set(test_items[0])))
+
+        generator = EbayDataGenerator(items, labels, (139, 139), test_share=0.75)
+        test_items = self._get_from_generator(self.NUM_IMAGES, generator)
+        self.assertEqual(1, len(set(test_items[0])))
+
+    def test_training_set_share_of_zero_raises(self) -> None:
+        items, labels = self._generate_items_with_labels(self.NUM_IMAGES)
+        with self.assertRaises(ValueError):
+            generator = EbayDataGenerator(items, labels, (139, 139), test_share=1)
+            self._get_from_generator(self.NUM_IMAGES, generator)
+
     def _generate_items_with_labels(self, num_items: int) -> Tuple[Items, numpy.ndarray]:
         items = self._generate_items(num_items)
         for i, item in enumerate(items):
@@ -63,3 +86,10 @@ class EbayDataGeneratorTest(TestBase):
     def _generate_items(self, num_items: int) -> Items:
         raw_items = [Item(self.api, self.category, i + 1) for i in range(num_items)]
         return Items(raw_items)
+
+    @staticmethod
+    def _get_from_generator(num_items: int, generator: EbayDataGenerator) -> List:
+        return [
+            tuple([tuple(line.tolist()) for line in next(generator.train_generator())[1]])
+            for _ in range(num_items)
+        ]
